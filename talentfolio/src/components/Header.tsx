@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Bookmark } from "lucide-react";
+import { Bookmark, LogIn, LogOut, Pencil } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
   bookmarkCount: number;
   showBookmarksOnly: boolean;
   onToggleBookmarks: () => void;
   onLogoClick: () => void;
+  onLoginClick: () => void;
+  onEditProfile?: () => void;
 }
 
 /** Talento wordmark SVG logo */
@@ -51,7 +54,10 @@ export default function Header({
   showBookmarksOnly,
   onToggleBookmarks,
   onLogoClick,
+  onLoginClick,
+  onEditProfile,
 }: HeaderProps) {
+  const { user, profile, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
   const bgOpacity = useTransform(scrollY, [0, 80], [0, 0.92]);
@@ -114,6 +120,74 @@ export default function Header({
           </div>
         </button>
 
+        {/* Right side: auth + bookmark */}
+        <div className="flex items-center gap-2">
+
+        {/* 로그인/프로필 버튼 */}
+        {user && profile ? (
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%",
+                backgroundColor: profile.role === "developer" ? "rgba(167,139,250,0.2)" : "rgba(251,146,60,0.2)",
+                border: `1px solid ${profile.role === "developer" ? "rgba(167,139,250,0.4)" : "rgba(251,146,60,0.4)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 10, fontWeight: 700, fontFamily: "Syne, sans-serif",
+                color: profile.role === "developer" ? "var(--dev-color)" : "var(--des-color)",
+              }}>
+                {profile.name.slice(0, 1)}
+              </div>
+              <span className="text-sm" style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}>
+                {profile.name}
+              </span>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={onEditProfile}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+              style={{
+                backgroundColor: "rgba(232,121,249,0.08)",
+                border: "1px solid rgba(232,121,249,0.2)",
+                color: "var(--accent)",
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+              <span className="text-sm hidden sm:block" style={{ fontFamily: "DM Sans, sans-serif" }}>내 프로필</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={signOut}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm hidden sm:block" style={{ fontFamily: "DM Sans, sans-serif" }}>로그아웃</span>
+            </motion.button>
+          </div>
+        ) : (
+          <motion.button
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={onLoginClick}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, #e879f9, #c026d3)",
+              color: "white",
+              border: "none",
+              boxShadow: "0 4px 14px rgba(232,121,249,0.35)",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 14, fontWeight: 600,
+            }}
+          >
+            <LogIn className="w-4 h-4" />
+            <span className="text-sm hidden sm:block">로그인</span>
+          </motion.button>
+        )}
+
         {/* Bookmark toggle */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -146,6 +220,8 @@ export default function Header({
             </motion.span>
           )}
         </motion.button>
+
+        </div>{/* end right-side flex */}
       </div>
     </header>
   );

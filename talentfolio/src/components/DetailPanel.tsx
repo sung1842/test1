@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { X, Bookmark, Mail, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
+import { X, Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
 import { Candidate } from "@/types/candidate";
 import Avatar from "./Avatar";
 import RoleBadge from "./RoleBadge";
@@ -13,6 +13,7 @@ interface DetailPanelProps {
   onClose: () => void;
   onBookmark: (id: string) => void;
   onSkillClick: (skill: string) => void;
+  onMessage?: (candidate: Candidate) => void;
 }
 
 function LinkButton({
@@ -48,6 +49,7 @@ export default function DetailPanel({
   onClose,
   onBookmark,
   onSkillClick,
+  onMessage,
 }: DetailPanelProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -246,18 +248,36 @@ export default function DetailPanel({
             >
               연락하기
             </h3>
-            <a
-              href={`mailto:${candidate.email}`}
-              style={{
-                backgroundColor: "var(--accent)",
-                color: "white",
-                fontFamily: "DM Sans, sans-serif",
-              }}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90 hover:shadow-lg"
-            >
-              <Mail className="w-4 h-4" />
-              이메일 보내기
-            </a>
+            <div className="flex gap-2">
+              {/* 메시지 보내기 버튼 */}
+              <button
+                onClick={() => onMessage?.(candidate)}
+                style={{
+                  background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                  color: "white",
+                  fontFamily: "DM Sans, sans-serif",
+                  border: "none",
+                  boxShadow: "0 6px 20px rgba(232,121,249,0.35)",
+                  cursor: "pointer",
+                }}
+                className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90 hover:shadow-lg"
+              >
+                <MessageSquare className="w-4 h-4" />
+                메시지 보내기
+              </button>
+              {/* 이메일 보내기 버튼 */}
+              <a
+                href={`mailto:${candidate.email}`}
+                style={{
+                  border: "1px solid var(--border-color)",
+                  color: "var(--text-secondary)",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+            </div>
             <p
               style={{ color: "var(--text-secondary)" }}
               className="text-xs text-center mt-2"

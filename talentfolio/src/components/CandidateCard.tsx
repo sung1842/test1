@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Bookmark, Mail, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
+import { Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
 import { Candidate } from "@/types/candidate";
 import { cn } from "@/lib/utils";
 import Avatar from "./Avatar";
@@ -15,6 +15,7 @@ interface CandidateCardProps {
   onSelect: (candidate: Candidate) => void;
   onBookmark: (id: string, e: React.MouseEvent) => void;
   onSkillClick: (skill: string) => void;
+  onMessage?: (candidate: Candidate) => void;
   animationDelay: number;
 }
 
@@ -53,6 +54,7 @@ export default function CandidateCard({
   onSelect,
   onBookmark,
   onSkillClick,
+  onMessage,
   animationDelay,
 }: CandidateCardProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -231,21 +233,53 @@ export default function CandidateCard({
             })}
           </div>
 
-          <motion.a
-            href={`mailto:${candidate.email}`}
-            whileHover={{ scale: 1.05, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
-            style={{
-              background: "linear-gradient(135deg, #e879f9, #c026d3)",
-              color: "white",
-              fontFamily: "DM Sans, sans-serif",
-              boxShadow: "0 4px 14px rgba(232,121,249,0.35)",
-            }}
-          >
-            <Mail className="w-3 h-3" />
-            이메일 보내기
-          </motion.a>
+          <div className="flex items-center gap-2">
+            {/* 메시지 버튼 */}
+            <motion.button
+              whileHover={{ scale: 1.08, y: -1 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={(e) => { e.stopPropagation(); onMessage?.(candidate); }}
+              title="메시지 보내기"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
+              style={{
+                background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                color: "white",
+                fontFamily: "DM Sans, sans-serif",
+                boxShadow: "0 4px 14px rgba(232,121,249,0.35)",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <MessageSquare className="w-3 h-3" />
+              메시지
+            </motion.button>
+            {/* 이메일 버튼 */}
+            <motion.a
+              href={`mailto:${candidate.email}`}
+              whileHover={{ scale: 1.08, y: -1 }}
+              whileTap={{ scale: 0.94 }}
+              title="이메일 보내기"
+              className="flex items-center p-2 rounded-xl"
+              style={{
+                border: "1px solid var(--border-color)",
+                color: "var(--text-secondary)",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.color = "var(--accent)";
+                el.style.borderColor = "rgba(232,121,249,0.4)";
+                el.style.backgroundColor = "rgba(232,121,249,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.color = "var(--text-secondary)";
+                el.style.borderColor = "var(--border-color)";
+                el.style.backgroundColor = "transparent";
+              }}
+            >
+              <Mail className="w-3.5 h-3.5" />
+            </motion.a>
+          </div>
         </motion.div>
       </div>
     </motion.div>
