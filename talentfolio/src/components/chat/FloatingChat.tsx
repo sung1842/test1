@@ -209,7 +209,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                         color: "white", fontSize: 10, fontWeight: 700,
                         fontFamily: "JetBrains Mono, monospace", flexShrink: 0,
                       }}>
-                        {conv.unreadCount}
+                        {formatBadgeCount(conv.unreadCount)}
                       </span>
                     )}
                   </div>
@@ -417,6 +417,10 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
       </div>
     </div>
   );
+}
+
+function formatBadgeCount(n: number): string {
+  return n > 99 ? "99+" : String(n);
 }
 
 // ─── FloatingChat (main) ──────────────────────────────────────────────────────
@@ -854,7 +858,7 @@ export default function FloatingChat({
                     borderRadius: 10, padding: "1px 7px",
                     fontFamily: "JetBrains Mono, monospace",
                   }}>
-                    {totalUnread}
+                    {formatBadgeCount(totalUnread)}
                   </span>
                 )}
               </div>
@@ -959,7 +963,7 @@ export default function FloatingChat({
                 border: "2px solid #080808",
               }}
             >
-              {totalUnread}
+              {formatBadgeCount(totalUnread)}
             </motion.span>
           )}
         </AnimatePresence>

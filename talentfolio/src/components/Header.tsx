@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Bookmark, LogIn, LogOut, Pencil } from "lucide-react";
+import { Bookmark, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
@@ -126,7 +126,11 @@ export default function Header({
         {/* 로그인/프로필 버튼 */}
         {user && profile ? (
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl"
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={onEditProfile}
+              title="내 프로필 편집"
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer"
               style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div style={{
                 width: 22, height: 22, borderRadius: "50%",
@@ -141,19 +145,6 @@ export default function Header({
               <span className="text-sm" style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}>
                 {profile.name}
               </span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={onEditProfile}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
-              style={{
-                backgroundColor: "rgba(232,121,249,0.08)",
-                border: "1px solid rgba(232,121,249,0.2)",
-                color: "var(--accent)",
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-              <span className="text-sm hidden sm:block" style={{ fontFamily: "DM Sans, sans-serif" }}>내 프로필</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
