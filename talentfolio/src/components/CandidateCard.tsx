@@ -129,9 +129,9 @@ export default function CandidateCard({
           onClick={(e) => onBookmark(candidate.id, e)}
           className="absolute top-3 right-3 z-10 p-2 rounded-xl"
           style={{
-            backgroundColor: isBookmarked ? "rgba(251,146,60,0.2)" : "rgba(0,0,0,0.5)",
-            border: `1px solid ${isBookmarked ? "rgba(251,146,60,0.5)" : "rgba(255,255,255,0.1)"}`,
-            color: isBookmarked ? "var(--accent-alt)" : "rgba(255,255,255,0.6)",
+            backgroundColor: isBookmarked ? "rgba(196,144,110,0.2)" : "rgba(0,0,0,0.4)",
+            border: `1px solid ${isBookmarked ? "rgba(196,144,110,0.5)" : "rgba(245,237,228,0.1)"}`,
+            color: isBookmarked ? "var(--accent-alt)" : "rgba(245,237,228,0.6)",
             backdropFilter: "blur(8px)",
           }}
         >
@@ -226,8 +226,8 @@ export default function CandidateCard({
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLElement;
                     el.style.color = "var(--accent)";
-                    el.style.borderColor = "rgba(232,121,249,0.4)";
-                    el.style.backgroundColor = "rgba(232,121,249,0.08)";
+                    el.style.borderColor = "rgba(232,41,74,0.4)";
+                    el.style.backgroundColor = "rgba(232,41,74,0.08)";
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLElement;
@@ -251,10 +251,10 @@ export default function CandidateCard({
               title="메시지 보내기"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
               style={{
-                background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                background: "linear-gradient(135deg, #e8294a, #b5182d)",
                 color: "white",
                 fontFamily: "DM Sans, sans-serif",
-                boxShadow: "0 4px 14px rgba(232,121,249,0.35)",
+                boxShadow: "0 4px 14px rgba(232,41,74,0.35)",
                 border: "none",
                 cursor: "pointer",
               }}
@@ -276,8 +276,8 @@ export default function CandidateCard({
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.color = "var(--accent)";
-                el.style.borderColor = "rgba(232,121,249,0.4)";
-                el.style.backgroundColor = "rgba(232,121,249,0.08)";
+                el.style.borderColor = "rgba(232,41,74,0.4)";
+                el.style.backgroundColor = "rgba(232,41,74,0.08)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement;

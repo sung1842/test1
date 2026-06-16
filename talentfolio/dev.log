@@ -1,0 +1,15 @@
+
+> talentfolio@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.20.10.9:3000
+- Environments: .env.local
+✓ Ready in 604ms
+
+ GET / 200 in 954ms (next.js: 204ms, application-code: 750ms)
+ GET / 200 in 233ms (next.js: 10ms, application-code: 223ms)
+ GET /slides/NaN.webp 404 in 149ms (next.js: 56ms, application-code: 94ms)
+ GET / 200 in 268ms (next.js: 7ms, application-code: 261ms)
+ GET /slides/NaN.webp 404 in 83ms (next.js: 9ms, application-code: 74ms)

@@ -20,7 +20,7 @@ export default function Avatar({ name, avatar, size = "md", role }: AvatarProps)
     .join("");
 
   const { container, text } = sizeMap[size];
-  const bgColor = role === "developer" ? "rgba(167,139,250,0.2)" : "rgba(251,146,60,0.2)";
+  const bgColor = role === "developer" ? "rgba(232,41,74,0.15)" : "rgba(196,144,110,0.15)";
   const textColor = role === "developer" ? "var(--dev-color)" : "var(--des-color)";
 
   if (avatar) {

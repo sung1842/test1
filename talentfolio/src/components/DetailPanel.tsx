@@ -140,10 +140,10 @@ export default function DetailPanel({
                   onClick={() => onBookmark(candidate.id)}
                   style={{
                     color: isBookmarked ? "var(--accent-alt)" : "var(--text-secondary)",
-                    backgroundColor: isBookmarked
-                      ? "rgba(245,166,35,0.1)"
+                  backgroundColor: isBookmarked
+                      ? "rgba(196,144,110,0.12)"
                       : "transparent",
-                    border: `1px solid ${isBookmarked ? "var(--accent-alt)" : "var(--border-color)"}`,
+                  border: `1px solid ${isBookmarked ? "var(--accent-alt)" : "var(--border-color)"}`,
                   }}
                   className="p-2 rounded-lg transition-all duration-200 hover:border-[var(--accent-alt)] hover:text-[var(--accent-alt)] flex-shrink-0"
                 >
@@ -253,11 +253,11 @@ export default function DetailPanel({
               <button
                 onClick={() => onMessage?.(candidate)}
                 style={{
-                  background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                  background: "linear-gradient(135deg, #e8294a, #b5182d)",
                   color: "white",
                   fontFamily: "DM Sans, sans-serif",
                   border: "none",
-                  boxShadow: "0 6px 20px rgba(232,121,249,0.35)",
+                  boxShadow: "0 6px 20px rgba(232,41,74,0.35)",
                   cursor: "pointer",
                 }}
                 className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90 hover:shadow-lg"

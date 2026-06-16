@@ -24,13 +24,11 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
 
-  // 모달 열릴 때 페이지 스크롤 막기
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // ESC 닫기
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -54,7 +52,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
     setLoading(false);
     if (err) {
-      if (err.includes("Invalid login"))       setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+      if (err.includes("Invalid login"))           setError("이메일 또는 비밀번호가 올바르지 않습니다.");
       else if (err.includes("already registered")) setError("이미 가입된 이메일입니다.");
       else if (err.includes("Password should"))    setError("비밀번호는 6자 이상이어야 합니다.");
       else setError(err);
@@ -64,8 +62,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   };
 
   const baseInputStyle: React.CSSProperties = {
-    width: "100%", background: "#1a1a1a",
-    border: "1px solid #2a2a2a", borderRadius: 10,
+    width: "100%", background: "#3a2318",
+    border: "1px solid #5c3828", borderRadius: 10,
     padding: "10px 12px 10px 38px",
     color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif",
     fontSize: 14, outline: "none", boxSizing: "border-box",
@@ -81,14 +79,13 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         onClick={onClose}
         style={{
           position: "fixed", inset: 0, zIndex: 300,
-          backgroundColor: "rgba(0,0,0,0.75)",
+          backgroundColor: "rgba(20,10,5,0.85)",
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
-          // 정가운데 정렬 컨테이너
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        {/* ── Modal (스크롤 가능한 컨테이너) ── */}
+        {/* ── Modal ── */}
         <motion.div
           key="modal"
           initial={{ opacity: 0, scale: 0.93 }}
@@ -98,32 +95,31 @@ export default function AuthModal({ onClose }: AuthModalProps) {
           onClick={e => e.stopPropagation()}
           style={{
             width: "min(440px, 92vw)",
-            maxHeight: "90vh",          // 화면 높이의 90%로 제한
-            overflowY: "auto",          // 내용이 길면 모달 내부에서 스크롤
-            background: "#0f0f0f",
-            border: "1px solid #242424",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            background: "#231410",
+            border: "1px solid #5c3828",
             borderRadius: 20,
-            boxShadow: "0 28px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
-            // 스크롤바 스타일링
+            boxShadow: "0 28px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,237,228,0.04)",
             scrollbarWidth: "thin",
-            scrollbarColor: "#2a2a2a transparent",
+            scrollbarColor: "#5c3828 transparent",
           } as React.CSSProperties}
         >
           {/* ── 헤더 ── */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 20px", borderBottom: "1px solid #1e1e1e",
-            position: "sticky", top: 0, background: "#0f0f0f", zIndex: 1,
+            padding: "18px 20px", borderBottom: "1px solid #3a2318",
+            position: "sticky", top: 0, background: "#231410", zIndex: 1,
           }}>
             <div>
               <h2 style={{
-                fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 18,
-                color: "var(--text-primary)", margin: 0,
+                fontFamily: "SerreriaSobria, serif", fontWeight: 400, fontSize: 20,
+                color: "var(--text-primary)", margin: 0, letterSpacing: "0.03em",
               }}>
                 {mode === "login" ? "로그인" : "회원가입"}
               </h2>
               <p style={{
-                fontFamily: "JetBrains Mono, monospace", fontSize: 11,
+                fontFamily: "AlanisHand, cursive", fontSize: 12,
                 color: "var(--text-secondary)", margin: "3px 0 0",
               }}>
                 {mode === "login" ? "TalentFolio에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}
@@ -132,12 +128,12 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             <button
               onClick={onClose}
               style={{
-                background: "rgba(255,255,255,0.06)", border: "1px solid #2a2a2a",
+                background: "rgba(245,237,228,0.06)", border: "1px solid #5c3828",
                 borderRadius: 8, padding: 7, cursor: "pointer",
                 color: "var(--text-secondary)", display: "flex", transition: "all 0.15s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(245,237,228,0.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(245,237,228,0.06)"; }}
             >
               <X size={15} />
             </button>
@@ -148,8 +144,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
             {/* 탭 전환 */}
             <div style={{
-              display: "flex", background: "#1a1a1a", borderRadius: 10,
-              padding: 3, marginBottom: 20, border: "1px solid #242424",
+              display: "flex", background: "#3a2318", borderRadius: 10,
+              padding: 3, marginBottom: 20, border: "1px solid #5c3828",
             }}>
               {(["login", "signup"] as const).map(m => (
                 <button
@@ -159,9 +155,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
                     cursor: "pointer", fontFamily: "DM Sans, sans-serif",
                     fontSize: 13, fontWeight: 600, transition: "all 0.2s",
-                    background: mode === m ? "linear-gradient(135deg, #e879f9, #c026d3)" : "transparent",
+                    background: mode === m ? "linear-gradient(135deg, #e8294a, #b5182d)" : "transparent",
                     color: mode === m ? "white" : "var(--text-secondary)",
-                    boxShadow: mode === m ? "0 4px 12px rgba(232,121,249,0.3)" : "none",
+                    boxShadow: mode === m ? "0 4px 12px rgba(232,41,74,0.3)" : "none",
                   }}
                 >
                   {m === "login" ? "로그인" : "회원가입"}
@@ -189,8 +185,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         type="text" placeholder="이름" value={name}
                         onChange={e => setName(e.target.value)}
                         style={baseInputStyle}
-                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,121,249,0.5)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
                       />
                     </div>
 
@@ -198,15 +194,15 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     <div style={{ display: "flex", gap: 8 }}>
                       {(["developer", "designer"] as const).map(r => {
                         const active = role === r;
-                        const color  = r === "developer" ? "#a78bfa" : "#fb923c";
+                        const color  = r === "developer" ? "#e8294a" : "#c4906e";
                         return (
                           <button
                             key={r} type="button" onClick={() => setRole(r)}
                             style={{
                               flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer",
                               fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 600,
-                              border: `1px solid ${active ? color + "60" : "#2a2a2a"}`,
-                              background: active ? color + "15" : "#1a1a1a",
+                              border: `1px solid ${active ? color + "60" : "#5c3828"}`,
+                              background: active ? color + "20" : "#3a2318",
                               color: active ? color : "var(--text-secondary)",
                               transition: "all 0.15s",
                             }}
@@ -224,8 +220,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         type="text" placeholder="직함 (예: 풀스택 개발자, UI/UX 디자이너)"
                         value={title} onChange={e => setTitle(e.target.value)}
                         style={baseInputStyle}
-                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,121,249,0.5)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
                       />
                     </div>
                   </motion.div>
@@ -239,8 +235,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   type="email" placeholder="이메일" value={email}
                   onChange={e => setEmail(e.target.value)} required
                   style={baseInputStyle}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,121,249,0.5)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
                 />
               </div>
 
@@ -251,8 +247,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   type={showPw ? "text" : "password"} placeholder="비밀번호 (6자 이상)"
                   value={password} onChange={e => setPassword(e.target.value)} required
                   style={{ ...baseInputStyle, paddingRight: 40 }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,121,249,0.5)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
                 />
                 <button type="button" onClick={() => setShowPw(v => !v)} style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
@@ -270,7 +266,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     style={{
                       margin: 0, padding: "8px 12px", borderRadius: 8,
-                      background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
+                      background: "rgba(232,41,74,0.1)", border: "1px solid rgba(232,41,74,0.3)",
                       color: "#f87171", fontFamily: "DM Sans, sans-serif", fontSize: 13,
                     }}
                   >
@@ -288,10 +284,10 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 style={{
                   width: "100%", padding: "12px 0", borderRadius: 12, border: "none",
                   cursor: loading ? "default" : "pointer",
-                  background: loading ? "#2a2a2a" : "linear-gradient(135deg, #e879f9, #c026d3)",
+                  background: loading ? "#3a2318" : "linear-gradient(135deg, #e8294a, #b5182d)",
                   color: loading ? "var(--text-secondary)" : "white",
                   fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 700,
-                  boxShadow: loading ? "none" : "0 6px 20px rgba(232,121,249,0.35)",
+                  boxShadow: loading ? "none" : "0 6px 20px rgba(232,41,74,0.35)",
                   transition: "all 0.2s", marginTop: 4,
                 }}
               >

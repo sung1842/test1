@@ -53,18 +53,18 @@ const SKILL_MAP: Record<string, SkillConfig> = {
   "ArgoCD":       { icon: Layers,            color: "#EF7B4D", bg: "rgba(239,123,77,0.12)"  },
   "gRPC":         { icon: Globe,             color: "#244C5A", bg: "rgba(36,76,90,0.12)"    },
   "Combine":      { icon: Code2,             color: "#F05138", bg: "rgba(240,81,56,0.12)"   },
-  "Core Data":    { icon: Code2,             color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  "Core Data":    { icon: Code2,             color: "#e8294a", bg: "rgba(232,41,74,0.12)"  },
   "CloudKit":     { icon: Globe,             color: "#1C9BF0", bg: "rgba(28,155,240,0.12)"  },
   "Xcode":        { icon: Code2,             color: "#147EFB", bg: "rgba(20,126,251,0.12)"  },
   "Illustrator":  { icon: Palette,           color: "#FF9A00", bg: "rgba(255,154,0,0.12)"   },
   "Photoshop":    { icon: Palette,           color: "#31A8FF", bg: "rgba(49,168,255,0.12)"  },
   "After Effects":{ icon: Palette,           color: "#9999FF", bg: "rgba(153,153,255,0.12)" },
   "Cinema 4D":    { icon: Box,               color: "#011A6A", bg: "rgba(1,26,106,0.12)"    },
-  "Motion":       { icon: Zap,               color: "#e879f9", bg: "rgba(232,121,249,0.12)" },
-  "Branding":     { icon: Palette,           color: "#fb923c", bg: "rgba(251,146,60,0.12)"  },
-  "Design System":{ icon: Layers,            color: "#e879f9", bg: "rgba(232,121,249,0.12)" },
-  "Prototyping":  { icon: Zap,               color: "#fb923c", bg: "rgba(251,146,60,0.12)"  },
-  "UX Research":  { icon: Globe,             color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  "Motion":       { icon: Zap,               color: "#e8294a", bg: "rgba(232,41,74,0.12)"  },
+  "Branding":     { icon: Palette,           color: "#c4906e", bg: "rgba(196,144,110,0.12)" },
+  "Design System":{ icon: Layers,            color: "#e8294a", bg: "rgba(232,41,74,0.12)"  },
+  "Prototyping":  { icon: Zap,               color: "#c4906e", bg: "rgba(196,144,110,0.12)" },
+  "UX Research":  { icon: Globe,             color: "#e8294a", bg: "rgba(232,41,74,0.12)"  },
   "Pinecone":     { icon: Layers,            color: "#1db980", bg: "rgba(29,185,128,0.12)"  },
   "Maze":         { icon: Code2,             color: "#FF4F64", bg: "rgba(255,79,100,0.12)"  },
   "Lottie":       { icon: Zap,               color: "#00DDB3", bg: "rgba(0,221,179,0.12)"   },
@@ -73,8 +73,8 @@ const SKILL_MAP: Record<string, SkillConfig> = {
 
 const DEFAULT: SkillConfig = {
   icon: Code2,
-  color: "#a78bfa",
-  bg: "rgba(167,139,250,0.1)",
+  color: "#c4906e",
+  bg: "rgba(196,144,110,0.1)",
 };
 
 interface SkillTagProps {

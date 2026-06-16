@@ -99,7 +99,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
         className="pointer-events-none absolute inset-0 flex items-center justify-center"
         style={{
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 45%, rgba(91,110,245,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 40% at 50% 45%, rgba(232,41,74,0.08) 0%, transparent 70%)",
         }}
       />
 

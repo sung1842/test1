@@ -7,9 +7,9 @@ export default function RoleBadge({ role }: RoleBadgeProps) {
   return (
     <span
       style={{
-        backgroundColor: isDev ? "rgba(167,139,250,0.15)" : "rgba(251,146,60,0.15)",
+        backgroundColor: isDev ? "rgba(232,41,74,0.12)" : "rgba(196,144,110,0.12)",
         color: isDev ? "var(--dev-color)" : "var(--des-color)",
-        border: `1px solid ${isDev ? "rgba(167,139,250,0.35)" : "rgba(251,146,60,0.35)"}`,
+        border: `1px solid ${isDev ? "rgba(232,41,74,0.35)" : "rgba(196,144,110,0.35)"}`,
         fontFamily: "JetBrains Mono, monospace",
       }}
       className="text-xs px-2.5 py-1 rounded-full font-medium"

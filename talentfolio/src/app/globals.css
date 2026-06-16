@@ -1,19 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@500;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
+/* ── Custom Brand Fonts ── */
+@font-face {
+  font-family: "SerreriaSobria";
+  src: url("/fonts/SerreriaSobria.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "AlanisHand";
+  src: url("/fonts/AlanisHand.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Color Palette: 조합 F — Deep Brown × Rose Red × Warm Beige ── */
 :root {
-  --background: #080808;
-  --surface: #111111;
-  --surface-elevated: #181818;
-  --border-color: #242424;
-  --accent: #e879f9;        /* fuchsia-400 — strikes hard on black */
-  --accent-rgb: 232,121,249;
-  --accent-alt: #fb923c;    /* orange-400 — warm contrast */
-  --dev-color: #a78bfa;     /* violet-400 — developer badge */
-  --des-color: #fb923c;     /* orange-400 — designer badge */
-  --text-primary: #f5f5f5;
-  --text-secondary: #737373;
-  --tag-bg: #1a1a1a;
+  --background: #2c1810;
+  --surface: #3a2318;
+  --surface-elevated: #4a2e1e;
+  --border-color: #5c3828;
+
+  --accent: #e8294a;        /* rose red — main accent */
+  --accent-rgb: 232,41,74;
+  --accent-alt: #c4906e;    /* warm terracotta — secondary accent */
+
+  --dev-color: #e8294a;     /* rose red — developer badge */
+  --des-color: #c4906e;     /* warm terracotta — designer badge */
+
+  --text-primary: #f5ede4;  /* warm beige */
+  --text-secondary: #a08070; /* muted warm brown */
+  --tag-bg: #3a2318;
 }
 
 * {

@@ -44,7 +44,7 @@ export default function FilterTabs({
               <span
                 style={{
                   backgroundColor: isActive
-                    ? "rgba(91,110,245,0.2)"
+                    ? "rgba(232,41,74,0.15)"
                     : "var(--tag-bg)",
                   color: isActive ? "var(--accent)" : "var(--text-secondary)",
                   fontFamily: "JetBrains Mono, monospace",

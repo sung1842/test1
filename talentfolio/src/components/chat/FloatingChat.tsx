@@ -74,8 +74,8 @@ function clockTime(iso: string): string {
 
 function UserAvatar({ user, size = 38 }: { user: UIParticipant; size?: number }) {
   const isDev  = user.role === "developer";
-  const color  = isDev ? "#a78bfa" : "#fb923c";
-  const bg     = isDev ? "rgba(167,139,250,0.15)" : "rgba(251,146,60,0.15)";
+  const color  = isDev ? "#e8294a" : "#c4906e";
+  const bg     = isDev ? "rgba(232,41,74,0.15)" : "rgba(196,144,110,0.15)";
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
@@ -92,8 +92,8 @@ function OnlineDot({ online }: { online: boolean }) {
   return (
     <div style={{
       width: 9, height: 9, borderRadius: "50%",
-      border: "2px solid #0f0f0f",
-      backgroundColor: online ? "#22c55e" : "#525252",
+      border: "2px solid #231410",
+      backgroundColor: online ? "#22c55e" : "#6b4a3a",
     }} />
   );
 }
@@ -148,7 +148,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
     <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
       <AnimatePresence>
         {conversations.map((conv) => {
-          const roleColor = conv.participant.role === "developer" ? "#a78bfa" : "#fb923c";
+          const roleColor = conv.participant.role === "developer" ? "#e8294a" : "#c4906e";
           const isHov = hovered === conv.id;
           return (
             <motion.div
@@ -184,8 +184,8 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                       <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
                         {conv.participant.name}
                       </span>
-                      {conv.isAI && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(232,121,249,0.12)", border: "1px solid rgba(232,121,249,0.25)", borderRadius: 4, fontSize: 9, color: "var(--accent)", fontFamily: "JetBrains Mono, monospace" }}>
+                        {conv.isAI && (
+                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(232,41,74,0.12)", border: "1px solid rgba(232,41,74,0.25)", borderRadius: 4, fontSize: 9, color: "var(--accent)", fontFamily: "JetBrains Mono, monospace" }}>
                           <Bot size={8} /> AI
                         </span>
                       )}
@@ -205,7 +205,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                       <span style={{
                         minWidth: 18, height: 18, borderRadius: 9, padding: "0 5px",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                        background: "linear-gradient(135deg, #e8294a, #b5182d)",
                         color: "white", fontSize: 10, fontWeight: 700,
                         fontFamily: "JetBrains Mono, monospace", flexShrink: 0,
                       }}>
@@ -227,8 +227,8 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                     onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
                     style={{
                       position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                      background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-                      borderRadius: 8, padding: 6, cursor: "pointer", color: "#ef4444", display: "flex",
+                      background: "rgba(232,41,74,0.1)", border: "1px solid rgba(232,41,74,0.3)",
+                      borderRadius: 8, padding: 6, cursor: "pointer", color: "#e8294a", display: "flex",
                     }}
                   >
                     <Trash2 size={12} />
@@ -269,7 +269,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
     setInput("");
   };
 
-  const roleColor = conversation.participant.role === "developer" ? "#a78bfa" : "#fb923c";
+  const roleColor = conversation.participant.role === "developer" ? "#e8294a" : "#c4906e";
 
   const shouldShowTime = (i: number) =>
     i === conversation.messages.length - 1 ||
@@ -280,10 +280,10 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
       {/* Sub-header */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "9px 12px", borderBottom: "1px solid #242424", flexShrink: 0,
+        padding: "9px 12px", borderBottom: "1px solid #5c3828", flexShrink: 0,
       }}>
         <button onClick={onBack} style={{
-          background: "rgba(255,255,255,0.05)", border: "1px solid #2a2a2a",
+          background: "rgba(245,237,228,0.05)", border: "1px solid #5c3828",
           borderRadius: 8, padding: "5px 6px", cursor: "pointer",
           color: "var(--text-secondary)", display: "flex", transition: "color 0.15s",
         }}
@@ -300,8 +300,8 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
             <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
               {conversation.participant.name}
             </span>
-            {conversation.isAI ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(232,121,249,0.12)", border: "1px solid rgba(232,121,249,0.25)", borderRadius: 5, fontSize: 9, color: "var(--accent)", fontFamily: "JetBrains Mono, monospace" }}>
+              {conversation.isAI ? (
+              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(232,41,74,0.12)", border: "1px solid rgba(232,41,74,0.25)", borderRadius: 5, fontSize: 9, color: "var(--accent)", fontFamily: "JetBrains Mono, monospace" }}>
                 <Bot size={9} /> AI 채팅
               </span>
             ) : (
@@ -342,11 +342,11 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
               <div style={{
                 maxWidth: "80%", padding: "8px 12px",
                 borderRadius: isOwn ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
-                background: isOwn ? "linear-gradient(135deg, #e879f9, #c026d3)" : "#1e1e1e",
-                border: isOwn ? "none" : "1px solid #2a2a2a",
+                background: isOwn ? "linear-gradient(135deg, #e8294a, #b5182d)" : "#3a2318",
+                border: isOwn ? "none" : "1px solid #5c3828",
                 color: isOwn ? "white" : "var(--text-primary)",
                 fontSize: 13, fontFamily: "DM Sans, sans-serif", lineHeight: 1.5,
-                boxShadow: isOwn ? "0 4px 12px rgba(232,121,249,0.28)" : "none",
+                boxShadow: isOwn ? "0 4px 12px rgba(232,41,74,0.28)" : "none",
                 wordBreak: "break-word",
               }}>
                 {msg.content}
@@ -378,7 +378,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
 
       {/* Input */}
       <div style={{
-        padding: "10px 12px", borderTop: "1px solid #242424",
+        padding: "10px 12px", borderTop: "1px solid #5c3828",
         flexShrink: 0, display: "flex", gap: 8, alignItems: "center",
       }}>
         <input
@@ -389,14 +389,14 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
           placeholder={isAIThinking ? "AI가 응답 중..." : "메시지를 입력하세요..."}
           disabled={isAIThinking}
           style={{
-            flex: 1, background: "#1a1a1a", border: "1px solid #2a2a2a",
+            flex: 1, background: "#3a2318", border: "1px solid #5c3828",
             borderRadius: 10, padding: "8px 12px",
             color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif",
             fontSize: 13, outline: "none", transition: "border-color 0.15s",
             opacity: isAIThinking ? 0.5 : 1,
           }}
-          onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,121,249,0.5)")}
-          onBlur={e  => (e.currentTarget.style.borderColor = "#2a2a2a")}
+          onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.5)")}
+          onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
         />
         <motion.button
           whileHover={{ scale: isAIThinking ? 1 : 1.08 }} whileTap={{ scale: isAIThinking ? 1 : 0.92 }}
@@ -405,11 +405,11 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
           style={{
             width: 36, height: 36, borderRadius: 10, border: "none",
             cursor: (input.trim() && !isAIThinking) ? "pointer" : "default",
-            background: (input.trim() && !isAIThinking) ? "linear-gradient(135deg, #e879f9, #c026d3)" : "#1e1e1e",
-            color: (input.trim() && !isAIThinking) ? "white" : "#525252",
+            background: (input.trim() && !isAIThinking) ? "linear-gradient(135deg, #e8294a, #b5182d)" : "#3a2318",
+            color: (input.trim() && !isAIThinking) ? "white" : "#6b4a3a",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, transition: "background 0.2s, color 0.2s",
-            boxShadow: (input.trim() && !isAIThinking) ? "0 4px 12px rgba(232,121,249,0.3)" : "none",
+            boxShadow: (input.trim() && !isAIThinking) ? "0 4px 12px rgba(232,41,74,0.3)" : "none",
           }}
         >
           {isAIThinking ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
@@ -844,24 +844,24 @@ export default function FloatingChat({
               zIndex: 200,
               width: "min(360px, calc(100vw - 32px))",
               height: "min(520px, calc(100svh - 120px))",
-              background: "rgba(13,13,13,0.97)",
-              border: "1px solid #242424", borderRadius: 20,
+              background: "rgba(30,16,8,0.97)",
+              border: "1px solid #5c3828", borderRadius: 20,
               backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)",
-              boxShadow: "0 28px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)",
+              boxShadow: "0 28px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(245,237,228,0.04)",
               display: "flex", flexDirection: "column", overflow: "hidden",
             }}
           >
             {/* 패널 헤더 */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "13px 14px", borderBottom: "1px solid #242424", flexShrink: 0,
+              padding: "13px 14px", borderBottom: "1px solid #5c3828", flexShrink: 0,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: 8,
-                  background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                  background: "linear-gradient(135deg, #e8294a, #b5182d)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 10px rgba(232,121,249,0.35)",
+                  boxShadow: "0 4px 10px rgba(232,41,74,0.35)",
                 }}>
                   <MessageSquare size={14} color="white" />
                 </div>
@@ -870,7 +870,7 @@ export default function FloatingChat({
                 </span>
                 {!activeConv && totalUnread > 0 && (
                   <span style={{
-                    background: "linear-gradient(135deg, #e879f9, #c026d3)",
+                    background: "linear-gradient(135deg, #e8294a, #b5182d)",
                     color: "white", fontSize: 10, fontWeight: 700,
                     borderRadius: 10, padding: "1px 7px",
                     fontFamily: "JetBrains Mono, monospace",
@@ -880,12 +880,12 @@ export default function FloatingChat({
                 )}
               </div>
               <button onClick={closePanel} style={{
-                background: "rgba(255,255,255,0.06)", border: "1px solid #2a2a2a",
+                background: "rgba(245,237,228,0.06)", border: "1px solid #5c3828",
                 borderRadius: 8, padding: 6, cursor: "pointer",
                 color: "var(--text-secondary)", display: "flex", transition: "all 0.15s",
               }}
-                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(245,237,228,0.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(245,237,228,0.06)"; }}
               >
                 <X size={14} />
               </button>
@@ -940,23 +940,23 @@ export default function FloatingChat({
           left: 16,
           zIndex: 201,
           width: 52, height: 52, borderRadius: 16,
-          border: panelOpen ? "1px solid rgba(232,121,249,0.35)" : "none",
+          border: panelOpen ? "1px solid rgba(232,41,74,0.35)" : "none",
           cursor: "pointer",
           background: panelOpen
-            ? "rgba(232,121,249,0.1)"
-            : "linear-gradient(135deg, #e879f9, #c026d3)",
+            ? "rgba(232,41,74,0.1)"
+            : "linear-gradient(135deg, #e8294a, #b5182d)",
           color: "white",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: panelOpen
-            ? "0 0 0 1px rgba(232,121,249,0.2)"
-            : "0 8px 24px rgba(232,121,249,0.45)",
+            ? "0 0 0 1px rgba(232,41,74,0.2)"
+            : "0 8px 24px rgba(232,41,74,0.45)",
           transition: "background 0.2s, box-shadow 0.2s, border 0.2s",
         } as React.CSSProperties}
       >
         <AnimatePresence mode="wait">
           {panelOpen ? (
             <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <X size={20} color="var(--accent)" />
+              <X size={20} color="#e8294a" />
             </motion.span>
           ) : !user ? (
             <motion.span key="login" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={{ duration: 0.15 }}>
@@ -978,7 +978,7 @@ export default function FloatingChat({
                 position: "absolute", top: -5, right: -5,
                 minWidth: 18, height: 18, borderRadius: 9, padding: "0 4px",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                background: "#fb923c", color: "white",
+                background: "#e8294a", color: "white",
                 fontSize: 10, fontWeight: 700, fontFamily: "JetBrains Mono, monospace",
                 border: "2px solid #080808",
               }}
