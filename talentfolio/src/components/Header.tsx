@@ -25,7 +25,7 @@ export default function Header({
   const { user, profile, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const bgOpacity = useTransform(scrollY, [0, 80], [0, 0.95]);
+  const bgOpacity = useTransform(scrollY, [0, 80], [0, 0.97]);
   const borderOpacity = useTransform(scrollY, [0, 80], [0, 1]);
 
   useEffect(() => {
@@ -41,14 +41,16 @@ export default function Header({
         WebkitBackdropFilter: scrolled ? "blur(24px) saturate(180%)" : "none",
       }}
     >
+      {/* Backdrop fill */}
       <motion.div
         style={{ opacity: bgOpacity }}
         aria-hidden
         className="absolute inset-0 pointer-events-none"
       >
-        <div className="absolute inset-0" style={{ backgroundColor: "#2c1810" }} />
+        <div className="absolute inset-0" style={{ backgroundColor: "#020005" }} />
       </motion.div>
 
+      {/* Bottom border — crimson accent line */}
       <motion.div
         style={{ opacity: borderOpacity }}
         aria-hidden
@@ -58,7 +60,7 @@ export default function Header({
           className="h-px"
           style={{
             background:
-              "linear-gradient(to right, transparent, rgba(245,237,228,0.25), transparent)",
+              "linear-gradient(to right, transparent, rgba(246,4,46,0.5), transparent)",
           }}
         />
       </motion.div>
@@ -78,12 +80,12 @@ export default function Header({
                 fontSize: 23,
                 fontWeight: 400,
                 letterSpacing: "0.03em",
-                color: "var(--text-primary)",
+                color: "#f0ecf8",
                 lineHeight: 1,
               }}
             >
               Talent
-              <span style={{ color: "var(--accent)" }}>Folio</span>
+              <span style={{ color: "#f6042e" }}>Folio</span>
             </span>
             {/* Subtitle — AlanisHand (logo only) */}
             <span
@@ -113,32 +115,32 @@ export default function Header({
                 title="내 프로필 편집"
                 className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer"
                 style={{
-                  backgroundColor: "rgba(245,237,228,0.06)",
-                  border: "1px solid rgba(245,237,228,0.1)",
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
                 <div style={{
                   width: 22, height: 22, borderRadius: "50%",
                   backgroundColor:
                     profile.role === "developer"
-                      ? "rgba(232,41,74,0.2)"
-                      : "rgba(196,144,110,0.2)",
+                      ? "rgba(246,4,46,0.18)"
+                      : "rgba(255,174,46,0.18)",
                   border: `1px solid ${
                     profile.role === "developer"
-                      ? "rgba(232,41,74,0.4)"
-                      : "rgba(196,144,110,0.4)"
+                      ? "rgba(246,4,46,0.45)"
+                      : "rgba(255,174,46,0.45)"
                   }`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 10, fontWeight: 700,
                   fontFamily: "DM Sans, sans-serif",
                   color:
                     profile.role === "developer"
-                      ? "var(--dev-color)"
-                      : "var(--des-color)",
+                      ? "#f6042e"
+                      : "#ffae2e",
                 }}>
                   {profile.name.slice(0, 1)}
                 </div>
-                <span className="text-sm" style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}>
+                <span className="text-sm" style={{ fontFamily: "DM Sans, sans-serif", color: "#f0ecf8" }}>
                   {profile.name}
                 </span>
               </motion.button>
@@ -147,8 +149,8 @@ export default function Header({
                 onClick={signOut}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
                 style={{
-                  backgroundColor: "rgba(245,237,228,0.04)",
-                  border: "1px solid rgba(245,237,228,0.08)",
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                   color: "var(--text-secondary)",
                 }}
               >
@@ -162,10 +164,10 @@ export default function Header({
               onClick={onLoginClick}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, #e8294a, #b5182d)",
+                background: "linear-gradient(135deg, #f6042e, #c0001e)",
                 color: "white",
                 border: "none",
-                boxShadow: "0 4px 14px rgba(232,41,74,0.35)",
+                boxShadow: "0 4px 16px rgba(246,4,46,0.4)",
                 fontFamily: "DM Sans, sans-serif",
                 fontSize: 14, fontWeight: 600,
               }}
@@ -183,14 +185,14 @@ export default function Header({
             className="relative flex items-center gap-2 px-3 py-2 rounded-xl transition-colors duration-200 cursor-pointer"
             style={{
               backgroundColor: showBookmarksOnly
-                ? "rgba(196,144,110,0.12)"
-                : "rgba(245,237,228,0.04)",
+                ? "rgba(255,174,46,0.1)"
+                : "rgba(255,255,255,0.04)",
               border: `1px solid ${
                 showBookmarksOnly
-                  ? "rgba(196,144,110,0.4)"
-                  : "rgba(245,237,228,0.08)"
+                  ? "rgba(255,174,46,0.4)"
+                  : "rgba(255,255,255,0.08)"
               }`,
-              color: showBookmarksOnly ? "var(--accent-alt)" : "var(--text-secondary)",
+              color: showBookmarksOnly ? "#ffae2e" : "var(--text-secondary)",
             }}
           >
             <Bookmark className="w-4 h-4" fill={showBookmarksOnly ? "currentColor" : "none"} />
@@ -204,7 +206,7 @@ export default function Header({
                 animate={{ scale: 1, opacity: 1 }}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, #e8294a, #c4906e)",
+                  background: "linear-gradient(135deg, #f6042e, #c0001e)",
                   color: "white",
                   fontFamily: "JetBrains Mono, monospace",
                 }}

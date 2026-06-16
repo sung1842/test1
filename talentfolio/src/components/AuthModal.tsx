@@ -62,8 +62,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   };
 
   const baseInputStyle: React.CSSProperties = {
-    width: "100%", background: "#3a2318",
-    border: "1px solid #5c3828", borderRadius: 10,
+    width: "100%", background: "#0f0b18",
+    border: "1px solid #271c32", borderRadius: 10,
     padding: "10px 12px 10px 38px",
     color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif",
     fontSize: 14, outline: "none", boxSizing: "border-box",
@@ -79,7 +79,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         onClick={onClose}
         style={{
           position: "fixed", inset: 0, zIndex: 300,
-          backgroundColor: "rgba(20,10,5,0.85)",
+          backgroundColor: "rgba(2,0,5,0.9)",
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -97,19 +97,19 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             width: "min(440px, 92vw)",
             maxHeight: "90vh",
             overflowY: "auto",
-            background: "#231410",
-            border: "1px solid #5c3828",
+            background: "#0d0918",
+            border: "1px solid #271c32",
             borderRadius: 20,
-            boxShadow: "0 28px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,237,228,0.04)",
+            boxShadow: "0 28px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(246,4,46,0.06)",
             scrollbarWidth: "thin",
-            scrollbarColor: "#5c3828 transparent",
+            scrollbarColor: "#271c32 transparent",
           } as React.CSSProperties}
         >
           {/* ── 헤더 ── */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 20px", borderBottom: "1px solid #3a2318",
-            position: "sticky", top: 0, background: "#231410", zIndex: 1,
+            padding: "18px 20px", borderBottom: "1px solid #271c32",
+            position: "sticky", top: 0, background: "#0d0918", zIndex: 1,
           }}>
             <div>
               <h2 style={{
@@ -128,12 +128,12 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             <button
               onClick={onClose}
               style={{
-                background: "rgba(245,237,228,0.06)", border: "1px solid #5c3828",
+                background: "rgba(255,255,255,0.04)", border: "1px solid #271c32",
                 borderRadius: 8, padding: 7, cursor: "pointer",
                 color: "var(--text-secondary)", display: "flex", transition: "all 0.15s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(245,237,228,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(245,237,228,0.06)"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
             >
               <X size={15} />
             </button>
@@ -144,8 +144,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
             {/* 탭 전환 */}
             <div style={{
-              display: "flex", background: "#3a2318", borderRadius: 10,
-              padding: 3, marginBottom: 20, border: "1px solid #5c3828",
+              display: "flex", background: "#0b0812", borderRadius: 10,
+              padding: 3, marginBottom: 20, border: "1px solid #271c32",
             }}>
               {(["login", "signup"] as const).map(m => (
                 <button
@@ -155,9 +155,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
                     cursor: "pointer", fontFamily: "DM Sans, sans-serif",
                     fontSize: 13, fontWeight: 600, transition: "all 0.2s",
-                    background: mode === m ? "linear-gradient(135deg, #e8294a, #b5182d)" : "transparent",
+                    background: mode === m ? "linear-gradient(135deg, #f6042e, #c0001e)" : "transparent",
                     color: mode === m ? "white" : "var(--text-secondary)",
-                    boxShadow: mode === m ? "0 4px 12px rgba(232,41,74,0.3)" : "none",
+                    boxShadow: mode === m ? "0 4px 12px rgba(246,4,46,0.35)" : "none",
                   }}
                 >
                   {m === "login" ? "로그인" : "회원가입"}
@@ -185,8 +185,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         type="text" placeholder="이름" value={name}
                         onChange={e => setName(e.target.value)}
                         style={baseInputStyle}
-                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
+                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(246,4,46,0.6)")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
                       />
                     </div>
 
@@ -194,7 +194,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     <div style={{ display: "flex", gap: 8 }}>
                       {(["developer", "designer"] as const).map(r => {
                         const active = role === r;
-                        const color  = r === "developer" ? "#e8294a" : "#c4906e";
+                        const color  = r === "developer" ? "#f6042e" : "#ffae2e";
                         return (
                           <button
                             key={r} type="button" onClick={() => setRole(r)}
@@ -202,7 +202,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                               flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer",
                               fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 600,
                               border: `1px solid ${active ? color + "60" : "#5c3828"}`,
-                              background: active ? color + "20" : "#3a2318",
+                              background: active ? color + "20" : "#0b0812",
                               color: active ? color : "var(--text-secondary)",
                               transition: "all 0.15s",
                             }}
@@ -220,8 +220,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         type="text" placeholder="직함 (예: 풀스택 개발자, UI/UX 디자이너)"
                         value={title} onChange={e => setTitle(e.target.value)}
                         style={baseInputStyle}
-                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
+                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(246,4,46,0.6)")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
                       />
                     </div>
                   </motion.div>
@@ -235,8 +235,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   type="email" placeholder="이메일" value={email}
                   onChange={e => setEmail(e.target.value)} required
                   style={baseInputStyle}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(246,4,46,0.6)")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
                 />
               </div>
 
@@ -247,8 +247,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   type={showPw ? "text" : "password"} placeholder="비밀번호 (6자 이상)"
                   value={password} onChange={e => setPassword(e.target.value)} required
                   style={{ ...baseInputStyle, paddingRight: 40 }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,41,74,0.6)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#5c3828")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(246,4,46,0.6)")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
                 />
                 <button type="button" onClick={() => setShowPw(v => !v)} style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
@@ -266,7 +266,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     style={{
                       margin: 0, padding: "8px 12px", borderRadius: 8,
-                      background: "rgba(232,41,74,0.1)", border: "1px solid rgba(232,41,74,0.3)",
+                      background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.3)",
                       color: "#f87171", fontFamily: "DM Sans, sans-serif", fontSize: 13,
                     }}
                   >
@@ -284,10 +284,10 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 style={{
                   width: "100%", padding: "12px 0", borderRadius: 12, border: "none",
                   cursor: loading ? "default" : "pointer",
-                  background: loading ? "#3a2318" : "linear-gradient(135deg, #e8294a, #b5182d)",
+                  background: loading ? "#0b0812" : "linear-gradient(135deg, #f6042e, #c0001e)",
                   color: loading ? "var(--text-secondary)" : "white",
                   fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 700,
-                  boxShadow: loading ? "none" : "0 6px 20px rgba(232,41,74,0.35)",
+                  boxShadow: loading ? "none" : "0 6px 20px rgba(246,4,46,0.4)",
                   transition: "all 0.2s", marginTop: 4,
                 }}
               >

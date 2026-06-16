@@ -86,7 +86,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
     setTimeout(() => { setSaved(false); onClose(); }, 1000);
   };
 
-  const roleColor = profile?.role === "developer" ? "#e8294a" : "#c4906e";
+  const roleColor = profile?.role === "developer" ? "#f6042e" : "#ffae2e";
 
   return (
     <motion.div
@@ -96,7 +96,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
       onClick={onClose}
       style={{
         position: "fixed", inset: 0, zIndex: 300,
-        backgroundColor: "rgba(20,10,5,0.85)",
+        backgroundColor: "rgba(2,0,5,0.9)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "20px",
       }}
@@ -110,8 +110,8 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         style={{
           width: "100%", maxWidth: 560, maxHeight: "90vh",
           overflowY: "auto",
-          background: "#231410",
-          border: "1px solid #5c3828",
+          background: "#0d0918",
+          border: "1px solid #271c32",
           borderRadius: 20,
           padding: "28px 28px 24px",
           display: "flex", flexDirection: "column", gap: 20,
@@ -127,13 +127,13 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
               {profile?.name} · <span style={{ color: roleColor }}>{profile?.role === "developer" ? "개발자" : "디자이너"}</span>
             </p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(245,237,228,0.06)", border: "1px solid #5c3828", borderRadius: 8, padding: 7, cursor: "pointer", color: "var(--text-secondary)", display: "flex" }}>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid #271c32", borderRadius: 8, padding: 7, cursor: "pointer", color: "var(--text-secondary)", display: "flex" }}>
             <X size={15} />
           </button>
         </div>
 
         {/* 공개 여부 토글 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(245,237,228,0.03)", border: "1px solid #5c3828", borderRadius: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #271c32", borderRadius: 12 }}>
           <div>
             <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, color: "var(--text-primary)", margin: 0 }}>인재 목록에 공개</p>
             <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--text-secondary)", margin: "2px 0 0" }}>켜면 메인 페이지 목록에 표시됩니다</p>
@@ -142,7 +142,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
             onClick={() => setIsPublic((v) => !v)}
             style={{
               width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
-              background: isPublic ? "linear-gradient(135deg, #e8294a, #b5182d)" : "#4a2e1e",
+              background: isPublic ? "linear-gradient(135deg, #f6042e, #c0001e)" : "#16101f",
               position: "relative", transition: "background 0.2s", flexShrink: 0,
             }}
           >
@@ -178,11 +178,11 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
 
         {/* 스킬 */}
         <Field label="스킬 태그" hint="Enter 또는 쉼표로 추가">
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#2c1810", border: "1px solid #5c3828", borderRadius: 10 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#0b0812", border: "1px solid #271c32", borderRadius: 10 }}>
             {skills.map((s) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(232,41,74,0.1)", border: "1px solid rgba(232,41,74,0.25)", borderRadius: 6, fontSize: 12, color: "#e8294a", fontFamily: "JetBrains Mono, monospace" }}>
+              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 6, fontSize: 12, color: "#f6042e", fontFamily: "JetBrains Mono, monospace" }}>
                 {s}
-                <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "#e8294a", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
+                <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "#f6042e", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
                   <X size={11} />
                 </button>
               </span>
@@ -226,7 +226,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
           disabled={loading}
           style={{
             width: "100%", padding: "12px",
-            background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #e8294a, #b5182d)",
+            background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #f6042e, #c0001e)",
             border: "none", borderRadius: 12, cursor: "pointer",
             color: "white", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -269,8 +269,8 @@ function LinkInput({ label, value, onChange, placeholder }: { label: string; val
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  background: "#3a2318",
-  border: "1px solid #5c3828",
+  background: "#0f0b18",
+  border: "1px solid #271c32",
   borderRadius: 10,
   padding: "9px 12px",
   color: "var(--text-primary)",

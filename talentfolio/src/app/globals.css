@@ -1,27 +1,28 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
-/* ── Color Palette: 조합 F — Deep Brown × Rose Red × Warm Beige ── */
+/* ── Color Palette: 조합 B — Midnight × Crimson × Amber ── */
+/*   기저: 미드나잇 #020005  |  강조1: 크림슨 #f6042e  |  강조2: 앰버 #ffae2e (최소화) */
 :root {
-  /* Background layers — deep brown base */
-  --background: #2c1810;
-  --surface: #3d2015;
-  --surface-elevated: #4d2a1a;
-  --border-color: #6b4030;
+  /* Background layers — midnight base */
+  --background: #020005;
+  --surface: #0b0812;
+  --surface-elevated: #16101f;
+  --border-color: #271c32;
 
   /* Accents */
-  --accent: #e8294a;          /* rose red — CTA 전용 */
-  --accent-rgb: 232,41,74;
-  --accent-alt: #c4906e;      /* warm terracotta — secondary */
+  --accent: #f6042e;          /* crimson — primary / developer */
+  --accent-rgb: 246,4,46;
+  --accent-alt: #ffae2e;      /* amber — designer / use sparingly */
 
   /* Role badge colors */
-  --dev-color: #e8294a;
-  --des-color: #c4906e;
+  --dev-color: #f6042e;       /* crimson */
+  --des-color: #ffae2e;       /* amber */
 
   /* Text */
-  --text-primary: #f5ede4;    /* warm beige */
-  --text-secondary: #b09080;  /* muted warm */
-  --tag-bg: #3d2015;
+  --text-primary: #f0ecf8;    /* near-white, slight cool tint */
+  --text-secondary: #7a6a8a;  /* muted purple-grey */
+  --tag-bg: #0b0812;
 
   /* Brand fonts (set by next/font/local via layout.tsx) */
   /* --font-serreria, --font-alanis */

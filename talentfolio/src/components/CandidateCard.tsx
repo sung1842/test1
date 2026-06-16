@@ -83,7 +83,7 @@ export default function CandidateCard({
         backgroundColor: "var(--surface)",
         border: `1px solid ${isSelected ? "var(--accent)" : "var(--border-color)"}`,
         boxShadow: isSelected
-          ? "0 0 0 1px var(--accent), 0 8px 40px rgba(232,41,74,0.18)"
+          ? "0 0 0 1px #f6042e, 0 8px 40px rgba(246,4,46,0.2)"
           : "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
@@ -116,7 +116,9 @@ export default function CandidateCard({
         <div
           className="absolute top-0 left-0 right-0 h-0.5"
           style={{
-            background: "linear-gradient(to right, transparent, rgba(245,237,228,0.5), transparent)",
+            background: candidate.role === "developer"
+              ? "linear-gradient(to right, transparent, rgba(246,4,46,0.7), transparent)"
+              : "linear-gradient(to right, transparent, rgba(255,174,46,0.5), transparent)",
           }}
         />
 
@@ -249,10 +251,10 @@ export default function CandidateCard({
               title="메시지 보내기"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
               style={{
-                background: "linear-gradient(135deg, #e8294a, #b5182d)",
+                background: "linear-gradient(135deg, #f6042e, #c0001e)",
                 color: "white",
                 fontFamily: "DM Sans, sans-serif",
-                boxShadow: "0 4px 14px rgba(232,41,74,0.35)",
+                boxShadow: "0 4px 14px rgba(246,4,46,0.4)",
                 border: "none",
                 cursor: "pointer",
               }}

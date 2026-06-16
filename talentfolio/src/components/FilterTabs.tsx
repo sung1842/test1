@@ -27,14 +27,21 @@ export default function FilterTabs({
       <div className="max-w-7xl mx-auto flex items-center gap-1 min-w-max sm:min-w-0">
         {tabs.map((tab) => {
           const isActive = activeFilter === tab.value;
+          const activeLine =
+            tab.value === "developer" ? "#f6042e" : tab.value === "designer" ? "#ffae2e" : "#f6042e";
+          const activeBadgeBg =
+            tab.value === "developer" ? "rgba(246,4,46,0.15)" : tab.value === "designer" ? "rgba(255,174,46,0.15)" : "rgba(246,4,46,0.15)";
+          const activeBadgeColor =
+            tab.value === "developer" ? "#f6042e" : tab.value === "designer" ? "#ffae2e" : "#f6042e";
+
           return (
             <button
               key={tab.value}
               onClick={() => onFilterChange(tab.value)}
               style={{
-                color: isActive ? "#f5ede4" : "var(--text-secondary)",
+                color: isActive ? "#f0ecf8" : "var(--text-secondary)",
                 borderBottom: isActive
-                  ? "2px solid #f5ede4"
+                  ? `2px solid ${activeLine}`
                   : "2px solid transparent",
                 fontFamily: "DM Sans, sans-serif",
               }}
@@ -43,10 +50,8 @@ export default function FilterTabs({
               {tab.label}
               <span
                 style={{
-                  backgroundColor: isActive
-                    ? "rgba(245,237,228,0.18)"
-                    : "var(--tag-bg)",
-                  color: isActive ? "#f5ede4" : "var(--text-secondary)",
+                  backgroundColor: isActive ? activeBadgeBg : "var(--tag-bg)",
+                  color: isActive ? activeBadgeColor : "var(--text-secondary)",
                   fontFamily: "JetBrains Mono, monospace",
                 }}
                 className="text-xs px-2 py-0.5 rounded-full"
