@@ -113,13 +113,13 @@ export default function AuthModal({ onClose }: AuthModalProps) {
           }}>
             <div>
               <h2 style={{
-                fontFamily: "SerreriaSobria, serif", fontWeight: 400, fontSize: 20,
-                color: "var(--text-primary)", margin: 0, letterSpacing: "0.03em",
+                fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 18,
+                color: "var(--text-primary)", margin: 0,
               }}>
                 {mode === "login" ? "로그인" : "회원가입"}
               </h2>
               <p style={{
-                fontFamily: "AlanisHand, cursive", fontSize: 12,
+                fontFamily: "JetBrains Mono, monospace", fontSize: 11,
                 color: "var(--text-secondary)", margin: "3px 0 0",
               }}>
                 {mode === "login" ? "TalentFolio에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}

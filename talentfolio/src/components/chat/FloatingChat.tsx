@@ -81,7 +81,7 @@ function UserAvatar({ user, size = 38 }: { user: UIParticipant; size?: number })
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
       backgroundColor: bg, border: `1.5px solid ${color}40`,
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "Syne, sans-serif", color, fontWeight: 700, fontSize: size * 0.38,
+      fontFamily: "DM Sans, sans-serif", color, fontWeight: 700, fontSize: size * 0.38,
     }}>
       {user.name.slice(0, 2)}
     </div>
@@ -181,7 +181,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                      <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
                         {conv.participant.name}
                       </span>
                         {conv.isAI && (
@@ -297,7 +297,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+            <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
               {conversation.participant.name}
             </span>
               {conversation.isAI ? (
@@ -865,7 +865,7 @@ export default function FloatingChat({
                 }}>
                   <MessageSquare size={14} color="white" />
                 </div>
-                <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>
+                <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>
                   메시지
                 </span>
                 {!activeConv && totalUnread > 0 && (

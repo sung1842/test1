@@ -1,40 +1,30 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
-/* ── Custom Brand Fonts ── */
-@font-face {
-  font-family: "SerreriaSobria";
-  src: url("/fonts/SerreriaSobria.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "AlanisHand";
-  src: url("/fonts/AlanisHand.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* ── Color Palette: 조합 F — Deep Brown × Rose Red × Warm Beige ── */
 :root {
+  /* Background layers — deep brown base */
   --background: #2c1810;
-  --surface: #3a2318;
-  --surface-elevated: #4a2e1e;
-  --border-color: #5c3828;
+  --surface: #3d2015;
+  --surface-elevated: #4d2a1a;
+  --border-color: #6b4030;
 
-  --accent: #e8294a;        /* rose red — main accent */
+  /* Accents */
+  --accent: #e8294a;          /* rose red — CTA 전용 */
   --accent-rgb: 232,41,74;
-  --accent-alt: #c4906e;    /* warm terracotta — secondary accent */
+  --accent-alt: #c4906e;      /* warm terracotta — secondary */
 
-  --dev-color: #e8294a;     /* rose red — developer badge */
-  --des-color: #c4906e;     /* warm terracotta — designer badge */
+  /* Role badge colors */
+  --dev-color: #e8294a;
+  --des-color: #c4906e;
 
-  --text-primary: #f5ede4;  /* warm beige */
-  --text-secondary: #a08070; /* muted warm brown */
-  --tag-bg: #3a2318;
+  /* Text */
+  --text-primary: #f5ede4;    /* warm beige */
+  --text-secondary: #b09080;  /* muted warm */
+  --tag-bg: #3d2015;
+
+  /* Brand fonts (set by next/font/local via layout.tsx) */
+  /* --font-serreria, --font-alanis */
 }
 
 * {
@@ -54,49 +44,29 @@ body {
 ::-webkit-scrollbar {
   width: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: var(--background);
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-.animate-fadeInUp {
-  animation: fadeInUp 0.4s ease-out forwards;
-}
-
-.animate-slideInRight {
-  animation: slideInRight 0.3s ease-out forwards;
-}
+.animate-fadeInUp    { animation: fadeInUp 0.4s ease-out forwards; }
+.animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
 
 @keyframes spin {
   from { transform: rotate(0deg); }

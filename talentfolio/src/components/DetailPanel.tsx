@@ -129,7 +129,7 @@ export default function DetailPanel({
               <div className="flex items-start justify-between gap-2">
                 <h2
                   style={{
-                    fontFamily: "Syne, sans-serif",
+                    fontFamily: "DM Sans, sans-serif",
                     color: "var(--text-primary)",
                   }}
                   className="text-2xl font-bold leading-tight"
@@ -174,7 +174,7 @@ export default function DetailPanel({
           >
             <h3
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "DM Sans, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -195,7 +195,7 @@ export default function DetailPanel({
           >
             <h3
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "DM Sans, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -223,7 +223,7 @@ export default function DetailPanel({
             >
               <h3
                 style={{
-                  fontFamily: "Syne, sans-serif",
+                  fontFamily: "DM Sans, sans-serif",
                   color: "var(--text-secondary)",
                 }}
                 className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -241,7 +241,7 @@ export default function DetailPanel({
           <div>
             <h3
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "DM Sans, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"

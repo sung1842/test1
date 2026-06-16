@@ -83,7 +83,7 @@ export default function CandidateCard({
         backgroundColor: "var(--surface)",
         border: `1px solid ${isSelected ? "var(--accent)" : "var(--border-color)"}`,
         boxShadow: isSelected
-          ? "0 0 0 1px var(--accent), 0 8px 40px rgba(232,121,249,0.2)"
+          ? "0 0 0 1px var(--accent), 0 8px 40px rgba(232,41,74,0.18)"
           : "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
@@ -116,9 +116,7 @@ export default function CandidateCard({
         <div
           className="absolute top-0 left-0 right-0 h-0.5"
           style={{
-            background: candidate.role === "developer"
-              ? "linear-gradient(to right, transparent, var(--dev-color), transparent)"
-              : "linear-gradient(to right, transparent, var(--des-color), transparent)",
+            background: "linear-gradient(to right, transparent, rgba(245,237,228,0.5), transparent)",
           }}
         />
 
@@ -160,7 +158,7 @@ export default function CandidateCard({
         <motion.div variants={shouldReduceMotion ? {} : childVariants}>
           <h3
             className="text-lg font-bold leading-tight"
-            style={{ fontFamily: "Syne, sans-serif", color: "var(--text-primary)" }}
+            style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
           >
             {candidate.name}
           </h3>
@@ -225,9 +223,9 @@ export default function CandidateCard({
                   style={{ color: "var(--text-secondary)", border: "1px solid var(--border-color)" }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLElement;
-                    el.style.color = "var(--accent)";
-                    el.style.borderColor = "rgba(232,41,74,0.4)";
-                    el.style.backgroundColor = "rgba(232,41,74,0.08)";
+                    el.style.color = "#f5ede4";
+                    el.style.borderColor = "rgba(245,237,228,0.3)";
+                    el.style.backgroundColor = "rgba(245,237,228,0.06)";
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLElement;
@@ -275,9 +273,9 @@ export default function CandidateCard({
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.color = "var(--accent)";
-                el.style.borderColor = "rgba(232,41,74,0.4)";
-                el.style.backgroundColor = "rgba(232,41,74,0.08)";
+                el.style.color = "#f5ede4";
+                el.style.borderColor = "rgba(245,237,228,0.3)";
+                el.style.backgroundColor = "rgba(245,237,228,0.06)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement;

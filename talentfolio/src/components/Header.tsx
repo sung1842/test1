@@ -58,7 +58,7 @@ export default function Header({
           className="h-px"
           style={{
             background:
-              "linear-gradient(to right, transparent, rgba(232,41,74,0.3), transparent)",
+              "linear-gradient(to right, transparent, rgba(245,237,228,0.25), transparent)",
           }}
         />
       </motion.div>
@@ -71,13 +71,13 @@ export default function Header({
             whileTap={{ scale: 0.97 }}
             className="flex flex-col leading-none"
           >
-            {/* Brand title — SerreriaSobria */}
+            {/* Brand title — SerreriaSobria (logo only) */}
             <span
               style={{
-                fontFamily: "SerreriaSobria, serif",
-                fontSize: 22,
+                fontFamily: "var(--font-serreria), serif",
+                fontSize: 23,
                 fontWeight: 400,
-                letterSpacing: "0.04em",
+                letterSpacing: "0.03em",
                 color: "var(--text-primary)",
                 lineHeight: 1,
               }}
@@ -85,15 +85,15 @@ export default function Header({
               Talent
               <span style={{ color: "var(--accent)" }}>Folio</span>
             </span>
-            {/* Subtitle — AlanisHand */}
+            {/* Subtitle — AlanisHand (logo only) */}
             <span
               style={{
-                fontFamily: "AlanisHand, cursive",
-                fontSize: 11,
+                fontFamily: "var(--font-alanis), cursive",
+                fontSize: 12,
                 color: "var(--text-secondary)",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.04em",
                 lineHeight: 1.4,
-                marginTop: 2,
+                marginTop: 1,
               }}
             >
               Talent Discovery
@@ -130,7 +130,7 @@ export default function Header({
                   }`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 10, fontWeight: 700,
-                  fontFamily: "SerreriaSobria, serif",
+                  fontFamily: "DM Sans, sans-serif",
                   color:
                     profile.role === "developer"
                       ? "var(--dev-color)"

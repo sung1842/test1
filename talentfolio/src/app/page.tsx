@@ -213,7 +213,7 @@ export default function Home() {
           <>
             최고의 인재를
             <br />
-            <span style={{ color: "var(--accent)" }}>한 눈에</span> 발견하세요
+            <span style={{ color: "#f5ede4", fontStyle: "italic" }}>한 눈에</span> 발견하세요
           </>
         }
         description="개발자·디자이너의 포트폴리오와 이력을 한 곳에서 빠르게 열람하고, 마음에 드는 인재에게 즉시 연락하세요."
@@ -226,7 +226,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             <h2
               className="text-lg md:text-xl font-bold mb-3"
-              style={{ fontFamily: "Syne, sans-serif", color: "var(--text-primary)" }}
+              style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
             >
               인재 검색하기
             </h2>

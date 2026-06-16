@@ -120,10 +120,10 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         {/* 헤더 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h2 style={{ fontFamily: "SerreriaSobria, serif", fontWeight: 400, fontSize: 20, letterSpacing: "0.03em", color: "var(--text-primary)", margin: 0 }}>
+            <h2 style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 18, color: "var(--text-primary)", margin: 0 }}>
               내 프로필 편집
             </h2>
-            <p style={{ fontFamily: "AlanisHand, cursive", fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
+            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
               {profile?.name} · <span style={{ color: roleColor }}>{profile?.role === "developer" ? "개발자" : "디자이너"}</span>
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
             width: "100%", padding: "12px",
             background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #e8294a, #b5182d)",
             border: "none", borderRadius: 12, cursor: "pointer",
-            color: "white", fontFamily: "SerreriaSobria, serif", fontWeight: 400, fontSize: 15, letterSpacing: "0.05em",
+            color: "white", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             transition: "background 0.3s",
           }}

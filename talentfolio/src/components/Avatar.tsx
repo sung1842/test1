@@ -41,7 +41,7 @@ export default function Avatar({ name, avatar, size = "md", role }: AvatarProps)
       style={{
         backgroundColor: bgColor,
         border: `2px solid ${textColor}30`,
-        fontFamily: "Syne, sans-serif",
+        fontFamily: "DM Sans, sans-serif",
         color: textColor,
       }}
     >

@@ -99,7 +99,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
         className="pointer-events-none absolute inset-0 flex items-center justify-center"
         style={{
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 45%, rgba(232,41,74,0.08) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 40% at 50% 45%, rgba(196,144,110,0.12) 0%, transparent 70%)",
         }}
       />
 
@@ -120,7 +120,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
         <motion.h1
           {...fadeUp(0.15)}
           className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] text-center w-full"
-          style={{ fontFamily: "Syne, sans-serif", color: "var(--text-primary)" }}
+          style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
         >
           {title}
         </motion.h1>
@@ -154,7 +154,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
               <div className="flex flex-col items-center gap-0.5">
                 <span
                   className="text-2xl font-bold"
-                  style={{ fontFamily: "Syne, sans-serif", color: "var(--text-primary)" }}
+                  style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
                 >
                   {value}
                 </span>
