@@ -106,6 +106,17 @@ export default function Home() {
 
   useEffect(() => { loadRealCandidates(); }, [loadRealCandidates]);
 
+  // 다른 유저의 프로필 변경도 실시간 반영 (공개 → 비공개 전환 등)
+  useEffect(() => {
+    const channel = supabase
+      .channel("profiles-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        loadRealCandidates();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadRealCandidates]);
+
   // 정적 + 실제 후보자 합산 (실제 유저 중 정적 목록과 이름 중복 없음)
   const allCandidates = useMemo(() => {
     const realIds = new Set(realCandidates.map((c) => c.supabaseId));
@@ -206,14 +217,19 @@ export default function Home() {
           </>
         }
         description="개발자·디자이너의 포트폴리오와 이력을 한 곳에서 빠르게 열람하고, 마음에 드는 인재에게 즉시 연락하세요."
-        ctaText="인재 둘러보기 →"
         images={HERO_IMAGES}
         onCtaClick={scrollToCandidates}
       />
 
       <div ref={candidatesSectionRef} style={{ backgroundColor: "var(--background)" }}>
-        <div className="px-6 pt-12 pb-2" style={{ borderBottom: "1px solid var(--border-color)" }}>
+        <div className="px-4 sm:px-6 pt-12 pb-2" style={{ borderBottom: "1px solid var(--border-color)" }}>
           <div className="max-w-7xl mx-auto">
+            <h2
+              className="text-lg md:text-xl font-bold mb-3"
+              style={{ fontFamily: "Syne, sans-serif", color: "var(--text-primary)" }}
+            >
+              인재 검색하기
+            </h2>
             <InputWithTags
               placeholder="이름, 스킬, 직함으로 검색 후 Enter로 태그 추가..."
               tags={searchTags}
@@ -229,7 +245,7 @@ export default function Home() {
 
         <div className="flex" style={{ minHeight: "80vh" }}>
           <main
-            className="flex-1 p-6 transition-all duration-300"
+            className="flex-1 p-4 sm:p-6 transition-all duration-300"
             style={{ marginRight: selectedCandidate ? "min(420px, 100vw)" : 0 }}
           >
             <div className="max-w-7xl mx-auto">
@@ -237,14 +253,6 @@ export default function Home() {
                 <EmptyState query={emptyQuery} />
               ) : (
                 <>
-                  <p className="text-xs mb-4" style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}>
-                    {filteredCandidates.length}명의 후보자
-                    {realCandidates.length > 0 && (
-                      <span style={{ marginLeft: 8, color: "var(--accent)", opacity: 0.7 }}>
-                        · 실제 유저 {realCandidates.length}명 포함
-                      </span>
-                    )}
-                  </p>
                   <div
                     key={cardKey}
                     className="grid gap-4"

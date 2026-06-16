@@ -432,7 +432,7 @@ export default function FloatingChat({
   pendingTarget?: PendingTarget | null;
   onTargetHandled?: () => void;
 }) {
-  const { user } = useAuth();
+  const { user, onlineUserIds } = useAuth();
 
   const [isOpen, setIsOpen]                 = useState(false);
   const [showAuthModal, setShowAuthModal]   = useState(false);
@@ -447,6 +447,19 @@ export default function FloatingChat({
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => { activeConvIdRef.current = activeConvId; }, [activeConvId]);
+
+  // ── Presence 기반 온라인 상태 실시간 반영 ────────────────────────────────
+  useEffect(() => {
+    setConversations(prev =>
+      prev.map(c => ({
+        ...c,
+        participant: {
+          ...c.participant,
+          is_online: c.isAI ? true : onlineUserIds.has(c.participant.id),
+        },
+      }))
+    );
+  }, [onlineUserIds]);
 
   // ── Supabase 대화 목록 로드 ───────────────────────────────────────────────
   const loadConversations = useCallback(async () => {
@@ -825,8 +838,12 @@ export default function FloatingChat({
             exit={{ opacity: 0, y: 24, scale: 0.94 }}
             transition={SPRING}
             style={{
-              position: "fixed", bottom: 84, left: 24, zIndex: 200,
-              width: 360, height: 520,
+              position: "fixed",
+              bottom: 84,
+              left: 16,
+              zIndex: 200,
+              width: "min(360px, calc(100vw - 32px))",
+              height: "min(520px, calc(100svh - 120px))",
               background: "rgba(13,13,13,0.97)",
               border: "1px solid #242424", borderRadius: 20,
               backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)",
@@ -918,7 +935,10 @@ export default function FloatingChat({
         onClick={handleButtonClick}
         title={!user ? "로그인 후 채팅 이용 가능" : "메시지"}
         style={{
-          position: "fixed", bottom: 24, left: 24, zIndex: 201,
+          position: "fixed",
+          bottom: "max(24px, env(safe-area-inset-bottom, 24px))",
+          left: 16,
+          zIndex: 201,
           width: 52, height: 52, borderRadius: 16,
           border: panelOpen ? "1px solid rgba(232,121,249,0.35)" : "none",
           cursor: "pointer",

@@ -14,37 +14,30 @@ interface HeaderProps {
   onEditProfile?: () => void;
 }
 
-/** Talento wordmark SVG logo */
-function TalentoLogo() {
+/** TalentFolio mark — rounded square badge with a sparkle (talent-spotlight) cut out */
+function TalentFolioLogo() {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Outer hexagon */}
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="29" height="29" rx="8" fill="var(--accent)" />
       <path
-        d="M16 2L29 9.5V22.5L16 30L3 22.5V9.5L16 2Z"
-        fill="url(#logo-grad)"
-        opacity="0.15"
+        d="M15 6.5L17.1 12.9L23.5 15L17.1 17.1L15 23.5L12.9 17.1L6.5 15L12.9 12.9Z"
+        fill="#080808"
       />
-      <path
-        d="M16 2L29 9.5V22.5L16 30L3 22.5V9.5L16 2Z"
-        stroke="url(#logo-grad)"
-        strokeWidth="1.5"
-        fill="none"
-      />
-      {/* Inner T mark */}
-      <path
-        d="M10 11H22M16 11V21"
-        stroke="url(#logo-grad)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      {/* Spark dot */}
-      <circle cx="22" cy="11" r="2" fill="url(#logo-grad)" />
-      <defs>
-        <linearGradient id="logo-grad" x1="3" y1="2" x2="29" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#e879f9" />
-          <stop offset="1" stopColor="#fb923c" />
-        </linearGradient>
-      </defs>
+    </svg>
+  );
+}
+
+/** Sparkle glyph used in place of the second "o" in "Folio" — ties the wordmark to the icon */
+function SparkleO({ size = 13 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      style={{ display: "inline-block", verticalAlign: "middle", marginBottom: 2, flexShrink: 0 }}
+    >
+      <circle cx="12" cy="12" r="11" fill="var(--accent)" />
+      <path d="M12 5L13.7 10.3L19 12L13.7 13.7L12 19L10.3 13.7L5 12L10.3 10.3Z" fill="#080808" />
     </svg>
   );
 }
@@ -92,30 +85,26 @@ export default function Header({
         <div className="h-px" style={{ background: "linear-gradient(to right, transparent, var(--border-color), transparent)" }} />
       </motion.div>
 
-      <div className="relative max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* Logo + wordmark */}
         <button onClick={onLogoClick} className="flex items-center gap-3 cursor-pointer group">
-          <motion.div whileHover={{ scale: 1.08, rotate: 5 }} whileTap={{ scale: 0.95 }}>
-            <TalentoLogo />
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
+            <TalentFolioLogo />
           </motion.div>
           <div className="hidden sm:flex flex-col leading-none">
-            <span
-              className="text-base font-black tracking-[0.15em] uppercase"
-              style={{
-                fontFamily: "Syne, sans-serif",
-                background: "linear-gradient(to right, #e879f9, #fb923c)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
+            <div
+              className="flex items-baseline text-base"
+              style={{ fontFamily: "Montserrat, sans-serif", fontWeight: 700, letterSpacing: "-0.01em" }}
             >
-              Talento
-            </span>
+              <span style={{ color: "var(--text-primary)" }}>Talent</span>
+              <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>Foli</span>
+              <SparkleO size={13} />
+            </div>
             <span
-              className="text-[9px] tracking-[0.3em] uppercase"
-              style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+              className="text-[9px] tracking-[0.32em] uppercase"
+              style={{ color: "var(--text-secondary)", fontFamily: "Montserrat, sans-serif", fontWeight: 500 }}
             >
-              talent discovery
+              Talent Discovery
             </span>
           </div>
         </button>

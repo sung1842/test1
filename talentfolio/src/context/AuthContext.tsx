@@ -8,6 +8,7 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  onlineUserIds: Set<string>;
   signUp: (email: string, password: string, name: string, role: "developer" | "designer", title: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -16,9 +17,10 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]       = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]             = useState<User | null>(null);
+  const [profile, setProfile]       = useState<Profile | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -69,6 +71,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
+  // ── Supabase Presence: 실시간 온라인 상태 추적 ────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      setOnlineUserIds(new Set());
+      return;
+    }
+
+    const channel = supabase.channel("online-users");
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState<{ user_id: string }>();
+        const ids = new Set(
+          Object.values(state).flat().map((p) => p.user_id)
+        );
+        setOnlineUserIds(ids);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({ user_id: user.id });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const signIn = async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return error.message;
@@ -91,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, onlineUserIds, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

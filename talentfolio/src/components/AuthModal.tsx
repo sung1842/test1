@@ -126,7 +126,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 fontFamily: "JetBrains Mono, monospace", fontSize: 11,
                 color: "var(--text-secondary)", margin: "3px 0 0",
               }}>
-                {mode === "login" ? "Talento에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}
+                {mode === "login" ? "TalentFolio에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}
               </p>
             </div>
             <button

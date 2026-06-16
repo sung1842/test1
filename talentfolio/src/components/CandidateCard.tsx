@@ -41,9 +41,18 @@ const linkIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   linkedin: Link,
 };
 
-/** Map candidate id → slide image (cycles through 1–12) */
+/** Map candidate id → slide image (cycles through 1–12).
+ *  Static candidates use numeric ids ("001"~"020").
+ *  Real users have UUID ids — fall back to a char-code hash. */
 function getCardImage(id: string): string {
-  const n = ((parseInt(id, 10) - 1) % 12) + 1;
+  const num = parseInt(id, 10);
+  if (!isNaN(num)) {
+    const n = ((num - 1) % 12) + 1;
+    return `/slides/${n}.webp`;
+  }
+  // UUID: derive a stable index from character codes
+  const hash = id.replace(/-/g, "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const n = (hash % 12) + 1;
   return `/slides/${n}.webp`;
 }
 

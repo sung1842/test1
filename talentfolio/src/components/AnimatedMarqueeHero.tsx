@@ -4,13 +4,12 @@ import React, { useRef } from "react";
 import { motion, useAnimationFrame, useMotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
-import { HoverButton } from "@/components/ui/hover-button";
 
 interface AnimatedMarqueeHeroProps {
   tagline: string;
   title: React.ReactNode;
   description: string;
-  ctaText: string;
+  ctaText?: string;
   images: string[];
   className?: string;
   onCtaClick?: () => void;
@@ -80,10 +79,8 @@ function Marquee({ images }: { images: string[] }) {
 }
 
 export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
-  tagline,
   title,
   description,
-  ctaText,
   images,
   className,
   onCtaClick,
@@ -118,7 +115,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
       />
 
       {/* Text block */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 pb-8 w-full">
+      <div className="relative z-10 flex flex-col items-center text-center px-6 pb-8 pt-24 md:pt-32 w-full">
         {/* Main title */}
         <motion.h1
           {...fadeUp(0.15)}
@@ -137,17 +134,10 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
           {description}
         </motion.p>
 
-        {/* CTA button */}
-        <motion.div {...fadeUp(0.42)} className="mt-8">
-          <HoverButton onClick={onCtaClick} style={{ fontFamily: "DM Sans, sans-serif" }}>
-            {ctaText}
-          </HoverButton>
-        </motion.div>
-
         {/* Stats row */}
         <motion.div
-          {...fadeUp(0.54)}
-          className="mt-10 flex items-center gap-10"
+          {...fadeUp(0.42)}
+          className="mt-10 flex items-center gap-6 sm:gap-10"
         >
           {[
             { value: "10+", label: "후보자" },

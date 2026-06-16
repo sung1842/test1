@@ -22,9 +22,9 @@ export default function FilterTabs({
   return (
     <div
       style={{ borderBottom: "1px solid var(--border-color)" }}
-      className="px-6"
+      className="px-6 overflow-x-auto"
     >
-      <div className="max-w-7xl mx-auto flex items-center gap-1">
+      <div className="max-w-7xl mx-auto flex items-center gap-1 min-w-max sm:min-w-0">
         {tabs.map((tab) => {
           const isActive = activeFilter === tab.value;
           return (
