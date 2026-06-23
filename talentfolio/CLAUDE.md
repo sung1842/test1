@@ -336,12 +336,183 @@ useEffect(() => {
 
 ---
 
+## MCP 확장 계획 (Talentfolio × jd-fit-analyzer 연동)
+
+> jd-fit-analyzer(`C:\ClaudeWorkspace\jd-fit-analyzer`)가 Talentfolio의 Supabase `profiles`를
+> 읽기 전용으로 연결하는 별도 백엔드 서비스다. 아래 4개 Phase는 두 프로젝트를 MCP로
+> 연결해 "AI 채용 어시스턴트 플랫폼"으로 격상하는 로드맵이다.
+>
+> **작업 순서는 Phase 번호를 따른다.** 각 Phase 시작 전에 아래 체크리스트를 확인할 것.
+
+---
+
+### Phase M1 — JD 핏 스코어 카드 ★ 최우선
+
+**목표**: Talentfolio 메인 페이지에 "JD 매칭 분석" 기능 추가. 리크루터가 채용공고(JD)를
+입력하면 후보자 카드에 `strong_fit` / `possible_fit` / `weak_fit` 뱃지 + 점수가 실시간으로 표시.
+
+**연결 지점**:
+- jd-fit-analyzer MCP 서버: `POST http://localhost:3002/api/analyze` → `202 Accepted + jobId`
+- SSE 진행률: `GET http://localhost:3002/api/analyze/:jobId/stream`
+- 분석 엔진: Gemini Flash 3개 에이전트(기술스택/경험/컬처핏) + Claude Sonnet CEO
+
+**필요 환경변수 (talentfolio .env.local 추가)**:
+```env
+JD_ANALYZER_URL=http://localhost:3002   # jd-fit-analyzer orchestrator 주소
+```
+
+**UI 구현 위치**:
+- `src/components/JdMatchPanel.tsx` — JD 입력 텍스트에리어 + "분석 시작" 버튼 (사이드바 하단 또는 모달)
+- `src/components/FitScoreBadge.tsx` — `strong_fit`(초록) / `possible_fit`(주황) / `weak_fit`(빨강) 뱃지
+- `CandidateCard.tsx` — `fitScore?: FitScore` prop 추가, 카드 상단 오른쪽에 뱃지 오버레이
+- `page.tsx` — `jdAnalysisResults: Map<candidateId, FitReport>` 상태 추가
+
+**구현 순서**:
+1. `JdMatchPanel` 컴포넌트 (JD 입력 UI)
+2. `page.tsx`에 `/api/analyze` 호출 + SSE 구독 로직
+3. `FitScoreBadge` 컴포넌트
+4. `CandidateCard`에 뱃지 오버레이 통합
+5. 로딩 인디케이터 (SSE 진행 상황: "기술 분석 중..." → "경험 분석 중..." → "최종 판정 중...")
+
+**주의사항**:
+- jd-fit-analyzer 오케스트레이터가 반드시 먼저 실행 중이어야 함 (`cd jd-fit-analyzer/orchestrator && npm run dev`)
+- 동일 `(JD 해시, candidateId)` 조합은 Redis 캐시 재사용 (jd-fit-analyzer 자체 처리)
+- CORS 설정 필요: jd-fit-analyzer orchestrator에서 `http://localhost:3000` 허용
+
+---
+
+### Phase M2 — Slack HIL 인터랙티브 승인 게이트
+
+**목표**: 현재 단방향 Slack 알림(talentfolio → Slack)을 **양방향 인터랙티브**로 확장.
+리크루터가 Slack에서 "✅ 승인" / "❌ 거절" 버튼 클릭 → jd-fit-analyzer HIL 상태 업데이트 →
+talentfolio `/sourcing/review` 화면에 반영.
+
+**연결 지점**:
+- jd-fit-analyzer `sourcing_actions` 테이블 (status: `draft` → `pending_review` → `approved/rejected`)
+- n8n 워크플로우: `Webhook`(POST) → Slack Block Kit 메시지 발송
+- Slack Interactivity Webhook → n8n → `/api/sourcing-actions/:id/review` (PATCH)
+- jd-fit-analyzer의 기존 `sourcing-mcp-server/` (Phase 5 완료 코드 재사용)
+
+**필요 환경변수**:
+```env
+SLACK_BOT_TOKEN=xoxb-...           # Slack Bot OAuth (chat:write 스코프)
+SLACK_SIGNING_SECRET=...           # Interactivity 검증용
+N8N_SLACK_WEBHOOK_URL=...          # n8n → Slack 발송 트리거
+```
+
+**UI 구현 위치**:
+- `src/app/sourcing/page.tsx` — 후보자 쇼트리스트 구성 + Slack 발송 요청
+- `src/app/sourcing/review/page.tsx` — HIL 승인 대기 목록 (jd-fit-analyzer의 기존 `/review` 화면 포팅)
+
+**Slack Block Kit 메시지 구조**:
+```json
+{
+  "blocks": [
+    { "type": "section", "text": "후보자 [이름] 연락 승인 요청" },
+    { "type": "actions", "elements": [
+      { "type": "button", "text": "✅ 승인", "action_id": "approve_sourcing" },
+      { "type": "button", "text": "❌ 거절", "action_id": "reject_sourcing", "style": "danger" }
+    ]}
+  ]
+}
+```
+
+**구현 순서**:
+1. Slack App 설정 (Interactivity 활성화, Slash Command 등록)
+2. n8n 워크플로우 확장 (기존 알림 → Block Kit 인터랙티브 메시지)
+3. Slack Interactivity Webhook → n8n → PATCH `/api/sourcing-actions/:id/review`
+4. talentfolio `/sourcing` 화면 구현
+5. talentfolio `/sourcing/review` 화면 구현 (HIL 상태 폴링)
+
+---
+
+### Phase M3 — GitHub MCP 개발자 프로필 자동 보강
+
+**목표**: `github_url`이 등록된 개발자 후보자 카드에 실제 GitHub 활동 데이터 표시.
+- 주요 사용 언어 비율 (Language bar)
+- 최근 30일 커밋 수
+- 대표 레포 star 수
+- 마지막 활동일 → "Active 3 days ago" 뱃지
+
+**연결 지점**:
+- `@modelcontextprotocol/server-github` (공식 GitHub MCP 서버)
+- jd-fit-analyzer `mcp-server/src/tools/`에 `enrich_github_profile` tool 추가
+- talentfolio DetailPanel에서 `GET /api/github-enrich?candidateId=...` 호출
+
+**필요 환경변수 (jd-fit-analyzer)**:
+```env
+GITHUB_PERSONAL_ACCESS_TOKEN=ghp_...   # public repo 읽기 전용으로 충분
+```
+
+**구현 위치**:
+- jd-fit-analyzer: `mcp-server/src/tools/enrichGithubProfile.ts` (신규 tool)
+- talentfolio: `src/components/GitHubActivityBar.tsx` (언어 비율 시각화)
+- talentfolio: `DetailPanel.tsx`에 GitHub 활동 섹션 추가
+
+**구현 순서**:
+1. jd-fit-analyzer에 `enrich_github_profile` MCP tool 구현
+2. GitHub API 응답 prune 어댑터 (절대 규칙 3 준수)
+3. talentfolio `GitHubActivityBar` 컴포넌트
+4. `DetailPanel`에 통합 (캐싱: 24시간 Redis TTL)
+
+---
+
+### Phase M4 — Notion MCP 후보자 리포트 Export
+
+**목표**: FIT 스코어가 높은 후보자(또는 북마크된 후보자)를 Notion 데이터베이스에 자동 export.
+각 후보자 → Notion 페이지 1개 (이름/점수/분석 요약/스킬/링크 포함).
+
+**연결 지점**:
+- `@notionhq/notion-mcp-server` (Notion 공식 MCP 서버)
+- jd-fit-analyzer `sourcing-mcp-server/`에 `export_to_notion` tool 추가
+- talentfolio DetailPanel / FitReport 화면에 "Notion으로 내보내기" 버튼
+
+**필요 환경변수 (jd-fit-analyzer)**:
+```env
+NOTION_API_KEY=secret_...             # Notion Integration Token
+NOTION_CANDIDATE_DB_ID=...            # 후보자 저장 대상 DB ID
+```
+
+**Notion 페이지 구조**:
+```
+📄 [후보자명] — strong_fit (92점)
+├─ 기술스택 분석: matched / missing 항목
+├─ 경험 분석: 요약
+├─ 컬처핏: 요약
+├─ CEO 코멘트
+├─ 스킬 태그
+└─ GitHub / 포트폴리오 / LinkedIn 링크
+```
+
+**구현 순서**:
+1. Notion Integration 생성 + DB 연결
+2. jd-fit-analyzer에 `export_to_notion` tool 구현
+3. talentfolio `DetailPanel`에 "Notion Export" 버튼 추가
+4. Export 완료 시 Notion 페이지 URL을 토스트로 표시
+
+---
+
 ## 개발 서버 실행
 
 ```bash
-cd C:\ClaudeWorkspace\main\talentfolio
+# Talentfolio (메인 앱)
+cd C:\ClaudeWorkspace\test1-main\talentfolio
 npm run dev
 # → http://localhost:3000
+```
+
+```bash
+# MCP 확장 기능 사용 시 — jd-fit-analyzer도 함께 실행 필요
+# 터미널 1: MCP 서버 (반드시 오케스트레이터보다 먼저)
+cd C:\ClaudeWorkspace\jd-fit-analyzer\mcp-server && npm run dev
+# → http://localhost:3002/mcp
+
+# 터미널 2: 오케스트레이터 (BullMQ 워커 포함)
+cd C:\ClaudeWorkspace\jd-fit-analyzer\orchestrator && npm run dev
+
+# 터미널 3: jd-fit-analyzer 웹 UI (Phase M1 핏 분석 결과 확인용)
+cd C:\ClaudeWorkspace\jd-fit-analyzer\web && npm run dev
+# → http://localhost:3001
 ```
 
 ```bash
