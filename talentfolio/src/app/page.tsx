@@ -7,6 +7,7 @@ import { Candidate } from "@/types/candidate";
 import candidatesData from "@/data/candidates.json";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
+import FilterSidebar from "@/components/FilterSidebar";
 import FilterTabs from "@/components/FilterTabs";
 import CandidateCard from "@/components/CandidateCard";
 import DetailPanel from "@/components/DetailPanel";
@@ -25,8 +26,15 @@ const HERO_IMAGES = [
 ];
 
 type FilterType = "all" | "developer" | "designer";
+type SortType = "default" | "name" | "developer_first" | "designer_first";
 
-// 정적 더미 후보자에 source 태그 부착
+const SORT_OPTIONS: { value: SortType; label: string }[] = [
+  { value: "default",        label: "기본순" },
+  { value: "name",           label: "이름순" },
+  { value: "developer_first", label: "개발자 먼저" },
+  { value: "designer_first", label: "디자이너 먼저" },
+];
+
 const staticCandidates: Candidate[] = (candidatesData as Candidate[]).map((c) => ({
   ...c,
   source: "static" as const,
@@ -61,16 +69,17 @@ function profileToCandidate(p: {
 
 export default function Home() {
   const { user } = useAuth();
-  const [searchTags, setSearchTags]           = useState<string[]>([]);
-  const [searchInput, setSearchInput]         = useState("");
-  const [activeFilter, setActiveFilter]       = useState<FilterType>("all");
+  const [searchTags, setSearchTags]               = useState<string[]>([]);
+  const [searchInput, setSearchInput]             = useState("");
+  const [activeFilter, setActiveFilter]           = useState<FilterType>("all");
+  const [sortBy, setSortBy]                       = useState<SortType>("default");
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [bookmarks, setBookmarks]             = useState<Set<string>>(new Set());
+  const [bookmarks, setBookmarks]                 = useState<Set<string>>(new Set());
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
-  const [cardKey, setCardKey]                 = useState(0);
-  const [showAuthModal, setShowAuthModal]     = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [realCandidates, setRealCandidates]   = useState<Candidate[]>([]);
+  const [cardKey, setCardKey]                     = useState(0);
+  const [showAuthModal, setShowAuthModal]         = useState(false);
+  const [showProfileModal, setShowProfileModal]   = useState(false);
+  const [realCandidates, setRealCandidates]       = useState<Candidate[]>([]);
   const [chatTarget, setChatTarget] = useState<{
     name: string; email: string;
     isDummy?: boolean; candidateInfo?: Candidate; supabaseId?: string;
@@ -85,7 +94,6 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // 북마크 복원
   useEffect(() => {
     try {
       const saved = localStorage.getItem("talentfolio-bookmarks");
@@ -93,7 +101,6 @@ export default function Home() {
     } catch {}
   }, []);
 
-  // 실제 공개 프로필 로드
   const loadRealCandidates = useCallback(async () => {
     const { data } = await supabase
       .from("profiles")
@@ -106,7 +113,6 @@ export default function Home() {
 
   useEffect(() => { loadRealCandidates(); }, [loadRealCandidates]);
 
-  // 다른 유저의 프로필 변경도 실시간 반영 (공개 → 비공개 전환 등)
   useEffect(() => {
     const channel = supabase
       .channel("profiles-realtime")
@@ -117,10 +123,7 @@ export default function Home() {
     return () => { supabase.removeChannel(channel); };
   }, [loadRealCandidates]);
 
-  // 정적 + 실제 후보자 합산 (실제 유저 중 정적 목록과 이름 중복 없음)
   const allCandidates = useMemo(() => {
-    const realIds = new Set(realCandidates.map((c) => c.supabaseId));
-    // 자기 자신이 실제 유저로 등록된 경우 중복 방지
     return [...staticCandidates, ...realCandidates];
   }, [realCandidates]);
 
@@ -132,7 +135,7 @@ export default function Home() {
   }, [searchTags, searchInput]);
 
   const filteredCandidates = useMemo(() => {
-    return allCandidates.filter((c) => {
+    let result = allCandidates.filter((c) => {
       if (activeFilter !== "all" && c.role !== activeFilter) return false;
       if (showBookmarksOnly && !bookmarks.has(c.id)) return false;
       if (activeQueries.length === 0) return true;
@@ -143,10 +146,24 @@ export default function Home() {
         c.skills.some((s) => s.toLowerCase().includes(q))
       );
     });
-  }, [allCandidates, activeQueries, activeFilter, showBookmarksOnly, bookmarks]);
+
+    if (sortBy === "name") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    } else if (sortBy === "developer_first") {
+      result = [...result].sort((a, b) =>
+        a.role === b.role ? 0 : a.role === "developer" ? -1 : 1
+      );
+    } else if (sortBy === "designer_first") {
+      result = [...result].sort((a, b) =>
+        a.role === b.role ? 0 : a.role === "designer" ? -1 : 1
+      );
+    }
+
+    return result;
+  }, [allCandidates, activeQueries, activeFilter, showBookmarksOnly, bookmarks, sortBy]);
 
   const counts = useMemo(() => ({
-    all: allCandidates.filter((c) => !showBookmarksOnly || bookmarks.has(c.id)).length,
+    all:       allCandidates.filter((c) => !showBookmarksOnly || bookmarks.has(c.id)).length,
     developer: allCandidates.filter((c) => c.role === "developer" && (!showBookmarksOnly || bookmarks.has(c.id))).length,
     designer:  allCandidates.filter((c) => c.role === "designer"  && (!showBookmarksOnly || bookmarks.has(c.id))).length,
   }), [allCandidates, showBookmarksOnly, bookmarks]);
@@ -155,6 +172,14 @@ export default function Home() {
     setActiveFilter(filter);
     setCardKey((k) => k + 1);
     setSelectedCandidate(null);
+  }, []);
+
+  const handleSkillToggle = useCallback((skill: string) => {
+    setSearchTags((prev) => {
+      const next = prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill];
+      return next;
+    });
+    setCardKey((k) => k + 1);
   }, []);
 
   const handleSkillClick = useCallback((skill: string) => {
@@ -221,8 +246,11 @@ export default function Home() {
         onCtaClick={scrollToCandidates}
       />
 
+      {/* ── Candidates Section ── */}
       <div ref={candidatesSectionRef} style={{ backgroundColor: "var(--background)" }}>
-        <div className="px-4 sm:px-6 pt-12 pb-2" style={{ borderBottom: "1px solid var(--border-color)" }}>
+
+        {/* Search bar */}
+        <div className="px-4 sm:px-6 pt-10 pb-4" style={{ borderBottom: "1px solid var(--border-color)" }}>
           <div className="max-w-7xl mx-auto">
             <h2
               className="text-lg md:text-xl font-bold mb-3"
@@ -236,46 +264,108 @@ export default function Home() {
               onTagsChange={(tags) => { setSearchTags(tags); setCardKey((k) => k + 1); }}
               inputValue={searchInput}
               onInputChange={(v) => { setSearchInput(v); setCardKey((k) => k + 1); }}
-              className="mb-4"
+              className="mb-0"
             />
           </div>
         </div>
 
-        <FilterTabs activeFilter={activeFilter} onFilterChange={handleFilterChange} counts={counts} />
+        {/* Mobile filter tabs — shown only on small screens */}
+        <div className="md:hidden">
+          <FilterTabs activeFilter={activeFilter} onFilterChange={handleFilterChange} counts={counts} />
+        </div>
 
-        <div className="flex" style={{ minHeight: "80vh" }}>
-          <main
-            className="flex-1 p-4 sm:p-6 transition-all duration-300"
+        {/* Main layout: sidebar + feed */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex gap-6 items-start"
+          style={{ minHeight: "80vh" }}
+        >
+          {/* Sidebar filter — desktop only */}
+          <FilterSidebar
+            activeFilter={activeFilter}
+            onFilterChange={handleFilterChange}
+            counts={counts}
+            activeSkillTags={searchTags}
+            onSkillToggle={handleSkillToggle}
+          />
+
+          {/* Feed */}
+          <div
+            className="flex-1 min-w-0 transition-all duration-300"
             style={{ marginRight: selectedCandidate ? "min(420px, 100vw)" : 0 }}
           >
-            <div className="max-w-7xl mx-auto">
-              {filteredCandidates.length === 0 ? (
-                <EmptyState query={emptyQuery} />
-              ) : (
-                <>
-                  <div
-                    key={cardKey}
-                    className="grid gap-4"
-                    style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}
-                  >
-                    {filteredCandidates.map((candidate, index) => (
-                      <CandidateCard
-                        key={candidate.id}
-                        candidate={candidate}
-                        isSelected={selectedCandidate?.id === candidate.id}
-                        isBookmarked={bookmarks.has(candidate.id)}
-                        onSelect={handleSelect}
-                        onBookmark={handleBookmark}
-                        onSkillClick={handleSkillClick}
-                        onMessage={handleStartChat}
-                        animationDelay={index * 50}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
+            {/* Feed header: result count + sort */}
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-base font-bold"
+                style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
+              >
+                인재 목록{" "}
+                <span
+                  className="font-normal text-sm ml-1"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  ({filteredCandidates.length}명)
+                </span>
+              </h2>
+
+              {/* Sort dropdown */}
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-xs hidden sm:inline"
+                  style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+                >
+                  Sort by:
+                </span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value as SortType); setCardKey((k) => k + 1); }}
+                  className="text-sm rounded-lg px-3 py-1.5 cursor-pointer appearance-none pr-7 outline-none transition-all"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border-color)",
+                    color: "#f6042e",
+                    fontFamily: "JetBrains Mono, monospace",
+                    fontSize: 12,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f6042e'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 8px center",
+                  }}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}
+                      style={{ background: "#0b0812", color: "#f0ecf8" }}
+                    >
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </main>
+
+            {/* Card grid */}
+            {filteredCandidates.length === 0 ? (
+              <EmptyState query={emptyQuery} />
+            ) : (
+              <div
+                key={cardKey}
+                className="grid gap-4"
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}
+              >
+                {filteredCandidates.map((candidate, index) => (
+                  <CandidateCard
+                    key={candidate.id}
+                    candidate={candidate}
+                    isSelected={selectedCandidate?.id === candidate.id}
+                    isBookmarked={bookmarks.has(candidate.id)}
+                    onSelect={handleSelect}
+                    onBookmark={handleBookmark}
+                    onSkillClick={handleSkillClick}
+                    onMessage={handleStartChat}
+                    animationDelay={index * 50}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <DetailPanel

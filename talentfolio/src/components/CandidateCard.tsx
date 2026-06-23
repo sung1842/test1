@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
 import { Candidate } from "@/types/candidate";
@@ -67,8 +68,25 @@ export default function CandidateCard({
   animationDelay,
 }: CandidateCardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [isHovered, setIsHovered] = useState(false);
   const activeLinks = Object.entries(candidate.links).filter(([, v]) => v) as [string, string][];
   const cardImage = getCardImage(candidate.id);
+
+  const glowColor = candidate.role === "developer"
+    ? { shadow: "rgba(246,4,46,0.3)", border: "#f6042e" }
+    : { shadow: "rgba(255,174,46,0.3)", border: "#ffae2e" };
+
+  const boxShadow = isSelected
+    ? `0 0 0 1px ${glowColor.border}, 0 8px 40px ${glowColor.shadow}`
+    : isHovered
+    ? `0 0 48px ${glowColor.shadow}, 0 8px 32px rgba(0,0,0,0.5)`
+    : "0 4px 24px rgba(0,0,0,0.4)";
+
+  const borderColor = isSelected
+    ? glowColor.border
+    : isHovered
+    ? glowColor.border
+    : "var(--border-color)";
 
   return (
     <motion.div
@@ -77,14 +95,15 @@ export default function CandidateCard({
       whileHover="hover"
       variants={containerVariants}
       transition={{ delay: animationDelay / 1000 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       onClick={() => onSelect(candidate)}
       className={cn("relative rounded-2xl overflow-hidden cursor-pointer")}
       style={{
         backgroundColor: "var(--surface)",
-        border: `1px solid ${isSelected ? "var(--accent)" : "var(--border-color)"}`,
-        boxShadow: isSelected
-          ? "0 0 0 1px #f6042e, 0 8px 40px rgba(246,4,46,0.2)"
-          : "0 4px 24px rgba(0,0,0,0.4)",
+        border: `1px solid ${borderColor}`,
+        boxShadow,
+        transition: "box-shadow 0.25s ease, border-color 0.25s ease",
       }}
     >
       {/* ── Top image area ── */}
