@@ -17,6 +17,8 @@ import { InputWithTags } from "@/components/ui/input-with-tags";
 import FloatingChat from "@/components/chat/FloatingChat";
 import AuthModal from "@/components/AuthModal";
 import ProfileEditModal from "@/components/ProfileEditModal";
+import JdMatchModal from "@/components/JdMatchModal";
+import type { FitReport } from "@/types/fitReport";
 
 const HERO_IMAGES = [
   "/slides/1.webp", "/slides/2.webp", "/slides/3.webp",
@@ -79,6 +81,8 @@ export default function Home() {
   const [cardKey, setCardKey]                     = useState(0);
   const [showAuthModal, setShowAuthModal]         = useState(false);
   const [showProfileModal, setShowProfileModal]   = useState(false);
+  const [showJdModal, setShowJdModal]             = useState(false);
+  const [fitResults, setFitResults]               = useState<Map<string, FitReport>>(new Map());
   const [realCandidates, setRealCandidates]       = useState<Candidate[]>([]);
   const [chatTarget, setChatTarget] = useState<{
     name: string; email: string;
@@ -307,7 +311,28 @@ export default function Home() {
                 </span>
               </h2>
 
-              {/* Sort dropdown */}
+              {/* JD 매칭 버튼 + Sort dropdown */}
+              <div className="flex items-center gap-3">
+                {/* JD 매칭 분석 */}
+                <button
+                  onClick={() => setShowJdModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: fitResults.size > 0
+                      ? "rgba(246,4,46,0.12)"
+                      : "var(--surface-elevated)",
+                    border: `1px solid ${fitResults.size > 0 ? "rgba(246,4,46,0.4)" : "var(--border-color)"}`,
+                    color: fitResults.size > 0 ? "#f6042e" : "var(--text-secondary)",
+                    fontFamily: "DM Sans, sans-serif",
+                  }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                  {fitResults.size > 0 ? `JD 매칭 (${fitResults.size})` : "JD 매칭"}
+                </button>
+
+                {/* Sort */}
               <div className="flex items-center gap-2">
                 <span
                   className="text-xs hidden sm:inline"
@@ -339,6 +364,7 @@ export default function Home() {
                   ))}
                 </select>
               </div>
+              </div>
             </div>
 
             {/* Card grid */}
@@ -356,6 +382,7 @@ export default function Home() {
                     candidate={candidate}
                     isSelected={selectedCandidate?.id === candidate.id}
                     isBookmarked={bookmarks.has(candidate.id)}
+                    fitReport={candidate.supabaseId ? fitResults.get(candidate.supabaseId) : undefined}
                     onSelect={handleSelect}
                     onBookmark={handleBookmark}
                     onSkillClick={handleSkillClick}
@@ -384,6 +411,20 @@ export default function Home() {
       />
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+
+      <AnimatePresence>
+        {showJdModal && (
+          <JdMatchModal
+            candidates={filteredCandidates}
+            userId={user?.id ?? null}
+            onClose={() => setShowJdModal(false)}
+            onResults={(results) => {
+              setFitResults((prev) => new Map([...prev, ...results]));
+              setShowJdModal(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showProfileModal && (

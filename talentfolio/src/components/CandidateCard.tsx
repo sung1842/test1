@@ -5,14 +5,17 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
 import { Candidate } from "@/types/candidate";
 import { cn } from "@/lib/utils";
+import type { FitReport } from "@/types/fitReport";
 import Avatar from "./Avatar";
 import RoleBadge from "./RoleBadge";
 import SkillTag from "./SkillTag";
+import FitScoreBadge from "./FitScoreBadge";
 
 interface CandidateCardProps {
   candidate: Candidate;
   isSelected: boolean;
   isBookmarked: boolean;
+  fitReport?: FitReport;
   onSelect: (candidate: Candidate) => void;
   onBookmark: (id: string, e: React.MouseEvent) => void;
   onSkillClick: (skill: string) => void;
@@ -61,6 +64,7 @@ export default function CandidateCard({
   candidate,
   isSelected,
   isBookmarked,
+  fitReport,
   onSelect,
   onBookmark,
   onSkillClick,
@@ -156,6 +160,13 @@ export default function CandidateCard({
         >
           <Bookmark className="w-3.5 h-3.5" fill={isBookmarked ? "currentColor" : "none"} />
         </motion.button>
+
+        {/* FitScore badge — top left (JD 매칭 분석 결과) */}
+        {fitReport && (
+          <div className="absolute top-3 left-3 z-10">
+            <FitScoreBadge report={fitReport} compact />
+          </div>
+        )}
 
         {/* Avatar — bottom center, overlapping the image/body seam */}
         <div className="absolute -bottom-6 left-5 z-10">
