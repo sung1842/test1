@@ -243,14 +243,9 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
                     <span style={{ color: "var(--text-secondary)" }}> (상위 {MAX_CANDIDATES}명)</span>
                   )}
                 </p>
-                {dummyCount > 0 && (
-                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                    더미 후보자 {dummyCount}명은 Supabase 미등록으로 제외됩니다
-                  </p>
-                )}
                 {analyzable.length === 0 && (
                   <p className="text-[10px] mt-0.5" style={{ color: "#ffae2e" }}>
-                    실제 등록된 후보자가 없습니다. 프로필을 등록해주세요.
+                    분석 가능한 후보자가 없습니다.
                   </p>
                 )}
               </div>
