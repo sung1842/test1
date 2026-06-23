@@ -57,7 +57,7 @@ export default function FilterSidebar({
         <div>
           <p
             className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
           >
             Role Type
           </p>
@@ -107,7 +107,7 @@ export default function FilterSidebar({
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
                     style={{
-                      fontFamily: "JetBrains Mono, monospace",
+                      fontFamily: "DM Sans, sans-serif",
                       background: isActive ? (
                         value === "developer" ? "rgba(246,4,46,0.18)" :
                         value === "designer"  ? "rgba(255,174,46,0.15)" :
@@ -135,7 +135,7 @@ export default function FilterSidebar({
         <div>
           <p
             className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
           >
             Tech Stack
           </p>
@@ -148,7 +148,7 @@ export default function FilterSidebar({
                   onClick={() => onSkillToggle(skill)}
                   className="text-[11px] px-2.5 py-1 rounded-full transition-all duration-200"
                   style={{
-                    fontFamily: "JetBrains Mono, monospace",
+                    fontFamily: "DM Sans, sans-serif",
                     background: isActive ? "rgba(246,4,46,0.15)" : "var(--surface-elevated)",
                     border: `1px solid ${isActive ? "rgba(246,4,46,0.4)" : "var(--border-color)"}`,
                     color: isActive ? "#f6042e" : "var(--text-secondary)",

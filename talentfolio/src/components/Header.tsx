@@ -208,7 +208,7 @@ export default function Header({
                 style={{
                   background: "linear-gradient(135deg, #f6042e, #c0001e)",
                   color: "white",
-                  fontFamily: "JetBrains Mono, monospace",
+                  fontFamily: "DM Sans, sans-serif",
                 }}
               >
                 {bookmarkCount}

@@ -103,7 +103,7 @@ export default function DetailPanel({
             <span
               style={{
                 color: "var(--text-secondary)",
-                fontFamily: "JetBrains Mono, monospace",
+                fontFamily: "DM Sans, sans-serif",
               }}
               className="text-xs"
             >
@@ -155,7 +155,7 @@ export default function DetailPanel({
               </div>
               <p
                 style={{
-                  fontFamily: "JetBrains Mono, monospace",
+                  fontFamily: "DM Sans, sans-serif",
                   color: "var(--text-secondary)",
                 }}
                 className="text-sm mt-1"

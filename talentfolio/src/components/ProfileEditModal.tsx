@@ -180,7 +180,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         <Field label="스킬 태그" hint="Enter 또는 쉼표로 추가">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#0b0812", border: "1px solid #271c32", borderRadius: 10 }}>
             {skills.map((s) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 6, fontSize: 12, color: "#f6042e", fontFamily: "JetBrains Mono, monospace" }}>
+              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 6, fontSize: 12, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
                 {s}
                 <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "#f6042e", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
                   <X size={11} />
@@ -256,7 +256,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function LinkInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--text-secondary)", minWidth: 64, textAlign: "right" }}>{label}</span>
+      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--text-secondary)", minWidth: 64, textAlign: "right" }}>{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

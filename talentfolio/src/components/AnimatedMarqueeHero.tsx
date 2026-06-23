@@ -160,7 +160,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
                 </span>
                 <span
                   className="text-xs"
-                  style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+                  style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
                 >
                   {label}
                 </span>
@@ -197,7 +197,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
       >
         <span
           className="text-xs"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
+          style={{ fontFamily: "DM Sans, sans-serif" }}
         >
           scroll
         </span>

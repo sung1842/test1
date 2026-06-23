@@ -52,7 +52,7 @@ export default function FilterTabs({
                 style={{
                   backgroundColor: isActive ? activeBadgeBg : "var(--tag-bg)",
                   color: isActive ? activeBadgeColor : "var(--text-secondary)",
-                  fontFamily: "JetBrains Mono, monospace",
+                  fontFamily: "DM Sans, sans-serif",
                 }}
                 className="text-xs px-2 py-0.5 rounded-full"
               >

@@ -311,7 +311,7 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <span
                   className="text-xs hidden sm:inline"
-                  style={{ color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace" }}
+                  style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
                 >
                   Sort by:
                 </span>
@@ -323,7 +323,7 @@ export default function Home() {
                     background: "var(--surface)",
                     border: "1px solid var(--border-color)",
                     color: "#f6042e",
-                    fontFamily: "JetBrains Mono, monospace",
+                    fontFamily: "DM Sans, sans-serif",
                     fontSize: 12,
                     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f6042e'/%3E%3C/svg%3E")`,
                     backgroundRepeat: "no-repeat",

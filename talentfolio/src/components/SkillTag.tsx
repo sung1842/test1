@@ -95,7 +95,7 @@ export default function SkillTag({ skill, onClick, small }: SkillTagProps) {
         backgroundColor: config.bg,
         border: `1px solid ${config.color}30`,
         color: config.color,
-        fontFamily: "JetBrains Mono, monospace",
+        fontFamily: "DM Sans, sans-serif",
         fontSize: small ? "10px" : "11px",
         padding: small ? "3px 8px" : "4px 10px",
         cursor: onClick ? "pointer" : "default",

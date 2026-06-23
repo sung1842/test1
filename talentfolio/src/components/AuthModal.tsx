@@ -119,7 +119,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 {mode === "login" ? "로그인" : "회원가입"}
               </h2>
               <p style={{
-                fontFamily: "JetBrains Mono, monospace", fontSize: 11,
+                fontFamily: "DM Sans, sans-serif", fontSize: 11,
                 color: "var(--text-secondary)", margin: "3px 0 0",
               }}>
                 {mode === "login" ? "TalentFolio에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}
@@ -200,7 +200,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                             key={r} type="button" onClick={() => setRole(r)}
                             style={{
                               flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer",
-                              fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 600,
+                              fontFamily: "DM Sans, sans-serif", fontSize: 11, fontWeight: 600,
                               border: `1px solid ${active ? color + "60" : "#5c3828"}`,
                               background: active ? color + "20" : "#0b0812",
                               color: active ? color : "var(--text-secondary)",

@@ -125,7 +125,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace", fontSize: 12 }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", fontSize: 12 }}>
         <Loader2 size={18} style={{ animation: "spin 1s linear infinite", color: "var(--accent)" }} />
         불러오는 중...
       </div>
@@ -136,7 +136,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)" }}>
         <MessageSquare size={28} opacity={0.25} />
-        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 12 }}>아직 대화가 없습니다</span>
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12 }}>아직 대화가 없습니다</span>
         <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, opacity: 0.6, textAlign: "center", padding: "0 20px" }}>
           인재 카드의 메시지 버튼으로<br />대화를 시작해보세요
         </span>
@@ -185,12 +185,12 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                         {conv.participant.name}
                       </span>
                         {conv.isAI && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 4, fontSize: 9, color: "#f6042e", fontFamily: "JetBrains Mono, monospace" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 4, fontSize: 9, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
                           <Bot size={8} /> AI
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace", flexShrink: 0, marginLeft: 8 }}>
+                    <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", flexShrink: 0, marginLeft: 8 }}>
                       {conv.lastMessageAt ? relativeTime(conv.lastMessageAt) : ""}
                     </span>
                   </div>
@@ -207,13 +207,13 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         background: "linear-gradient(135deg, #f6042e, #c0001e)",
                         color: "white", fontSize: 10, fontWeight: 700,
-                        fontFamily: "JetBrains Mono, monospace", flexShrink: 0,
+                        fontFamily: "DM Sans, sans-serif", flexShrink: 0,
                       }}>
                         {formatBadgeCount(conv.unreadCount)}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: roleColor, fontFamily: "JetBrains Mono, monospace" }}>
+                  <span style={{ fontSize: 10, color: roleColor, fontFamily: "DM Sans, sans-serif" }}>
                     {conv.participant.role === "developer" ? "개발자" : "디자이너"}
                   </span>
                 </div>
@@ -301,14 +301,14 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
               {conversation.participant.name}
             </span>
               {conversation.isAI ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 5, fontSize: 9, color: "#f6042e", fontFamily: "JetBrains Mono, monospace" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 5, fontSize: 9, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
                 <Bot size={9} /> AI 채팅
               </span>
             ) : (
               <OnlineDot online={conversation.participant.is_online} />
             )}
           </div>
-          <span style={{ fontSize: 10, color: roleColor, fontFamily: "JetBrains Mono, monospace" }}>
+          <span style={{ fontSize: 10, color: roleColor, fontFamily: "DM Sans, sans-serif" }}>
             {conversation.participant.title}
           </span>
         </div>
@@ -352,7 +352,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
                 {msg.content}
               </div>
               {shouldShowTime(i) && (
-                <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "JetBrains Mono, monospace", marginTop: 3, padding: "0 3px" }}>
+                <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", marginTop: 3, padding: "0 3px" }}>
                   {clockTime(msg.created_at)}
                 </span>
               )}
@@ -873,7 +873,7 @@ export default function FloatingChat({
                     background: "linear-gradient(135deg, #f6042e, #c0001e)",
                     color: "white", fontSize: 10, fontWeight: 700,
                     borderRadius: 10, padding: "1px 7px",
-                    fontFamily: "JetBrains Mono, monospace",
+                    fontFamily: "DM Sans, sans-serif",
                   }}>
                     {formatBadgeCount(totalUnread)}
                   </span>
@@ -979,7 +979,7 @@ export default function FloatingChat({
                 minWidth: 18, height: 18, borderRadius: 9, padding: "0 4px",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: "#e8294a", color: "white",
-                fontSize: 10, fontWeight: 700, fontFamily: "JetBrains Mono, monospace",
+                fontSize: 10, fontWeight: 700, fontFamily: "DM Sans, sans-serif",
                 border: "2px solid #080808",
               }}
             >

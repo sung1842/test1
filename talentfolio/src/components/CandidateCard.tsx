@@ -185,7 +185,7 @@ export default function CandidateCard({
           </h3>
           <p
             className="text-[11px] mt-0.5"
-            style={{ fontFamily: "JetBrains Mono, monospace", color: "var(--text-secondary)" }}
+            style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-secondary)" }}
           >
             {candidate.title}
           </p>
@@ -214,7 +214,7 @@ export default function CandidateCard({
               style={{
                 color: "var(--text-secondary)",
                 backgroundColor: "var(--tag-bg)",
-                fontFamily: "JetBrains Mono, monospace",
+                fontFamily: "DM Sans, sans-serif",
               }}
             >
               +{candidate.skills.length - 4}
