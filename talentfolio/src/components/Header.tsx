@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Bookmark, LogIn, LogOut } from "lucide-react";
+import { Bookmark, LogIn, LogOut, Send, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { isJdAnalyzerConfigured } from "@/lib/features";
 
 interface HeaderProps {
   bookmarkCount: number;
@@ -22,7 +24,7 @@ export default function Header({
   onLoginClick,
   onEditProfile,
 }: HeaderProps) {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, authAvailable } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
   const bgOpacity = useTransform(scrollY, [0, 80], [0, 0.97]);
@@ -60,7 +62,7 @@ export default function Header({
           className="h-px"
           style={{
             background:
-              "linear-gradient(to right, transparent, rgba(246,4,46,0.5), transparent)",
+              "var(--brand-line)",
           }}
         />
       </motion.div>
@@ -85,7 +87,7 @@ export default function Header({
               }}
             >
               Talent
-              <span style={{ color: "#f6042e" }}>Folio</span>
+              <span style={{ color: "var(--accent)" }}>Folio</span>
             </span>
             {/* Subtitle — AlanisHand (logo only) */}
             <span
@@ -106,8 +108,43 @@ export default function Header({
         {/* ── Right side: auth + bookmark ── */}
         <div className="flex items-center gap-2">
 
+          {/* B2B 소싱·연동 (jd-fit-analyzer 배포 시) */}
+          {user && isJdAnalyzerConfigured() && (
+            <Link
+              href="/settings/integrations"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "var(--text-secondary)",
+                fontFamily: "DM Sans, sans-serif",
+                fontSize: 14,
+              }}
+            >
+              <Settings className="w-4 h-4" />
+              <span>연동</span>
+            </Link>
+          )}
+
+          {user && isJdAnalyzerConfigured() && (
+            <Link
+              href="/sourcing"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "var(--text-secondary)",
+                fontFamily: "DM Sans, sans-serif",
+                fontSize: 14,
+              }}
+            >
+              <Send className="w-4 h-4" />
+              <span>소싱</span>
+            </Link>
+          )}
+
           {/* 로그인/프로필 버튼 */}
-          {user && profile ? (
+          {authAvailable && (user && profile ? (
             <div className="flex items-center gap-2">
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -158,16 +195,12 @@ export default function Header({
                 <span className="text-sm hidden sm:block" style={{ fontFamily: "DM Sans, sans-serif" }}>로그아웃</span>
               </motion.button>
             </div>
-          ) : (
+          ) : authAvailable ? (
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={onLoginClick}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
+              className="btn-brand btn-brand--shadow-md flex items-center gap-1.5 px-3 py-2 rounded-xl cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, #f6042e, #c0001e)",
-                color: "white",
-                border: "none",
-                boxShadow: "0 4px 16px rgba(246,4,46,0.4)",
                 fontFamily: "DM Sans, sans-serif",
                 fontSize: 14, fontWeight: 600,
               }}
@@ -175,7 +208,7 @@ export default function Header({
               <LogIn className="w-4 h-4" />
               <span className="text-sm hidden sm:block">로그인</span>
             </motion.button>
-          )}
+          ) : null)}
 
           {/* Bookmark toggle */}
           <motion.button
@@ -204,9 +237,8 @@ export default function Header({
                 key={bookmarkCount}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
+                className="btn-brand absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, #f6042e, #c0001e)",
                   color: "white",
                   fontFamily: "DM Sans, sans-serif",
                 }}

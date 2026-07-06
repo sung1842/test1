@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Candidate } from "@/types/candidate";
 import candidatesData from "@/data/candidates.json";
 import { supabase } from "@/lib/supabase";
+import { isJdAnalyzerConfigured, isSupabaseConfigured } from "@/lib/features";
 import Header from "@/components/Header";
 import FilterSidebar from "@/components/FilterSidebar";
 import FilterTabs from "@/components/FilterTabs";
@@ -17,7 +18,7 @@ import { InputWithTags } from "@/components/ui/input-with-tags";
 import FloatingChat from "@/components/chat/FloatingChat";
 import AuthModal from "@/components/AuthModal";
 import ProfileEditModal from "@/components/ProfileEditModal";
-import JdMatchModal from "@/components/JdMatchModal";
+import JdMatchModal, { type JdFormState, EMPTY_JD_FORM } from "@/components/JdMatchModal";
 import type { FitReport } from "@/types/fitReport";
 
 const HERO_IMAGES = [
@@ -28,10 +29,11 @@ const HERO_IMAGES = [
 ];
 
 type FilterType = "all" | "developer" | "designer";
-type SortType = "default" | "name" | "developer_first" | "designer_first";
+type SortType = "default" | "name" | "developer_first" | "designer_first" | "fit";
 
 const SORT_OPTIONS: { value: SortType; label: string }[] = [
   { value: "default",        label: "기본순" },
+  { value: "fit",            label: "JD 적합도순" },
   { value: "name",           label: "이름순" },
   { value: "developer_first", label: "개발자 먼저" },
   { value: "designer_first", label: "디자이너 먼저" },
@@ -82,6 +84,7 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal]         = useState(false);
   const [showProfileModal, setShowProfileModal]   = useState(false);
   const [showJdModal, setShowJdModal]             = useState(false);
+  const [jdForm, setJdForm]                       = useState<JdFormState>(EMPTY_JD_FORM);
   const [fitResults, setFitResults]               = useState<Map<string, FitReport>>(new Map());
   const [realCandidates, setRealCandidates]       = useState<Candidate[]>([]);
   const [chatTarget, setChatTarget] = useState<{
@@ -105,7 +108,13 @@ export default function Home() {
     } catch {}
   }, []);
 
+  // 로그아웃 시 JD 입력 임시 보관 내용 초기화 (다른 사용자에게 남지 않도록)
+  useEffect(() => {
+    if (!user) setJdForm(EMPTY_JD_FORM);
+  }, [user]);
+
   const loadRealCandidates = useCallback(async () => {
+    if (!isSupabaseConfigured() || !supabase) return;
     const { data } = await supabase
       .from("profiles")
       .select("*")
@@ -118,13 +127,15 @@ export default function Home() {
   useEffect(() => { loadRealCandidates(); }, [loadRealCandidates]);
 
   useEffect(() => {
-    const channel = supabase
+    const client = supabase;
+    if (!isSupabaseConfigured() || !client) return;
+    const channel = client
       .channel("profiles-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         loadRealCandidates();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, [loadRealCandidates]);
 
   const allCandidates = useMemo(() => {
@@ -161,10 +172,14 @@ export default function Home() {
       result = [...result].sort((a, b) =>
         a.role === b.role ? 0 : a.role === "designer" ? -1 : 1
       );
+    } else if (sortBy === "fit") {
+      const scoreOf = (c: Candidate): number =>
+        (c.supabaseId ? fitResults.get(c.supabaseId)?.overallScore : undefined) ?? -1;
+      result = [...result].sort((a, b) => scoreOf(b) - scoreOf(a));
     }
 
     return result;
-  }, [allCandidates, activeQueries, activeFilter, showBookmarksOnly, bookmarks, sortBy]);
+  }, [allCandidates, activeQueries, activeFilter, showBookmarksOnly, bookmarks, sortBy, fitResults]);
 
   const counts = useMemo(() => ({
     all:       allCandidates.filter((c) => !showBookmarksOnly || bookmarks.has(c.id)).length,
@@ -242,7 +257,7 @@ export default function Home() {
           <>
             최고의 인재를
             <br />
-            <span style={{ color: "#f6042e" }}>한 눈에</span> 발견하세요
+            <span style={{ color: "var(--accent)" }}>한 눈에</span> 발견하세요
           </>
         }
         description="개발자·디자이너의 포트폴리오와 이력을 한 곳에서 빠르게 열람하고, 마음에 드는 인재에게 즉시 연락하세요."
@@ -313,16 +328,16 @@ export default function Home() {
 
               {/* JD 매칭 버튼 + Sort dropdown */}
               <div className="flex items-center gap-3">
-                {/* JD 매칭 분석 */}
+                {isJdAnalyzerConfigured() && (
                 <button
                   onClick={() => setShowJdModal(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                   style={{
                     background: fitResults.size > 0
-                      ? "rgba(246,4,46,0.12)"
+                      ? "rgba(var(--accent-rgb), 0.12)"
                       : "var(--surface-elevated)",
-                    border: `1px solid ${fitResults.size > 0 ? "rgba(246,4,46,0.4)" : "var(--border-color)"}`,
-                    color: fitResults.size > 0 ? "#f6042e" : "var(--text-secondary)",
+                    border: `1px solid ${fitResults.size > 0 ? "rgba(var(--accent-rgb), 0.4)" : "var(--border-color)"}`,
+                    color: fitResults.size > 0 ? "var(--accent)" : "var(--text-secondary)",
                     fontFamily: "DM Sans, sans-serif",
                   }}
                 >
@@ -331,6 +346,7 @@ export default function Home() {
                   </svg>
                   {fitResults.size > 0 ? `JD 매칭 (${fitResults.size})` : "JD 매칭"}
                 </button>
+                )}
 
                 {/* Sort */}
               <div className="flex items-center gap-2">
@@ -347,10 +363,10 @@ export default function Home() {
                   style={{
                     background: "var(--surface)",
                     border: "1px solid var(--border-color)",
-                    color: "#f6042e",
+                    color: "var(--accent)",
                     fontFamily: "DM Sans, sans-serif",
                     fontSize: 12,
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f6042e'/%3E%3C/svg%3E")`,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E07A5F'/%3E%3C/svg%3E")`,
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "right 8px center",
                   }}
@@ -398,6 +414,7 @@ export default function Home() {
         <DetailPanel
           candidate={selectedCandidate}
           isBookmarked={selectedCandidate ? bookmarks.has(selectedCandidate.id) : false}
+          fitReport={selectedCandidate?.supabaseId ? fitResults.get(selectedCandidate.supabaseId) : undefined}
           onClose={handleClose}
           onBookmark={(id) => handleBookmark(id)}
           onSkillClick={handleSkillClick}
@@ -415,12 +432,25 @@ export default function Home() {
       <AnimatePresence>
         {showJdModal && (
           <JdMatchModal
-            candidates={filteredCandidates}
             userId={user?.id ?? null}
+            form={jdForm}
+            onFormChange={setJdForm}
             onClose={() => setShowJdModal(false)}
             onResults={(results) => {
               setFitResults((prev) => new Map([...prev, ...results]));
+              // 분석 결과가 카드에 흩어지지 않도록 적합도순으로 정렬해 상단에 노출
+              setSortBy("fit");
+              setActiveFilter("all");
+              setCardKey((k) => k + 1);
+            }}
+            onViewResults={() => {
               setShowJdModal(false);
+              setSortBy("fit");
+              setActiveFilter("all");
+              setCardKey((k) => k + 1);
+              requestAnimationFrame(() => {
+                candidatesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              });
             }}
           />
         )}

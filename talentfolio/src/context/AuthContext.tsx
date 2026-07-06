@@ -3,12 +3,14 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase, Profile } from "@/lib/supabase";
+import { BACKEND_UNAVAILABLE_MSG, isSupabaseConfigured } from "@/lib/features";
 
 interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
   onlineUserIds: Set<string>;
+  authAvailable: boolean;
   signUp: (email: string, password: string, name: string, role: "developer" | "designer", title: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -17,29 +19,30 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]             = useState<User | null>(null);
-  const [profile, setProfile]       = useState<Profile | null>(null);
-  const [loading, setLoading]       = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const authAvailable = isSupabaseConfigured() && supabase !== null;
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    if (!supabase) return;
+    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
     if (data) setProfile(data as Profile);
   }, []);
 
   useEffect(() => {
-    // 초기 세션 확인
+    if (!authAvailable || !supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
       setLoading(false);
     });
 
-    // 세션 변화 구독
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
@@ -47,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchProfile]);
+  }, [authAvailable, fetchProfile]);
 
   const signUp = async (
     email: string,
@@ -56,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: "developer" | "designer",
     title: string,
   ): Promise<string | null> => {
-    // name, role, title을 메타데이터로 전달 → DB 트리거가 자동으로 profiles INSERT
+    if (!authAvailable || !supabase) return BACKEND_UNAVAILABLE_MSG;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -64,28 +67,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return error.message;
     if (data.user) {
-      // 트리거가 profiles를 만들 때까지 잠깐 대기
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
       await fetchProfile(data.user.id);
     }
     return null;
   };
 
-  // ── Supabase Presence: 실시간 온라인 상태 추적 ────────────────────────────
   useEffect(() => {
-    if (!user) {
+    if (!authAvailable || !supabase || !user) {
       setOnlineUserIds(new Set());
       return;
     }
 
-    const channel = supabase.channel("online-users");
+    const client = supabase;
+    const channel = client.channel("online-users");
 
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<{ user_id: string }>();
-        const ids = new Set(
-          Object.values(state).flat().map((p) => p.user_id)
-        );
+        const ids = new Set(Object.values(state).flat().map((p) => p.user_id));
         setOnlineUserIds(ids);
       })
       .subscribe(async (status) => {
@@ -95,14 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
-  }, [user]);
+  }, [authAvailable, user]);
 
   const signIn = async (email: string, password: string): Promise<string | null> => {
+    if (!authAvailable || !supabase) return BACKEND_UNAVAILABLE_MSG;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return error.message;
-    // is_online 업데이트
     const { data: { user: u } } = await supabase.auth.getUser();
     if (u) {
       await supabase.from("profiles").update({ is_online: true }).eq("id", u.id);
@@ -112,6 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) {
+      setUser(null);
+      setProfile(null);
+      return;
+    }
     if (user) {
       await supabase.from("profiles").update({ is_online: false }).eq("id", user.id);
     }
@@ -121,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, onlineUserIds, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, onlineUserIds, authAvailable, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

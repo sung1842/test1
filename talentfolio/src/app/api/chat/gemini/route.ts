@@ -53,7 +53,7 @@ const COMM_STYLES = [
 export async function POST(req: NextRequest) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
-    return NextResponse.json({ error: "GEMINI_API_KEY가 설정되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "AI 채팅은 현재 데모 모드에서 사용할 수 없습니다." }, { status: 503 });
   }
 
   const { candidateName, candidateInfo, messages } = (await req.json()) as {

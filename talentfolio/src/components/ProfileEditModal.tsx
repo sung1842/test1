@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { BACKEND_UNAVAILABLE_MSG, isSupabaseConfigured } from "@/lib/features";
 
 interface ProfileEditModalProps {
   onClose: () => void;
@@ -31,7 +32,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
   const [error, setError]    = useState("");
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isSupabaseConfigured() || !supabase) return;
     supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
       if (!data) return;
       setShortBio(data.short_bio ?? "");
@@ -62,6 +63,10 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
 
   const handleSave = async () => {
     if (!user) return;
+    if (!isSupabaseConfigured() || !supabase) {
+      setError(BACKEND_UNAVAILABLE_MSG);
+      return;
+    }
     setSaving(true);
     setError("");
 
@@ -142,8 +147,8 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
             onClick={() => setIsPublic((v) => !v)}
             style={{
               width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
-              background: isPublic ? "linear-gradient(135deg, #f6042e, #c0001e)" : "#16101f",
-              position: "relative", transition: "background 0.2s", flexShrink: 0,
+              backgroundColor: isPublic ? "var(--accent)" : "#16101f",
+              position: "relative", transition: "background-color 0.2s", flexShrink: 0,
             }}
           >
             <motion.div
@@ -180,9 +185,9 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         <Field label="스킬 태그" hint="Enter 또는 쉼표로 추가">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#0b0812", border: "1px solid #271c32", borderRadius: 10 }}>
             {skills.map((s) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 6, fontSize: 12, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
+              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 6, fontSize: 12, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
                 {s}
-                <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "#f6042e", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
+                <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
                   <X size={11} />
                 </button>
               </span>
@@ -224,9 +229,10 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={loading}
+          className={saved ? undefined : "btn-brand btn-brand--shadow-btn"}
           style={{
             width: "100%", padding: "12px",
-            background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #f6042e, #c0001e)",
+            background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : undefined,
             border: "none", borderRadius: 12, cursor: "pointer",
             color: "white", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,

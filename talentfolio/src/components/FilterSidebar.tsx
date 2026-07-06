@@ -149,9 +149,9 @@ export default function FilterSidebar({
                   className="text-[11px] px-2.5 py-1 rounded-full transition-all duration-200"
                   style={{
                     fontFamily: "DM Sans, sans-serif",
-                    background: isActive ? "rgba(246,4,46,0.15)" : "var(--surface-elevated)",
-                    border: `1px solid ${isActive ? "rgba(246,4,46,0.4)" : "var(--border-color)"}`,
-                    color: isActive ? "#f6042e" : "var(--text-secondary)",
+                    background: isActive ? "rgba(var(--accent-rgb), 0.15)" : "var(--surface-elevated)",
+                    border: `1px solid ${isActive ? "rgba(var(--accent-rgb), 0.4)" : "var(--border-color)"}`,
+                    color: isActive ? "var(--accent)" : "var(--text-secondary)",
                     fontWeight: isActive ? 600 : 400,
                   }}
                 >

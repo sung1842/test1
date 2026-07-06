@@ -28,11 +28,11 @@ export default function FilterTabs({
         {tabs.map((tab) => {
           const isActive = activeFilter === tab.value;
           const activeLine =
-            tab.value === "developer" ? "#f6042e" : tab.value === "designer" ? "#ffae2e" : "#f6042e";
+            tab.value === "developer" ? "var(--dev-color)" : tab.value === "designer" ? "var(--des-color)" : "var(--accent)";
           const activeBadgeBg =
-            tab.value === "developer" ? "rgba(246,4,46,0.15)" : tab.value === "designer" ? "rgba(255,174,46,0.15)" : "rgba(246,4,46,0.15)";
+            tab.value === "developer" ? "rgba(var(--dev-color-rgb), 0.15)" : tab.value === "designer" ? "rgba(var(--des-color-rgb), 0.15)" : "rgba(var(--accent-rgb), 0.15)";
           const activeBadgeColor =
-            tab.value === "developer" ? "#f6042e" : tab.value === "designer" ? "#ffae2e" : "#f6042e";
+            tab.value === "developer" ? "var(--dev-color)" : tab.value === "designer" ? "var(--des-color)" : "var(--accent)";
 
           return (
             <button

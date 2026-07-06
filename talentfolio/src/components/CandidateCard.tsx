@@ -80,33 +80,51 @@ export default function CandidateCard({
     ? { shadow: "rgba(246,4,46,0.3)", border: "#f6042e" }
     : { shadow: "rgba(255,174,46,0.3)", border: "#ffae2e" };
 
-  const boxShadow = isSelected
+  // JD 분석 결과가 있으면 적합도(verdict)에 따라 카드를 강하게 강조한다.
+  const fitAccent = fitReport
+    ? {
+        strong_fit:   { color: "#22c55e", glow: "rgba(34,197,94,0.55)",  soft: "rgba(34,197,94,0.22)" },
+        possible_fit: { color: "#ffae2e", glow: "rgba(255,174,46,0.5)",  soft: "rgba(255,174,46,0.2)" },
+        weak_fit:     { color: "#f6042e", glow: "rgba(246,4,46,0.45)",   soft: "rgba(246,4,46,0.18)" },
+      }[fitReport.verdict]
+    : null;
+
+  const boxShadow = fitAccent
+    ? `0 0 0 2px ${fitAccent.color}, 0 0 28px ${fitAccent.glow}, 0 18px 44px rgba(0,0,0,0.6), 0 6px 14px ${fitAccent.soft}`
+    : isSelected
     ? `0 0 0 1px ${glowColor.border}, 0 8px 40px ${glowColor.shadow}`
     : isHovered
     ? `0 0 48px ${glowColor.shadow}, 0 8px 32px rgba(0,0,0,0.5)`
     : "0 4px 24px rgba(0,0,0,0.4)";
 
-  const borderColor = isSelected
+  const borderColor = fitAccent
+    ? fitAccent.color
+    : isSelected
     ? glowColor.border
     : isHovered
     ? glowColor.border
     : "var(--border-color)";
 
+  // 강한 적합(strong_fit) 카드는 은은하게 펄스 애니메이션으로 시선을 끈다.
+  // (animate에 object를 넘기면 자식 variant 전파가 끊겨 내용이 사라지므로 펄스는 CSS로 처리)
+  const isStrongPulse = fitReport?.verdict === "strong_fit" && !shouldReduceMotion;
+
   return (
     <motion.div
       initial={shouldReduceMotion ? "visible" : "hidden"}
       animate="visible"
-      whileHover="hover"
+      whileHover={{ y: fitAccent ? -8 : -4, scale: fitAccent ? 1.025 : 1.01 }}
       variants={containerVariants}
       transition={{ delay: animationDelay / 1000 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => onSelect(candidate)}
-      className={cn("relative rounded-2xl overflow-hidden cursor-pointer")}
+      className={cn("relative rounded-2xl overflow-hidden cursor-pointer", isStrongPulse && "fit-pulse-strong")}
       style={{
         backgroundColor: "var(--surface)",
         border: `1px solid ${borderColor}`,
         boxShadow,
+        transformStyle: "preserve-3d",
         transition: "box-shadow 0.25s ease, border-color 0.25s ease",
       }}
     >
@@ -135,13 +153,17 @@ export default function CandidateCard({
           }}
         />
 
-        {/* Accent tint strip — role color */}
+        {/* Accent tint strip — JD 적합도 색상 우선, 없으면 직군 색상 */}
         <div
-          className="absolute top-0 left-0 right-0 h-0.5"
+          className="absolute top-0 left-0 right-0"
           style={{
-            background: candidate.role === "developer"
+            height: fitAccent ? 3 : 2,
+            background: fitAccent
+              ? `linear-gradient(to right, transparent, ${fitAccent.color}, transparent)`
+              : candidate.role === "developer"
               ? "linear-gradient(to right, transparent, rgba(246,4,46,0.7), transparent)"
               : "linear-gradient(to right, transparent, rgba(255,174,46,0.5), transparent)",
+            boxShadow: fitAccent ? `0 0 12px ${fitAccent.glow}` : "none",
           }}
         />
 
@@ -279,14 +301,9 @@ export default function CandidateCard({
               whileTap={{ scale: 0.94 }}
               onClick={(e) => { e.stopPropagation(); onMessage?.(candidate); }}
               title="메시지 보내기"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
+              className="btn-brand btn-brand--shadow-sm flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
               style={{
-                background: "linear-gradient(135deg, #f6042e, #c0001e)",
-                color: "white",
                 fontFamily: "DM Sans, sans-serif",
-                boxShadow: "0 4px 14px rgba(246,4,46,0.4)",
-                border: "none",
-                cursor: "pointer",
               }}
             >
               <MessageSquare className="w-3 h-3" />

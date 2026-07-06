@@ -2,17 +2,54 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import type { Candidate } from "@/types/candidate";
+import { X, Zap, CheckCircle, XCircle, Loader2, Code2, Palette } from "lucide-react";
 import type { FitReport } from "@/types/fitReport";
-import { JD_ANALYZER_URL, STAGE_LABELS } from "@/types/fitReport";
+import { JD_ANALYZER_URL, STAGE_LABELS, isJdAnalyzerConfigured } from "@/types/fitReport";
+import { BACKEND_UNAVAILABLE_MSG } from "@/lib/features";
 import FitScoreBadge from "./FitScoreBadge";
 
+export interface JdFormState {
+  role: "developer" | "designer";
+  headcount: number;
+  requiredSkills: string;
+  preferred: string;
+  responsibilities: string;
+  culture: string;
+}
+
+export const EMPTY_JD_FORM: JdFormState = {
+  role: "developer",
+  headcount: 1,
+  requiredSkills: "",
+  preferred: "",
+  responsibilities: "",
+  culture: "",
+};
+
 interface JdMatchModalProps {
-  candidates: Candidate[];        // 현재 필터된 후보자 목록
-  userId: string | null;          // Supabase user ID (null이면 게스트)
+  userId: string | null;
+  form: JdFormState;                          // 부모(page.tsx) 메모리에 보관 — 모달 닫아도 유지, 새로고침 시 초기화
+  onFormChange: (form: JdFormState) => void;
   onClose: () => void;
   onResults: (results: Map<string, FitReport>) => void;
+  onViewResults: () => void;                  // 결과 확인하기 — 모달 닫고 메인 목록을 적합도순으로 노출/스크롤
+}
+
+interface RankedCandidate {
+  candidateId: string;
+  name: string;
+  title: string | null;
+  matchCount: number;
+  matchedKeywords: string[];
+}
+
+interface JdPlan {
+  role: "developer" | "designer";
+  roleConfidence: number;
+  keywords: string[];
+  totalInRole: number;
+  matchedCount: number;
+  ranked: RankedCandidate[];
 }
 
 type CandidateStatus =
@@ -22,82 +59,206 @@ type CandidateStatus =
   | { state: "done"; report: FitReport }
   | { state: "failed"; error: string };
 
-const MAX_CANDIDATES = 10;
+const BATCH_SIZE = 5;
 
 function StatusDot({ status }: { status: CandidateStatus }) {
-  if (status.state === "idle")     return <span className="w-2 h-2 rounded-full bg-gray-600 shrink-0" />;
-  if (status.state === "queued")   return <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 animate-pulse" />;
-  if (status.state === "analyzing")return <Loader2 size={8} className="shrink-0 animate-spin" style={{ color: "#ffae2e" }} />;
-  if (status.state === "done")     return <CheckCircle size={10} className="shrink-0" style={{ color: "#22c55e" }} />;
-  if (status.state === "failed")   return <XCircle size={10} className="shrink-0" style={{ color: "#f6042e" }} />;
+  if (status.state === "queued")    return <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 animate-pulse" />;
+  if (status.state === "analyzing") return <Loader2 size={10} className="shrink-0 animate-spin" style={{ color: "#ffae2e" }} />;
+  if (status.state === "done")      return <CheckCircle size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
+  if (status.state === "failed")    return <XCircle size={11} className="shrink-0" style={{ color: "#f6042e" }} />;
+  return <span className="w-2 h-2 rounded-full bg-gray-600 shrink-0" />;
 }
 
-export default function JdMatchModal({ candidates, userId, onClose, onResults }: JdMatchModalProps) {
+// 구조화 폼 입력값을 분석용 JD 텍스트로 조합
+function buildJdText(form: JdFormState): string {
+  const roleLabel = form.role === "developer" ? "개발자" : "디자이너";
+  const lines = [
+    "[채용공고]",
+    `모집 직군: ${roleLabel}`,
+    `모집 인원: ${form.headcount}명`,
+    "",
+  ];
+  if (form.requiredSkills.trim()) lines.push("[필수 기술]", form.requiredSkills.trim(), "");
+  if (form.preferred.trim())      lines.push("[우대 사항]", form.preferred.trim(), "");
+  lines.push("[담당 업무]", form.responsibilities.trim(), "");
+  lines.push("[조직 문화]", form.culture.trim());
+  return lines.join("\n");
+}
+
+// 필수 기술 텍스트를 키워드 배열로 파싱 (쉼표/줄바꿈/중점/슬래시 등 자유 입력 허용)
+function parseKeywords(text: string): string[] {
+  return text
+    .split(/[,\n·/|]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const inputBase: React.CSSProperties = {
+  background: "#0b0812",
+  border: "1px solid #271c32",
+  color: "var(--text-primary)",
+  fontFamily: "DM Sans, sans-serif",
+  padding: "10px 12px",
+  lineHeight: 1.5,
+};
+
+export default function JdMatchModal({ userId, form, onFormChange, onClose, onResults, onViewResults }: JdMatchModalProps) {
+  const jdAvailable = isJdAnalyzerConfigured() && Boolean(JD_ANALYZER_URL);
+  // ── 폼 상태는 부모(page.tsx) 메모리에서 관리 — 모달을 닫아도 유지됨 ──
+  const { role, headcount, requiredSkills, preferred, responsibilities, culture } = form;
+  const patchForm = (patch: Partial<JdFormState>) => onFormChange({ ...form, ...patch });
+
+  // ── 진행 상태 (모달 내부 — 닫으면 초기화) ──
+  const [phase, setPhase] = useState<"input" | "planning" | "analyzing">("input");
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<JdPlan | null>(null);
   const [jdText, setJdText] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isDone, setIsDone] = useState(false);
+  const [analyzedCount, setAnalyzedCount] = useState(0);
+  const [batchRunning, setBatchRunning] = useState(false);
   const [statuses, setStatuses] = useState<Map<string, CandidateStatus>>(new Map());
-  const [showDetails, setShowDetails] = useState(false);
   const esRefs = useRef<EventSource[]>([]);
-  const resultsRef = useRef<Map<string, FitReport>>(new Map());
-
-  // 실제 등록 프로필(UUID)만 분석 가능
-  const analyzable = candidates
-    .filter((c) => c.source === "profile" && c.supabaseId)
-    .slice(0, MAX_CANDIDATES);
-
-  const dummyCount = candidates.filter((c) => c.source !== "profile").length;
+  const sessionResultsRef = useRef<Map<string, FitReport>>(new Map());
+  const autoSourcingSentRef = useRef(false);
+  const [autoSourcingNotice, setAutoSourcingNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    return () => { esRefs.current.forEach((es) => es.close()); };
+  }, []);
+
+  // 모달이 열려 있는 동안 배경(메인 페이지) 스크롤 잠금 — 모달 내부만 스크롤
+  // (globals.css에서 html/body 모두 overflow-x:hidden 이라 실제 스크롤 요소가 html일 수 있어 둘 다 잠금)
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
     return () => {
-      esRefs.current.forEach((es) => es.close());
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
     };
   }, []);
 
-  const handleStart = async () => {
-    if (!jdText.trim() || analyzable.length === 0 || isRunning) return;
-    setIsRunning(true);
-    setIsDone(false);
-    resultsRef.current = new Map();
+  const updateStatus = (id: string, status: CandidateStatus) => {
+    setStatuses((prev) => new Map(prev).set(id, status));
+  };
 
+  // JD 분석 세션 완료 시 strong_fit 쇼트리스트 → Slack HIL 승인 요청 자동 등록 (M2.5)
+  const triggerAutoSourcing = async (reports: FitReport[]) => {
+    if (!userId || autoSourcingSentRef.current || reports.length === 0) return;
+    autoSourcingSentRef.current = true;
+
+    try {
+      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jd: jdText, userId, reports }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `서버 오류 (${res.status})`);
+
+      if (data.created) {
+        const n = data.shortlist?.length ?? 0;
+        setAutoSourcingNotice(`strong_fit ${n}명 쇼트리스트 — Slack 승인 요청을 보냈습니다. /sourcing/review 에서도 확인할 수 있습니다.`);
+      } else if (data.reason === "no_strong_fit") {
+        setAutoSourcingNotice("strong_fit 후보가 없어 자동 소싱 요청은 보내지 않았습니다.");
+      } else if (data.reason === "already_pending") {
+        setAutoSourcingNotice("이 JD에 대한 승인 요청이 이미 대기 중입니다.");
+      }
+    } catch (err) {
+      autoSourcingSentRef.current = false;
+      setAutoSourcingNotice(err instanceof Error ? err.message : "자동 소싱 요청 실패");
+    }
+  };
+
+  const finalizeAnalysisSession = async (reports: Map<string, FitReport>) => {
+    await triggerAutoSourcing([...reports.values()]);
+  };
+
+  const formValid =
+    headcount >= 1 &&
+    responsibilities.trim().length > 0 &&
+    culture.trim().length > 0;
+
+  // ── 1) 폼 제출 → JD 조합 → plan ──
+  const handlePlan = async () => {
+    if (!jdAvailable) return;
+    if (!formValid || phase === "planning") return;
+    setPhase("planning");
+    setPlanError(null);
+
+    const jd = buildJdText({ role, headcount, requiredSkills, preferred, responsibilities, culture });
+    setJdText(jd);
+    const keywords = parseKeywords(requiredSkills);
+
+    try {
+      const res = await fetch(`${JD_ANALYZER_URL}/api/jd/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jd, role, keywords }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? `서버 오류 (${res.status})`);
+      }
+      const data = (await res.json()) as JdPlan;
+      setPlan(data);
+      setPhase("analyzing");
+      void analyzeBatch(data, jd, 0);
+    } catch (err) {
+      setPlanError(err instanceof Error ? err.message : "분석 계획 수립 실패");
+      setPhase("input");
+    }
+  };
+
+  // ── 2) 상위 N명 배치 분석 (SSE) ──
+  const analyzeBatch = async (activePlan: JdPlan, jd: string, startIndex: number) => {
+    const batch = activePlan.ranked.slice(startIndex, startIndex + BATCH_SIZE);
+    if (batch.length === 0) return;
+
+    setBatchRunning(true);
     const uid = userId || `guest-${Date.now()}`;
-    const pending = new Set(analyzable.map((c) => c.supabaseId!));
-
-    const updateStatus = (id: string, status: CandidateStatus) => {
-      setStatuses((prev) => new Map(prev).set(id, status));
-    };
+    const pending = new Set(batch.map((c) => c.candidateId));
+    const batchResults = new Map<string, FitReport>();
 
     const checkDone = () => {
       if (pending.size === 0) {
-        setIsDone(true);
-        setIsRunning(false);
-        onResults(new Map(resultsRef.current));
+        setBatchRunning(false);
+        const nextCount = startIndex + batch.length;
+        setAnalyzedCount(nextCount);
+        batchResults.forEach((r, id) => sessionResultsRef.current.set(id, r));
+        if (batchResults.size > 0) onResults(new Map(batchResults));
+
+        const allAnalyzed = nextCount >= activePlan.ranked.length;
+        if (allAnalyzed) {
+          void finalizeAnalysisSession(sessionResultsRef.current);
+        }
       }
     };
 
     await Promise.all(
-      analyzable.map(async (candidate) => {
-        const cid = candidate.supabaseId!;
+      batch.map(async (candidate) => {
+        const cid = candidate.candidateId;
         updateStatus(cid, { state: "queued" });
         try {
           const res = await fetch(`${JD_ANALYZER_URL}/api/analyze`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ jd: jdText.trim(), candidateId: cid, userId: uid, tier: "free" }),
+            body: JSON.stringify({ jd, candidateId: cid, userId: uid, tier: "free" }),
           });
           const data = await res.json();
 
           if (data.cached && data.report) {
             updateStatus(cid, { state: "done", report: data.report });
-            resultsRef.current.set(cid, data.report);
+            batchResults.set(cid, data.report);
             pending.delete(cid);
             checkDone();
             return;
           }
-
           if (!data.jobId) throw new Error("jobId를 받지 못했습니다.");
 
-          updateStatus(cid, { state: "analyzing", stage: "queued" });
+          updateStatus(cid, { state: "analyzing", stage: STAGE_LABELS.queued });
 
           const es = new EventSource(`${JD_ANALYZER_URL}/api/jobs/${data.jobId}/stream?tier=free`);
           esRefs.current.push(es);
@@ -106,16 +267,14 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
             const { stage } = JSON.parse(e.data) as { stage: string };
             updateStatus(cid, { state: "analyzing", stage: STAGE_LABELS[stage] ?? stage });
           });
-
           es.addEventListener("completed", (e) => {
             const report = JSON.parse(e.data) as FitReport;
             updateStatus(cid, { state: "done", report });
-            resultsRef.current.set(cid, report);
+            batchResults.set(cid, report);
             pending.delete(cid);
             checkDone();
             es.close();
           });
-
           es.addEventListener("failed", (e) => {
             const { reason } = JSON.parse(e.data) as { reason: string };
             updateStatus(cid, { state: "failed", error: reason ?? "분석 실패" });
@@ -123,7 +282,6 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
             checkDone();
             es.close();
           });
-
           es.onerror = () => {
             updateStatus(cid, { state: "failed", error: "연결 오류" });
             pending.delete(cid);
@@ -131,8 +289,7 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
             es.close();
           };
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "알 수 없는 오류";
-          updateStatus(cid, { state: "failed", error: msg });
+          updateStatus(cid, { state: "failed", error: err instanceof Error ? err.message : "오류" });
           pending.delete(cid);
           checkDone();
         }
@@ -140,8 +297,14 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
     );
   };
 
-  const doneCount  = [...statuses.values()].filter((s) => s.state === "done").length;
-  const failCount  = [...statuses.values()].filter((s) => s.state === "failed").length;
+  const doneCount = [...statuses.values()].filter((s) => s.state === "done").length;
+  const failCount = [...statuses.values()].filter((s) => s.state === "failed").length;
+  const remaining = plan ? Math.max(0, plan.ranked.length - analyzedCount) : 0;
+  const visibleCandidates = plan ? plan.ranked.slice(0, analyzedCount + (batchRunning ? BATCH_SIZE : 0)) : [];
+
+  const roleLabel = (plan?.role ?? role) === "designer" ? "디자이너" : "개발자";
+  const RoleIcon = (plan?.role ?? role) === "designer" ? Palette : Code2;
+  const roleColor = (plan?.role ?? role) === "designer" ? "#ffae2e" : "#f6042e";
 
   return (
     <motion.div
@@ -149,7 +312,12 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(2,0,5,0.85)", backdropFilter: "blur(6px)" }}
+      style={{
+        background: "rgba(2,0,5,0.85)",
+        backdropFilter: "blur(6px)",
+        paddingTop: "5.5rem",   // 고정 헤더(z-100)에 가려지지 않도록 상단 여백 확보
+        paddingBottom: "1.5rem",
+      }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
@@ -161,272 +329,335 @@ export default function JdMatchModal({ candidates, userId, onClose, onResults }:
         style={{
           background: "#0d0918",
           border: "1px solid #271c32",
-          boxShadow: "0 0 60px rgba(246,4,46,0.15), 0 24px 64px rgba(0,0,0,0.6)",
-          maxHeight: "88vh",
+          boxShadow: "0 0 60px rgba(var(--accent-rgb), 0.15), 0 24px 64px rgba(0,0,0,0.6)",
+          maxHeight: "calc(100vh - 7rem)",   // 상/하 여백을 뺀 높이로 축소
           display: "flex",
           flexDirection: "column",
         }}
       >
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-4 shrink-0"
-          style={{ borderBottom: "1px solid #271c32" }}
-        >
+        <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: "1px solid #271c32" }}>
           <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(246,4,46,0.15)", border: "1px solid rgba(246,4,46,0.35)" }}
-            >
-              <Zap size={14} style={{ color: "#f6042e" }} />
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+              style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)" }}>
+              <Zap size={14} style={{ color: "var(--accent)" }} />
             </div>
             <div>
-              <h2
-                className="text-sm font-bold"
-                style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}
-              >
+              <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
                 JD 매칭 분석
               </h2>
               <p className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
-                AI가 채용공고와 후보자 포트폴리오의 적합도를 분석합니다
+                채용 정보를 입력하면 적합한 후보부터 정밀 분석합니다
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ color: "var(--text-secondary)", background: "var(--surface-elevated)" }}
-          >
+          <button onClick={onClose} className="p-1.5 rounded-lg transition-all"
+            style={{ color: "var(--text-secondary)", background: "var(--surface-elevated)" }}>
             <X size={14} />
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1">
-          <div className="px-6 py-5 space-y-5">
-            {/* JD textarea */}
-            <div>
-              <label
-                className="block text-xs font-semibold mb-2"
-                style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
-              >
-                채용공고 (JD) 붙여넣기
-              </label>
-              <textarea
-                value={jdText}
-                onChange={(e) => setJdText(e.target.value)}
-                disabled={isRunning}
-                placeholder={"[채용공고]\n직무: 풀스택 개발자\n필수 기술: React, TypeScript, Node.js\n우대: Docker, AWS 경험자\n...\n\n위와 같이 채용공고 전문을 붙여넣으세요."}
-                rows={7}
-                className="w-full rounded-xl resize-none text-sm outline-none transition-all"
-                style={{
-                  background: "#0b0812",
-                  border: "1px solid #271c32",
-                  color: "var(--text-primary)",
-                  fontFamily: "DM Sans, sans-serif",
-                  padding: "12px 14px",
-                  lineHeight: 1.6,
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(246,4,46,0.5)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
-              />
-            </div>
+        <div className="overflow-y-auto overscroll-contain flex-1">
+          <div className="px-6 py-5 space-y-4">
+            {!jdAvailable ? (
+              <p className="text-sm text-center py-8 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                {BACKEND_UNAVAILABLE_MSG}
+              </p>
+            ) : (
+            <>
+            {/* ── 입력 폼 (input 단계에서만) ── */}
+            {phase === "input" && (
+              <>
+                {/* 1. 직군 선택 */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    모집 직군 <span style={{ color: "var(--accent)" }}>*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { value: "developer", label: "개발자", Icon: Code2, color: "#f6042e" },
+                      { value: "designer",  label: "디자이너", Icon: Palette, color: "#ffae2e" },
+                    ] as const).map(({ value, label, Icon, color }) => {
+                      const active = role === value;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => patchForm({ role: value })}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                          style={{
+                            background: active ? `${color}1f` : "#0b0812",
+                            border: `1px solid ${active ? color : "#271c32"}`,
+                            color: active ? color : "var(--text-secondary)",
+                            fontFamily: "DM Sans, sans-serif",
+                          }}
+                        >
+                          <Icon size={15} />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            {/* 분석 대상 정보 */}
-            <div
-              className="rounded-xl px-4 py-3 flex items-center justify-between"
-              style={{ background: "rgba(246,4,46,0.05)", border: "1px solid rgba(246,4,46,0.15)" }}
-            >
-              <div>
-                <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                  분석 대상:{" "}
-                  <span style={{ color: "#f6042e" }}>{analyzable.length}명</span>
-                  {analyzable.length === MAX_CANDIDATES && candidates.filter(c => c.source === "profile").length > MAX_CANDIDATES && (
-                    <span style={{ color: "var(--text-secondary)" }}> (상위 {MAX_CANDIDATES}명)</span>
-                  )}
-                </p>
-                {analyzable.length === 0 && (
-                  <p className="text-[10px] mt-0.5" style={{ color: "#ffae2e" }}>
-                    분석 가능한 후보자가 없습니다.
+                {/* 2. 모집 인원 */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    모집 인원 <span style={{ color: "var(--accent)" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={headcount}
+                    onChange={(e) => patchForm({ headcount: Math.max(1, Number(e.target.value) || 1) })}
+                    className="w-28 rounded-xl text-sm outline-none transition-all"
+                    style={inputBase}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                  />
+                  <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }}>명</span>
+                </div>
+
+                {/* 3. 필수 기술 (선택) */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    필수 기술 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
+                  </label>
+                  <textarea
+                    value={requiredSkills}
+                    onChange={(e) => patchForm({ requiredSkills: e.target.value })}
+                    placeholder={role === "developer"
+                      ? "한 줄에 하나씩 자유롭게 입력하세요\nReact\nTypeScript\nNext.js"
+                      : "한 줄에 하나씩 자유롭게 입력하세요\nFigma\nPrototyping\nDesign System"}
+                    rows={4}
+                    className="w-full rounded-xl resize-y text-sm outline-none transition-all"
+                    style={inputBase}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                  />
+                  <p className="text-[10px] mt-1" style={{ color: "var(--text-secondary)" }}>
+                    입력한 기술을 가진 후보를 우선 분석합니다 (비우면 직군 전체 대상)
+                  </p>
+                </div>
+
+                {/* 4. 우대 사항 (선택) */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    우대 사항 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
+                  </label>
+                  <textarea
+                    value={preferred}
+                    onChange={(e) => patchForm({ preferred: e.target.value })}
+                    placeholder="자유롭게 여러 줄로 입력하세요&#10;예) Docker · AWS 경험자&#10;오픈소스 기여 경험"
+                    rows={4}
+                    className="w-full rounded-xl resize-y text-sm outline-none transition-all"
+                    style={inputBase}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                  />
+                </div>
+
+                {/* 5. 담당 업무 */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    담당 업무 <span style={{ color: "var(--accent)" }}>*</span>
+                  </label>
+                  <textarea
+                    value={responsibilities}
+                    onChange={(e) => patchForm({ responsibilities: e.target.value })}
+                    placeholder="사용자 대면 프론트엔드 기능 설계 및 구현, 코드 리뷰 주도 등"
+                    rows={3}
+                    className="w-full rounded-xl resize-none text-sm outline-none transition-all"
+                    style={inputBase}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                  />
+                </div>
+
+                {/* 6. 조직 문화 */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                    조직 문화 <span style={{ color: "var(--accent)" }}>*</span>
+                  </label>
+                  <textarea
+                    value={culture}
+                    onChange={(e) => patchForm({ culture: e.target.value })}
+                    placeholder="수평적 의사결정, 2주 스프린트, 자율 출퇴근, 학습 지원 문화 등"
+                    rows={3}
+                    className="w-full rounded-xl resize-none text-sm outline-none transition-all"
+                    style={inputBase}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                  />
+                </div>
+
+                {planError && <p className="text-[11px]" style={{ color: "#f6042e" }}>{planError}</p>}
+              </>
+            )}
+
+            {/* ── 분석 단계 요약 + 진행 ── */}
+            {phase !== "input" && (
+              <>
+                {plan && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl px-4 py-3.5 space-y-3"
+                    style={{ background: "rgba(var(--accent-rgb), 0.05)", border: "1px solid rgba(var(--accent-rgb), 0.15)" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <RoleIcon size={14} style={{ color: roleColor }} />
+                      <span className="text-xs font-bold" style={{ color: "var(--text-primary)" }}>{roleLabel} 모집</span>
+                    </div>
+                    {plan.keywords.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {plan.keywords.map((kw) => (
+                          <span key={kw} className="text-[11px] px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,174,46,0.1)", border: "1px solid rgba(255,174,46,0.25)", color: "#ffae2e" }}>
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                      {roleLabel} {plan.totalInRole}명 중 키워드 매칭{" "}
+                      <span style={{ color: "var(--accent)", fontWeight: 600 }}>{plan.matchedCount}명</span>
+                      {" "}· 적합도 높은 순 {BATCH_SIZE}명씩 분석
+                    </p>
+                  </motion.div>
+                )}
+
+                {autoSourcingNotice && (
+                  <p className="text-[11px] px-1" style={{ color: autoSourcingNotice.includes("실패") ? "#f6042e" : "#22c55e" }}>
+                    {autoSourcingNotice}
                   </p>
                 )}
-              </div>
-              <span
-                className="text-xs px-2 py-1 rounded-lg"
-                style={{
-                  background: "rgba(255,174,46,0.1)",
-                  border: "1px solid rgba(255,174,46,0.25)",
-                  color: "#ffae2e",
-                  fontFamily: "DM Sans, sans-serif",
-                }}
-              >
-                Free Tier
-              </span>
-            </div>
 
-            {/* 진행 상황 — 분석 시작 후 표시 */}
-            <AnimatePresence>
-              {statuses.size > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="rounded-xl overflow-hidden"
-                  style={{ border: "1px solid #271c32" }}
-                >
-                  {/* 요약 헤더 */}
-                  <button
-                    className="w-full flex items-center justify-between px-4 py-3 transition-all"
-                    style={{ background: "var(--surface)" }}
-                    onClick={() => setShowDetails((v) => !v)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {isRunning && <Loader2 size={12} className="animate-spin" style={{ color: "#ffae2e" }} />}
-                      {isDone && <CheckCircle size={12} style={{ color: "#22c55e" }} />}
+                {visibleCandidates.length > 0 && (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #271c32" }}>
+                    <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "var(--surface)" }}>
                       <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                        {isDone
-                          ? `분석 완료 — ${doneCount}명 성공${failCount > 0 ? `, ${failCount}명 실패` : ""}`
-                          : `분석 중... (${doneCount + failCount}/${analyzable.length})`}
+                        분석 결과 {doneCount}명 완료{failCount > 0 ? ` · ${failCount}명 실패` : ""}
                       </span>
+                      {batchRunning && <Loader2 size={12} className="animate-spin" style={{ color: "#ffae2e" }} />}
                     </div>
-                    {showDetails ? <ChevronUp size={12} style={{ color: "var(--text-secondary)" }} /> : <ChevronDown size={12} style={{ color: "var(--text-secondary)" }} />}
-                  </button>
-
-                  {/* 상세 목록 */}
-                  <AnimatePresence>
-                    {showDetails && (
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: "auto" }}
-                        exit={{ height: 0 }}
-                        style={{ overflow: "hidden" }}
-                      >
-                        <div
-                          className="px-4 py-2 space-y-2"
-                          style={{ borderTop: "1px solid #271c32", background: "#0b0812" }}
-                        >
-                          {analyzable.map((c) => {
-                            const id = c.supabaseId!;
-                            const st = statuses.get(id) ?? { state: "idle" };
-                            return (
-                              <div key={id} className="flex items-center justify-between gap-3 py-1">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <StatusDot status={st} />
-                                  <span
-                                    className="text-xs truncate"
-                                    style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}
-                                  >
-                                    {c.name}
-                                  </span>
-                                </div>
-                                <div className="shrink-0">
-                                  {st.state === "analyzing" && (
-                                    <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
-                                      {st.stage}
-                                    </span>
-                                  )}
-                                  {st.state === "done" && (
-                                    <FitScoreBadge report={st.report} compact />
-                                  )}
-                                  {st.state === "failed" && (
-                                    <span className="text-[10px]" style={{ color: "#f6042e" }}>
-                                      오류
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <div className="px-4 py-2 space-y-2" style={{ borderTop: "1px solid #271c32", background: "#0b0812" }}>
+                      {visibleCandidates.map((c, idx) => {
+                        const st = statuses.get(c.candidateId) ?? { state: "idle" as const };
+                        return (
+                          <div key={c.candidateId} className="flex items-center justify-between gap-3 py-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-[10px] tabular-nums w-4 shrink-0" style={{ color: "var(--text-secondary)" }}>{idx + 1}</span>
+                              <StatusDot status={st} />
+                              <span className="text-xs truncate" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>{c.name}</span>
+                              <span className="text-[10px] px-1 py-0.5 rounded shrink-0"
+                                style={{ background: "var(--surface-elevated)", color: "var(--text-secondary)" }}>{c.matchCount}개 일치</span>
+                            </div>
+                            <div className="shrink-0">
+                              {st.state === "analyzing" && <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>{st.stage}</span>}
+                              {st.state === "done" && <FitScoreBadge report={st.report} compact />}
+                              {st.state === "failed" && <span className="text-[10px]" style={{ color: "#f6042e" }}>오류</span>}
+                              {st.state === "queued" && <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>대기</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            </>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div
-          className="px-6 py-4 flex items-center gap-3 shrink-0"
-          style={{ borderTop: "1px solid #271c32" }}
-        >
-          {isDone ? (
-            <>
-              <button
-                onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={{
-                  background: "linear-gradient(135deg, #f6042e, #c0001e)",
-                  color: "white",
-                  fontFamily: "DM Sans, sans-serif",
-                  boxShadow: "0 4px 14px rgba(246,4,46,0.35)",
-                }}
-              >
-                결과 확인하기
-              </button>
-              <button
-                onClick={() => {
-                  setStatuses(new Map());
-                  setIsDone(false);
-                  setIsRunning(false);
-                  setShowDetails(false);
-                }}
-                className="px-4 py-2.5 rounded-xl text-sm transition-all"
-                style={{
-                  background: "var(--surface-elevated)",
-                  border: "1px solid var(--border-color)",
-                  color: "var(--text-secondary)",
-                  fontFamily: "DM Sans, sans-serif",
-                }}
-              >
-                다시 분석
-              </button>
-            </>
+        <div className="px-6 py-4 flex items-center gap-3 shrink-0" style={{ borderTop: "1px solid #271c32" }}>
+          {!jdAvailable ? (
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            >
+              닫기
+            </button>
           ) : (
+          <>
+          {phase === "input" && (
+            <button
+              onClick={handlePlan}
+              disabled={!formValid}
+              className="btn-brand btn-brand--shadow-btn flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                color: "white",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <Zap size={14} />
+              분석 시작
+            </button>
+          )}
+
+          {phase === "planning" && (
+            <button disabled className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+              style={{ background: "var(--surface-elevated)", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}>
+              <Loader2 size={14} className="animate-spin" />
+              후보 선별 중...
+            </button>
+          )}
+
+          {phase === "analyzing" && (
             <>
-              <button
-                onClick={handleStart}
-                disabled={!jdText.trim() || analyzable.length === 0 || isRunning}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  background: isRunning ? "var(--surface-elevated)" : "linear-gradient(135deg, #f6042e, #c0001e)",
-                  color: isRunning ? "var(--text-secondary)" : "white",
-                  fontFamily: "DM Sans, sans-serif",
-                  boxShadow: isRunning ? "none" : "0 4px 14px rgba(246,4,46,0.35)",
-                }}
-              >
-                {isRunning ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    분석 중...
-                  </>
-                ) : (
-                  <>
-                    <Zap size={14} />
-                    분석 시작
-                  </>
-                )}
-              </button>
-              {isRunning && (
+              {remaining > 0 && (
                 <button
-                  onClick={() => {
-                    esRefs.current.forEach((es) => es.close());
-                    esRefs.current = [];
-                    setIsRunning(false);
-                    setStatuses(new Map());
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-sm transition-all"
+                  onClick={() => plan && analyzeBatch(plan, jdText, analyzedCount)}
+                  disabled={batchRunning}
+                  className={batchRunning
+                    ? "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    : "btn-brand btn-brand--shadow-btn flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"}
                   style={{
-                    background: "var(--surface-elevated)",
-                    border: "1px solid var(--border-color)",
-                    color: "var(--text-secondary)",
+                    background: batchRunning ? "var(--surface-elevated)" : undefined,
+                    color: batchRunning ? "var(--text-secondary)" : "white",
                     fontFamily: "DM Sans, sans-serif",
+                    boxShadow: batchRunning ? "none" : undefined,
                   }}
                 >
-                  취소
+                  {batchRunning ? (
+                    <><Loader2 size={14} className="animate-spin" />분석 중...</>
+                  ) : (
+                    <>다음 {Math.min(BATCH_SIZE, remaining)}명 더 분석 (남은 {remaining}명)</>
+                  )}
                 </button>
               )}
+              <button
+                onClick={async () => {
+                  if (remaining === 0) {
+                    await finalizeAnalysisSession(sessionResultsRef.current);
+                    onViewResults();
+                  } else {
+                    onClose();
+                  }
+                }}
+                disabled={doneCount === 0 && remaining === 0}
+                className={remaining > 0
+                  ? "py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  : "btn-brand btn-brand--shadow-btn py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"}
+                style={{
+                  flex: remaining > 0 ? "0 0 auto" : 1,
+                  paddingLeft: 16, paddingRight: 16,
+                  background: remaining > 0 ? "var(--surface-elevated)" : undefined,
+                  border: remaining > 0 ? "1px solid var(--border-color)" : "none",
+                  color: remaining > 0 ? "var(--text-secondary)" : "white",
+                  fontFamily: "DM Sans, sans-serif",
+                  boxShadow: remaining > 0 ? "none" : undefined,
+                }}
+              >
+                {remaining > 0 ? "닫기" : `결과 확인하기 (${doneCount}명)`}
+              </button>
             </>
+          )}
+          </>
           )}
         </div>
       </motion.div>

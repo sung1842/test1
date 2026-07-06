@@ -3,13 +3,16 @@
 import { useEffect } from "react";
 import { X, Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
 import { Candidate } from "@/types/candidate";
+import type { FitReport } from "@/types/fitReport";
 import Avatar from "./Avatar";
 import RoleBadge from "./RoleBadge";
 import SkillTag from "./SkillTag";
+import FitReportDetail from "./FitReportDetail";
 
 interface DetailPanelProps {
   candidate: Candidate | null;
   isBookmarked: boolean;
+  fitReport?: FitReport;
   onClose: () => void;
   onBookmark: (id: string) => void;
   onSkillClick: (skill: string) => void;
@@ -35,7 +38,7 @@ function LinkButton({
         color: "var(--text-secondary)",
         fontFamily: "DM Sans, sans-serif",
       }}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(91,110,245,0.1)]"
+      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),0.1)]"
     >
       <Icon className="w-4 h-4" />
       {label}
@@ -46,6 +49,7 @@ function LinkButton({
 export default function DetailPanel({
   candidate,
   isBookmarked,
+  fitReport,
   onClose,
   onBookmark,
   onSkillClick,
@@ -168,6 +172,8 @@ export default function DetailPanel({
             </div>
           </div>
 
+          {fitReport && <FitReportDetail report={fitReport} />}
+
           <div
             className="mb-6 pb-6"
             style={{ borderBottom: "1px solid var(--border-color)" }}
@@ -252,15 +258,8 @@ export default function DetailPanel({
               {/* 메시지 보내기 버튼 */}
               <button
                 onClick={() => onMessage?.(candidate)}
-                style={{
-                  background: "linear-gradient(135deg, #e8294a, #b5182d)",
-                  color: "white",
-                  fontFamily: "DM Sans, sans-serif",
-                  border: "none",
-                  boxShadow: "0 6px 20px rgba(232,41,74,0.35)",
-                  cursor: "pointer",
-                }}
-                className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90 hover:shadow-lg"
+                className="btn-brand btn-brand--shadow-lg flex items-center justify-center gap-2 flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90"
+                style={{ fontFamily: "DM Sans, sans-serif" }}
               >
                 <MessageSquare className="w-4 h-4" />
                 메시지 보내기

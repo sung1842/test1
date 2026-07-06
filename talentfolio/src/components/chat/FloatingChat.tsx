@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/features";
 import { Candidate } from "@/types/candidate";
 import AuthModal from "@/components/AuthModal";
 
@@ -185,7 +186,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                         {conv.participant.name}
                       </span>
                         {conv.isAI && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 4, fontSize: 9, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 4, fontSize: 9, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
                           <Bot size={8} /> AI
                         </span>
                       )}
@@ -202,11 +203,12 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                       {conv.lastMessage || "대화를 시작해보세요"}
                     </span>
                     {conv.unreadCount > 0 && (
-                      <span style={{
+                      <span
+                        className="badge-brand"
+                        style={{
                         minWidth: 18, height: 18, borderRadius: 9, padding: "0 5px",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "linear-gradient(135deg, #f6042e, #c0001e)",
-                        color: "white", fontSize: 10, fontWeight: 700,
+                        fontSize: 10, fontWeight: 700,
                         fontFamily: "DM Sans, sans-serif", flexShrink: 0,
                       }}>
                         {formatBadgeCount(conv.unreadCount)}
@@ -227,8 +229,8 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                     onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
                     style={{
                       position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                      background: "rgba(246,4,46,0.1)", border: "1px solid rgba(246,4,46,0.3)",
-                      borderRadius: 8, padding: 6, cursor: "pointer", color: "#f6042e", display: "flex",
+                      background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)",
+                      borderRadius: 8, padding: 6, cursor: "pointer", color: "var(--accent)", display: "flex",
                     }}
                   >
                     <Trash2 size={12} />
@@ -301,7 +303,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
               {conversation.participant.name}
             </span>
               {conversation.isAI ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(246,4,46,0.12)", border: "1px solid rgba(246,4,46,0.25)", borderRadius: 5, fontSize: 9, color: "#f6042e", fontFamily: "DM Sans, sans-serif" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 5, fontSize: 9, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
                 <Bot size={9} /> AI 채팅
               </span>
             ) : (
@@ -339,14 +341,16 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
               transition={SPRING}
               style={{ display: "flex", flexDirection: "column", alignItems: isOwn ? "flex-end" : "flex-start" }}
             >
-              <div style={{
+              <div
+                className={isOwn ? "surface-brand" : undefined}
+                style={{
                 maxWidth: "80%", padding: "8px 12px",
                 borderRadius: isOwn ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
-                background: isOwn ? "linear-gradient(135deg, #f6042e, #c0001e)" : "#0f0b18",
+                background: isOwn ? undefined : "#0f0b18",
                 border: isOwn ? "none" : "1px solid #271c32",
                 color: isOwn ? "white" : "var(--text-primary)",
                 fontSize: 13, fontFamily: "DM Sans, sans-serif", lineHeight: 1.5,
-                boxShadow: isOwn ? "0 4px 12px rgba(246,4,46,0.3)" : "none",
+                boxShadow: isOwn ? "var(--brand-shadow-btn)" : "none",
                 wordBreak: "break-word",
               }}>
                 {msg.content}
@@ -395,21 +399,21 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
             fontSize: 13, outline: "none", transition: "border-color 0.15s",
             opacity: isAIThinking ? 0.5 : 1,
           }}
-          onFocus={e => (e.currentTarget.style.borderColor = "rgba(246,4,46,0.5)")}
+          onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)")}
           onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
         />
         <motion.button
           whileHover={{ scale: isAIThinking ? 1 : 1.08 }} whileTap={{ scale: isAIThinking ? 1 : 0.92 }}
           onClick={handleSend}
           disabled={isAIThinking}
+          className={(input.trim() && !isAIThinking) ? "btn-brand btn-brand--shadow-btn" : undefined}
           style={{
             width: 36, height: 36, borderRadius: 10, border: "none",
             cursor: (input.trim() && !isAIThinking) ? "pointer" : "default",
-            background: (input.trim() && !isAIThinking) ? "linear-gradient(135deg, #f6042e, #c0001e)" : "#0b0812",
+            background: (input.trim() && !isAIThinking) ? undefined : "#0b0812",
             color: (input.trim() && !isAIThinking) ? "white" : "#3a2a4a",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, transition: "background 0.2s, color 0.2s",
-            boxShadow: (input.trim() && !isAIThinking) ? "0 4px 12px rgba(246,4,46,0.35)" : "none",
           }}
         >
           {isAIThinking ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
@@ -463,10 +467,14 @@ export default function FloatingChat({
 
   // ── Supabase 대화 목록 로드 ───────────────────────────────────────────────
   const loadConversations = useCallback(async () => {
-    if (!user) return;
+    const client = supabase;
+    if (!user || !isSupabaseConfigured() || !client) {
+      setLoadingConvs(false);
+      return;
+    }
     setLoadingConvs(true);
 
-    const { data: convData } = await supabase
+    const { data: convData } = await client
       .from("conversations")
       .select("*")
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
@@ -478,10 +486,10 @@ export default function FloatingChat({
       convData.map(async (conv) => {
         const otherId = conv.user_a === user.id ? conv.user_b : conv.user_a;
 
-        const { data: profile } = await supabase
+        const { data: profile } = await client
           .from("profiles").select("*").eq("id", otherId).single();
 
-        const { data: msgs } = await supabase
+        const { data: msgs } = await client
           .from("messages").select("*")
           .eq("conversation_id", conv.id)
           .order("created_at", { ascending: true });
@@ -550,11 +558,21 @@ export default function FloatingChat({
   const startRealConversation = useCallback(async (target: PendingTarget) => {
     if (!user) return;
 
+    if (!isSupabaseConfigured() || !supabase) {
+      if (target.candidateInfo) {
+        startAIConversation(target.candidateInfo);
+      } else {
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    const client = supabase;
     let targetId: string | undefined = target.supabaseId;
 
     if (!targetId) {
       // 이름으로 폴백 검색
-      const { data: p } = await supabase
+      const { data: p } = await client
         .from("profiles").select("id").eq("name", target.name).single();
       targetId = p?.id;
     }
@@ -568,7 +586,7 @@ export default function FloatingChat({
     // 자기 자신에게 채팅 방지
     if (targetId === user.id) return;
 
-    const { data: existing } = await supabase
+    const { data: existing } = await client
       .from("conversations").select("id")
       .or(`and(user_a.eq.${user.id},user_b.eq.${targetId}),and(user_a.eq.${targetId},user_b.eq.${user.id})`)
       .maybeSingle();
@@ -576,7 +594,7 @@ export default function FloatingChat({
     let convId = existing?.id as string | undefined;
 
     if (!convId) {
-      const { data: newConv } = await supabase
+      const { data: newConv } = await client
         .from("conversations").insert({ user_a: user.id, user_b: targetId })
         .select("id").single();
       convId = newConv?.id;
@@ -587,7 +605,7 @@ export default function FloatingChat({
     await loadConversations();
     setIsOpen(true);
     setActiveConvId(convId);
-  }, [user, loadConversations]);
+  }, [user, loadConversations, startAIConversation]);
 
   // pendingTarget 처리
   useEffect(() => {
@@ -612,9 +630,10 @@ export default function FloatingChat({
 
   // ── Realtime: 활성 Supabase 대화 ────────────────────────────────────────
   useEffect(() => {
-    if (!user || !activeConvId || activeConvId.startsWith("ai-")) return;
+    if (!user || !activeConvId || activeConvId.startsWith("ai-") || !supabase) return;
 
-    const channel = supabase
+    const client = supabase;
+    const channel = client
       .channel(`conv-${activeConvId}`)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "messages",
@@ -633,14 +652,15 @@ export default function FloatingChat({
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, [user, activeConvId]);
 
   // ── 글로벌 인박스 구독 ───────────────────────────────────────────────────
   useEffect(() => {
-    if (!user) return;
+    if (!user || !supabase) return;
 
-    const channel = supabase
+    const client = supabase;
+    const channel = client
       .channel(`inbox-${user.id}`)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "messages",
@@ -666,14 +686,14 @@ export default function FloatingChat({
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, [user, loadConversations]);
 
   // ── 대화 선택 + 읽음 처리 ────────────────────────────────────────────────
   const selectConversation = (id: string) => {
     setActiveConvId(id);
     setConversations(prev => prev.map(c => c.id === id ? { ...c, unreadCount: 0 } : c));
-    if (user && !id.startsWith("ai-")) {
+    if (user && supabase && !id.startsWith("ai-")) {
       supabase.from("messages")
         .update({ is_read: true })
         .eq("conversation_id", id)
@@ -686,7 +706,7 @@ export default function FloatingChat({
   const deleteConversation = async (id: string) => {
     if (id.startsWith("ai-")) {
       setConversations(prev => prev.filter(c => c.id !== id));
-    } else {
+    } else if (supabase) {
       await supabase.from("conversations").delete().eq("id", id);
       setConversations(prev => prev.filter(c => c.id !== id));
     }
@@ -770,7 +790,7 @@ export default function FloatingChat({
 
   // ── Supabase 메시지 전송 ─────────────────────────────────────────────────
   const sendSupabaseMessage = async (convId: string, content: string) => {
-    if (!user) return;
+    if (!user || !supabase) return;
 
     const tempId  = `temp-${Date.now()}`;
     const tempMsg: UIMessage = {
@@ -847,7 +867,7 @@ export default function FloatingChat({
               background: "rgba(2,0,5,0.97)",
               border: "1px solid #271c32", borderRadius: 20,
               backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)",
-              boxShadow: "0 28px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(246,4,46,0.06)",
+              boxShadow: "0 28px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(var(--accent-rgb), 0.06)",
               display: "flex", flexDirection: "column", overflow: "hidden",
             }}
           >
@@ -857,11 +877,12 @@ export default function FloatingChat({
               padding: "13px 14px", borderBottom: "1px solid #271c32", flexShrink: 0,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
+                <div
+                  className="surface-brand"
+                  style={{
                   width: 28, height: 28, borderRadius: 8,
-                  background: "linear-gradient(135deg, #f6042e, #c0001e)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 10px rgba(246,4,46,0.4)",
+                  boxShadow: "var(--brand-shadow-md)",
                 }}>
                   <MessageSquare size={14} color="white" />
                 </div>
@@ -869,9 +890,10 @@ export default function FloatingChat({
                   메시지
                 </span>
                 {!activeConv && totalUnread > 0 && (
-                  <span style={{
-                    background: "linear-gradient(135deg, #f6042e, #c0001e)",
-                    color: "white", fontSize: 10, fontWeight: 700,
+                  <span
+                    className="badge-brand"
+                    style={{
+                    fontSize: 10, fontWeight: 700,
                     borderRadius: 10, padding: "1px 7px",
                     fontFamily: "DM Sans, sans-serif",
                   }}>
@@ -934,29 +956,21 @@ export default function FloatingChat({
         whileTap={{ scale: 0.92 }}
         onClick={handleButtonClick}
         title={!user ? "로그인 후 채팅 이용 가능" : "메시지"}
+        className={`btn-brand ${panelOpen ? "btn-brand--open" : "btn-brand--shadow-fab"}`}
         style={{
           position: "fixed",
           bottom: "max(24px, env(safe-area-inset-bottom, 24px))",
           left: 16,
           zIndex: 201,
           width: 52, height: 52, borderRadius: 16,
-          border: panelOpen ? "1px solid rgba(232,41,74,0.35)" : "none",
-          cursor: "pointer",
-          background: panelOpen
-            ? "rgba(232,41,74,0.1)"
-            : "linear-gradient(135deg, #e8294a, #b5182d)",
-          color: "white",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: panelOpen
-            ? "0 0 0 1px rgba(232,41,74,0.2)"
-            : "0 8px 24px rgba(232,41,74,0.45)",
           transition: "background 0.2s, box-shadow 0.2s, border 0.2s",
         } as React.CSSProperties}
       >
         <AnimatePresence mode="wait">
           {panelOpen ? (
             <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <X size={20} color="#e8294a" />
+              <X size={20} color="var(--accent)" />
             </motion.span>
           ) : !user ? (
             <motion.span key="login" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={{ duration: 0.15 }}>
@@ -978,10 +992,10 @@ export default function FloatingChat({
                 position: "absolute", top: -5, right: -5,
                 minWidth: 18, height: 18, borderRadius: 9, padding: "0 4px",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                background: "#e8294a", color: "white",
                 fontSize: 10, fontWeight: 700, fontFamily: "DM Sans, sans-serif",
                 border: "2px solid #080808",
               }}
+              className="badge-brand"
             >
               {formatBadgeCount(totalUnread)}
             </motion.span>

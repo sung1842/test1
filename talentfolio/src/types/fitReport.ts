@@ -35,5 +35,7 @@ export const STAGE_LABELS: Record<string, string> = {
   queued:          "대기 중...",
 };
 
-export const JD_ANALYZER_URL =
-  process.env.NEXT_PUBLIC_JD_ANALYZER_URL ?? "http://localhost:3001";
+import { getJdAnalyzerUrl, isJdAnalyzerConfigured } from "@/lib/features";
+
+export { isJdAnalyzerConfigured };
+export const JD_ANALYZER_URL = getJdAnalyzerUrl();

@@ -1,8 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
 @import "tailwindcss";
 
-/* ── Color Palette: 조합 B — Midnight × Crimson × Amber ── */
-/*   기저: 미드나잇 #020005  |  강조1: 크림슨 #f6042e  |  강조2: 앰버 #ffae2e (최소화) */
+/* ── Color Palette: 조합 B — Midnight × Copper(brand) × Crimson(dev) × Amber(des) ── */
+/*   기저: 미드나잇 #020005 | 브랜드: 코퍼 #E07A5F | 개발자: 크림슨 #f6042e | 디자이너: 앰버 #ffae2e */
 :root {
   /* Background layers — midnight base */
   --background: #020005;
@@ -10,14 +10,26 @@
   --surface-elevated: #16101f;
   --border-color: #271c32;
 
-  /* Accents */
-  --accent: #f6042e;          /* crimson — primary / developer */
-  --accent-rgb: 246,4,46;
+  /* Brand accent (logo, CTA, 배너, 메시지 버튼) */
+  --accent: #E07A5F;          /* copper — primary brand */
+  --accent-dark: #C96F4A;     /* darker copper — gradient endpoint */
+  --accent-rgb: 224, 122, 95;
   --accent-alt: #ffae2e;      /* amber — designer / use sparingly */
 
-  /* Role badge colors */
+  /* Role badge colors — 개발자/디자이너 전용 (브랜드와 분리) */
   --dev-color: #f6042e;       /* crimson */
+  --dev-color-rgb: 246, 4, 46;
   --des-color: #ffae2e;       /* amber */
+  --des-color-rgb: 255, 174, 46;
+
+  /* 브랜드 그림자/장식 (그라데이션은 .btn-brand 클래스에서만 — 인라인 var() 배경은 깨짐) */
+  --brand-shadow-sm: 0 4px 14px rgba(var(--accent-rgb), 0.4);
+  --brand-shadow-md: 0 4px 16px rgba(var(--accent-rgb), 0.4);
+  --brand-shadow-lg: 0 6px 20px rgba(var(--accent-rgb), 0.35);
+  --brand-shadow-btn: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+  --brand-shadow-fab: 0 8px 24px rgba(var(--accent-rgb), 0.45);
+  --brand-glow-hero: radial-gradient(ellipse 60% 40% at 50% 45%, rgba(var(--accent-rgb), 0.12) 0%, transparent 70%);
+  --brand-line: linear-gradient(to right, transparent, rgba(var(--accent-rgb), 0.5), transparent);
 
   /* Text */
   --text-primary: #f0ecf8;    /* near-white, slight cool tint */
@@ -69,7 +81,55 @@ body {
 .animate-fadeInUp    { animation: fadeInUp 0.4s ease-out forwards; }
 .animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
 
+/* JD 적합도 최상위(strong_fit) 카드 강조 펄스 — 초록 글로우가 은은하게 맥동 */
+@keyframes fitPulseStrong {
+  0%, 100% { box-shadow: 0 0 0 2px #22c55e, 0 0 22px rgba(34,197,94,0.45), 0 18px 44px rgba(0,0,0,0.6); }
+  50%      { box-shadow: 0 0 0 2px #22c55e, 0 0 42px rgba(34,197,94,0.7),  0 18px 44px rgba(0,0,0,0.6); }
+}
+.fit-pulse-strong { animation: fitPulseStrong 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fit-pulse-strong { animation: none; }
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/*
+ * 브랜드 CTA 버튼 — 반드시 class로 적용.
+ * 원인: (1) 인라인 linear-gradient(..., var(--accent)) 는 무효
+ *       (2) 인라인 background: var(--brand-gradient) 도 Tailwind button 리셋·framer-motion과 겹치면 채움 소실
+ * 해결: stylesheet에서 background-color + background-image 이중 지정 + button.btn-brand 특이도
+ */
+button.btn-brand,
+a.btn-brand {
+  background-color: var(--accent);
+  background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+.btn-brand--shadow-sm { box-shadow: var(--brand-shadow-sm); }
+.btn-brand--shadow-md { box-shadow: var(--brand-shadow-md); }
+.btn-brand--shadow-lg { box-shadow: var(--brand-shadow-lg); }
+.btn-brand--shadow-btn { box-shadow: var(--brand-shadow-btn); }
+.btn-brand--shadow-fab { box-shadow: var(--brand-shadow-fab); }
+button.btn-brand--open,
+a.btn-brand--open {
+  background-image: none;
+  background-color: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.2);
+}
+/* 버튼이 아닌 요소(말풍선, 뱃지)용 브랜드 채움 */
+.surface-brand {
+  background-color: var(--accent);
+  background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #ffffff;
+}
+.badge-brand {
+  background-color: var(--accent);
+  color: #ffffff;
 }

@@ -346,7 +346,54 @@ useEffect(() => {
 
 ---
 
-### Phase M1 — JD 핏 스코어 카드 ★ 최우선
+### ⏩ 현재 진행 상태 & 다음 작업 인계 (2026-06-24 기준)
+
+**완료**
+- ✅ **Phase M1 (JD 핏 스코어) 완료** — 아래 M1 상세 참고. 추가로 다음 개선까지 반영됨:
+  - `JdMatchModal`: 자유 텍스트 폼(직군/인원/필수기술/우대/담당업무/조직문화), 입력값을 부모(`page.tsx`) 메모리에 보존(모달 닫아도 유지, 새로고침/로그아웃 시 초기화), 모달 열릴 때 배경 스크롤 잠금(`html`+`body`).
+  - 3단계 퍼널: `/api/jd/plan`(직군·키워드 확보 → 코드 기반 키워드 매칭/랭킹) → 상위 N명만 `5명 배치` LLM 분석.
+  - 결과 노출: 분석 완료 시 메인 목록을 **"JD 적합도순"** 정렬로 자동 전환 + `결과 확인하기`가 후보 섹션으로 스크롤.
+  - `CandidateCard`: 적합도(verdict)별 테두리/글로우/3D 강조, `strong_fit`은 CSS 펄스(`fit-pulse-strong`).
+  - `FitReportDetail`(신규) → `DetailPanel` 상단에 "왜 적합한지"(종합점수/CEO총평 + 기술·경험·컬처핏별 점수/적합·보완 항목/근거) 표시.
+
+**실제 구성 메모 (문서와 코드 차이 주의)**
+- 포트: **orchestrator = 3001**, **mcp-server = 3002**. talentfolio는 `JD_ANALYZER_URL`(기본 `http://localhost:3001`, `src/types/fitReport.ts`)로 **orchestrator(3001)** 를 호출함. (아래 M1 본문의 일부 포트 표기는 옛 기준이라 코드가 우선)
+- 실행 순서: mcp-server(3002) → orchestrator(3001) → talentfolio(3000). Redis(Docker) 필수.
+- Gemini 키: `jd-fit-analyzer/.env.local`의 `GEMINI_API_KEY`만 사용(전역 env 없음). Tier1 선불 키 사용 중 — 잔액 소진 시 AI Studio에서 충전 필요. 키 변경 시 **mcp-server 재시작** 필수(키는 시작 시 1회 로드).
+
+- ✅ **Phase M2 (Slack HIL 인터랙티브 승인 게이트) — 코드 구현 완료** (2026-06-24). 아래 M2 상세 참고.
+  - jd-fit-analyzer: `notify_slack_approval`/`update_slack_decision` MCP tool, orchestrator `reviewSourcingAction` 공용 함수 + 액션 생성 시 Block Kit 승인요청 자동 발송 + `POST /api/slack/interactivity`(서명 검증·ack·승인/반려).
+  - talentfolio: `/sourcing`(후보 검색 + Slack 승인요청 작성), `/sourcing/review`(HIL 폴링 승인/반려), `Header`에 "소싱" 진입점.
+  - **남은 것은 코드가 아니라 외부 설정**: Slack App Interactivity 활성화 + `SLACK_SIGNING_SECRET` 등록 + 공개 터널(ngrok 등). 아래 M2 "남은 외부 설정" 참고.
+
+**다음 작업 우선순위** (2026-06-24 수정안 반영):
+
+| 순위 | Phase | 내용 | 상태 |
+|------|-------|------|------|
+| 1 | **M2.5** | JD 분석 완료 → `strong_fit` 임계값 쇼트리스트 → `sourcing_actions` + Slack HIL 자동 요청 | ✅ 코드 완료 |
+| 2 | **M2.6** | Slack Block Kit **Card/Carousel** + Talentfolio `/brief/[id]` unfurl 페이지 | ✅ 코드 완료 |
+| 3 | **M4** | **리크루터별 Notion OAuth** + `candidate_assessments` 정규화 → 개인 DB sync | ✅ 코드 완료 |
+| 4 | **M3** | GitHub MCP enrich → Slack Card / DetailPanel | ⏳ 대기 |
+| 5 | (후순위) | 주간 digest, 저장 JD 재매칭 | ⏳ 대기 |
+
+**이상 플로우 (목표 UX)**:
+```
+리크루터 JD 입력 (이벤트 — 상시 사냥 ❌)
+  → keyword plan (저비용) → 상위 K명만 LLM (비용 캡)
+  → strong_fit 임계값 + max 5명 쇼트리스트 (고정 N명 ❌)
+  → Slack Card/Carousel 승인 요청 (M2.6) + (선택) Notion sync (M4)
+  → 리크루터 ✅/❌ (Slack 또는 /sourcing/review)
+  → 승인 시 팀 채널에 리치 카드 발송
+```
+
+**운영 원칙 (사업·비용)**:
+- **Always-on LLM 사냥 금지** — JD 제출·분석 완료 같은 **이벤트**에서만 고비용 작업 실행
+- 프로필 변경 시 **임베딩만** 갱신 (LLM 없음)은 추후 허용
+- `/sourcing` 수동 검색 UI는 **축소 예정** → `/sourcing/review`(승인·이력) 중심
+
+---
+
+### Phase M1 — JD 핏 스코어 카드 ✅ 완료
 
 **목표**: Talentfolio 메인 페이지에 "JD 매칭 분석" 기능 추가. 리크루터가 채용공고(JD)를
 입력하면 후보자 카드에 `strong_fit` / `possible_fit` / `weak_fit` 뱃지 + 점수가 실시간으로 표시.
@@ -381,11 +428,24 @@ JD_ANALYZER_URL=http://localhost:3002   # jd-fit-analyzer orchestrator 주소
 
 ---
 
-### Phase M2 — Slack HIL 인터랙티브 승인 게이트
+### Phase M2 — Slack HIL 인터랙티브 승인 게이트 ✅ 코드 완료 / ⏳ 외부 설정 대기
 
 **목표**: 현재 단방향 Slack 알림(talentfolio → Slack)을 **양방향 인터랙티브**로 확장.
 리크루터가 Slack에서 "✅ 승인" / "❌ 거절" 버튼 클릭 → jd-fit-analyzer HIL 상태 업데이트 →
 talentfolio `/sourcing/review` 화면에 반영.
+
+**⚙️ 실제 구현 메모 (코드가 문서보다 우선)**
+- Phase 5에서 sourcing tool은 **별도 `sourcing-mcp-server`가 아니라 메인 `mcp-server`(:3002)** 에 들어있음. M2도 여기에 추가.
+- `sourcing_actions.status` enum은 `pending → approved/rejected/executed/failed` (문서의 `draft/pending_review/expired`는 미구현). 테이블은 **jd-fit-analyzer 자체 Supabase**(`bnezesulvtblzkaiipns`, service_role).
+- **흐름**: talentfolio `/sourcing`에서 `POST /api/sourcing/actions`(pending 생성) → orchestrator가 **같은 채널**로 ✅/❌ 버튼 Block Kit 승인요청 자동 발송(`notify_slack_approval`, ts를 `result.approval`에 저장) → 리크루터가 **Slack 버튼** 또는 **웹 `/sourcing/review`** 에서 승인 → 둘 다 orchestrator `reviewSourcingAction()` 공용 로직을 타고, 승인 시에만 `notify_slack`으로 실제 메시지 전송(`executed`) + 승인요청 카드를 `update_slack_decision`(chat.update)으로 갱신.
+- Slack 콜백 수신: orchestrator `POST /api/slack/interactivity` — `SLACK_SIGNING_SECRET`으로 HMAC 서명 검증 후 3초 내 200 ack, 이후 비동기 처리(Anti-Blocking). raw body가 필요해 이 라우트에만 `express.raw` 적용(전역 `express.json`은 urlencoded를 소비하지 않음).
+
+**🔧 남은 외부 설정 (코드 외 — 사용자 직접)**
+1. **Slack App**: api.slack.com/apps → 앱 생성/선택 → **Interactivity & Shortcuts** ON → Request URL에 `https://<공개주소>/api/slack/interactivity` 등록. Bot Token Scopes에 `chat:write`. 워크스페이스에 install.
+2. **`.env.local`** (jd-fit-analyzer): `SLACK_SIGNING_SECRET=`(Basic Information > Signing Secret) 추가. **변경 시 orchestrator 재시작** 필수. (`SLACK_BOT_TOKEN`은 이미 설정됨)
+3. **공개 터널**: 로컬 orchestrator(:3001)는 Slack이 직접 못 부르므로 `ngrok http 3001`(또는 cloudflared) 등으로 노출 후 그 URL을 1번 Request URL에 사용.
+4. **(선택) n8n 경유**: Slack Request URL을 n8n Webhook으로 두고, n8n에서 payload의 `actions[0].value`(=actionId)와 `action_id`(approve_sourcing/reject_sourcing)를 파싱해 orchestrator `POST /api/sourcing/actions/:id/review { action, decidedBy }`를 호출. 이 경우 서명 검증은 n8n 단에서 수행(또는 생략). 직접 수신 엔드포인트와 동일한 `reviewSourcingAction` 로직을 타므로 승인 카드 갱신도 동일하게 동작.
+5. **테스트 채널**: `/sourcing`의 기본 채널은 `#recruiting` — 봇이 초대된 실제 채널명으로 변경해 사용.
 
 **연결 지점**:
 - jd-fit-analyzer `sourcing_actions` 테이블 (status: `draft` → `pending_review` → `approved/rejected`)
@@ -417,12 +477,77 @@ N8N_SLACK_WEBHOOK_URL=...          # n8n → Slack 발송 트리거
 }
 ```
 
-**구현 순서**:
-1. Slack App 설정 (Interactivity 활성화, Slash Command 등록)
-2. n8n 워크플로우 확장 (기존 알림 → Block Kit 인터랙티브 메시지)
-3. Slack Interactivity Webhook → n8n → PATCH `/api/sourcing-actions/:id/review`
-4. talentfolio `/sourcing` 화면 구현
-5. talentfolio `/sourcing/review` 화면 구현 (HIL 상태 폴링)
+**구현 순서 (코드 부분 완료 체크)**:
+1. ✅ Block Kit 인터랙티브 메시지 발송 (`mcp-server`: `notify_slack_approval`, `update_slack_decision`)
+2. ✅ orchestrator 승인/반려 공용 로직(`reviewSourcingAction`) + 액션 생성 시 승인요청 자동 발송
+3. ✅ Slack Interactivity 수신 엔드포인트 `POST /api/slack/interactivity`(서명 검증) — n8n 경유도 동일 `reviewSourcingAction` 재사용
+4. ✅ talentfolio `/sourcing` 화면 (후보 검색 + Slack 승인요청 작성)
+5. ✅ talentfolio `/sourcing/review` 화면 (HIL 상태 4초 폴링, Slack 결정도 반영)
+6. ⏳ (외부) Slack App Interactivity 활성화 + `SLACK_SIGNING_SECRET` 등록 + 공개 터널 — 위 "남은 외부 설정" 참고
+
+**변경된 파일**:
+- jd-fit-analyzer: `mcp-server/src/lib/slack.ts`, `mcp-server/src/tools/notifySlack.ts`, `mcp-server/src/index.ts`, `orchestrator/src/server.ts`, `orchestrator/src/lib/slackVerify.ts`(신규)
+- talentfolio: `src/app/sourcing/page.tsx`, `src/app/sourcing/review/page.tsx`(신규), `src/types/sourcing.ts`(신규), `src/components/Header.tsx`(소싱 링크)
+
+---
+
+### Phase M2.5 — JD 완료 시 자동 쇼트리스트 → Slack HIL ✅ 코드 완료
+
+**목표**: 리크루터가 JD 분석을 마치면 `strong_fit` + `overallScore ≥ 75` 후보(최대 5명)만 자동으로
+`sourcing_actions`에 등록하고 Slack 승인 요청을 보낸다. **고정 N명 자동 확정 ❌**, **임계값 + 상한 ✅**.
+
+**트리거 (이벤트 기반)**:
+- `JdMatchModal`에서 전체 후보 분석 완료 시, 또는 **「결과 확인하기」** 클릭 시
+- 동일 `(jdHash, userId)` pending 액션이 있으면 중복 생성 안 함
+
+**API**:
+- `POST /api/sourcing/auto-from-jd` — body: `{ jd, userId, channel?, reports: FitReport[] }`
+- 응답: `{ created, reason?, action?, shortlist?, approvalWarning? }`
+
+**쇼트리스트 규칙** (`shared/lib/shortlist.ts`):
+```typescript
+verdict === "strong_fit" && overallScore >= 75 → sort desc → slice(0, 5)
+```
+
+**환경변수** (jd-fit-analyzer, 선택):
+```env
+SLACK_DEFAULT_CHANNEL=#recruiting   # auto-from-jd 기본 채널
+```
+
+**변경 파일**:
+- jd-fit-analyzer: `shared/lib/shortlist.ts`, `orchestrator/src/lib/autoSourcing.ts`, `orchestrator/src/lib/createSourcingWithApproval.ts`, `orchestrator/src/server.ts`, `shared/types.ts`
+- talentfolio: `src/components/JdMatchModal.tsx`
+
+**UI 축소 (후속)**:
+- `/sourcing` 수동 검색 → 이력 조회 위주로 축소 (M2.6 이후)
+
+---
+
+### Phase M2.6 — Slack 리치 카드 + Talentfolio Brief 페이지 ✅ 코드 완료
+
+**목표**: 단순 mrkdwn 대신 채용팀이 한눈에 볼 수 있는 **Block Kit Card/Carousel** 승인 카드.
+상세는 Talentfolio `/brief/[candidateId]?jd=<jdHash>` OG unfurl 링크.
+
+**3층 출력**:
+1. Slack Card/Carousel (요약: 점수, matched 스킬, CEO 한 줄) + Brief 보기 버튼
+2. Talentfolio `/brief/...` (풀 FitReport + 프로필, OG meta)
+3. (M4) Notion 페이지 링크
+
+**구현 위치**:
+- `jd-fit-analyzer/mcp-server/src/lib/slack.ts` — `buildCandidateCardBlocks`, `buildShortlistCarouselBlocks`, `buildShortlistApprovalBlocks`, `buildShortlistPublishedBlocks`
+- `jd-fit-analyzer/shared/lib/shortlist.ts` — `fitReportToBriefCard`, `fitReportsToBriefCards`
+- `jd-fit-analyzer/orchestrator` — `GET /api/brief?candidateId=&jdHash=`, 승인 시 리치 Card 전송
+- `talentfolio/src/app/brief/[candidateId]/page.tsx` — Brief UI + Open Graph
+- `talentfolio/src/lib/getCandidate.ts`, `src/lib/briefReport.ts`
+
+**환경변수** (jd-fit-analyzer `.env.local`):
+```env
+TALENTFOLIO_URL=http://localhost:3000   # Slack Card Brief 링크·unfurl 기준 URL
+```
+
+**Gemini 없이 테스트 가능**:
+- Brief 페이지: `http://localhost:3000/brief/001` (프로필만)
+- Slack Card 빌더: cards 배열이 payload에 있으면 mrkdwn 대신 Carousel (수동 `/api/sourcing/actions`에 cards JSON 전달 가능)
 
 ---
 
@@ -457,38 +582,35 @@ GITHUB_PERSONAL_ACCESS_TOKEN=ghp_...   # public repo 읽기 전용으로 충분
 
 ---
 
-### Phase M4 — Notion MCP 후보자 리포트 Export
+### Phase M4 — Notion 개인 DB 연동 (리크루터별 OAuth) ✅ 코드 완료
 
-**목표**: FIT 스코어가 높은 후보자(또는 북마크된 후보자)를 Notion 데이터베이스에 자동 export.
-각 후보자 → Notion 페이지 1개 (이름/점수/분석 요약/스킬/링크 포함).
+**목표**: 각 리크루터가 **자신의 Notion 워크스페이스·후보 DB**에 OAuth로 연결하고,
+JD 분석 결과(승인 후)를 **개인 Notion database**에 sync.
 
-**연결 지점**:
-- `@notionhq/notion-mcp-server` (Notion 공식 MCP 서버)
-- jd-fit-analyzer `sourcing-mcp-server/`에 `export_to_notion` tool 추가
-- talentfolio DetailPanel / FitReport 화면에 "Notion으로 내보내기" 버튼
+**DB Migration** (jd-fit-analyzer Supabase SQL Editor):
+- `docs/architecture/sql/008_m4_notion.sql` 실행
 
-**필요 환경변수 (jd-fit-analyzer)**:
+**API** (orchestrator :3001):
+- `GET /api/notion/oauth/start?userId=` → Notion OAuth redirect
+- `GET /api/notion/oauth/callback` → 토큰 저장 → talentfolio `/settings/integrations?notion=connected`
+- `GET /api/notion/integrations?userId=` — 연동 상태 (토큰 미노출)
+- `PATCH /api/notion/integrations` — `{ userId, dataSourceId }` DB 선택
+- `GET /api/notion/databases?userId=` — 접근 가능 DB 목록
+- `POST /api/notion/sync` — `{ userId, jdRunId, candidateIds[] }` 수동 sync
+- MCP tool: `sync_candidates_to_notion`
+
+**자동 sync**: Slack HIL 승인(`reviewSourcingAction` executed) + `payload.jdRunId` 있을 때 Notion sync 시도 (실패해도 Slack은 완료)
+
+**Talentfolio UI**: `/settings/integrations` — OAuth 연결 + DB 선택 (Header 「연동」)
+
+**환경변수** (jd-fit-analyzer):
 ```env
-NOTION_API_KEY=secret_...             # Notion Integration Token
-NOTION_CANDIDATE_DB_ID=...            # 후보자 저장 대상 DB ID
+NOTION_CLIENT_ID=
+NOTION_CLIENT_SECRET=
+NOTION_REDIRECT_URI=http://localhost:3001/api/notion/oauth/callback
 ```
 
-**Notion 페이지 구조**:
-```
-📄 [후보자명] — strong_fit (92점)
-├─ 기술스택 분석: matched / missing 항목
-├─ 경험 분석: 요약
-├─ 컬처핏: 요약
-├─ CEO 코멘트
-├─ 스킬 태그
-└─ GitHub / 포트폴리오 / LinkedIn 링크
-```
-
-**구현 순서**:
-1. Notion Integration 생성 + DB 연결
-2. jd-fit-analyzer에 `export_to_notion` tool 구현
-3. talentfolio `DetailPanel`에 "Notion Export" 버튼 추가
-4. Export 완료 시 Notion 페이지 URL을 토스트로 표시
+**Notion DB 필수 컬럼**: Name(title), Score(number), Verdict, CEO Summary, Matched Skills, TalentFolio(url), External ID(text)
 
 ---
 
