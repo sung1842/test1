@@ -1,0 +1,45 @@
+html:has(.demo-root),
+html:has(.demo-root) body {
+  background: #f7fbf9 !important;
+  color: #10231c;
+}
+.demo-root { min-height: 100vh; color: #10231c; }
+.demo-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 22px;
+  backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(16, 35, 28, 0.06);
+}
+.demo-back {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.55;
+  text-decoration: none;
+}
+.demo-badge {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  font-weight: 650;
+}
+.demo-spec {
+  background: #f7fbf9;
+  color: #10231c;
+}
+.demo-spec .demo-topbar {
+  background: rgba(247, 251, 249, 0.82);
+  border-bottom-color: rgba(15, 118, 110, 0.12);
+}
+
+/* Enterprise only — stack sidebar above content under 900px; spec stays untouched */
+@media (max-width: 900px) {
+  .demo-enterprise .ent-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}

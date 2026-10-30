@@ -17,8 +17,8 @@ const alanisHand = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "TalentFolio — 개발자·디자이너 이력서 열람 플랫폼",
-  description: "기업 인사팀을 위한 개발자·디자이너 포트폴리오 열람 플랫폼",
+  title: "Talentfolio · 작업물로 만나는 채용",
+  description: "구직자는 작업물로 보여 주고, 기업은 JD 한 장으로 AI가 먼저 찾아 둔 후보를 만나는 채용 플랫폼",
 };
 
 export default function RootLayout({
@@ -29,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${serreriaSobria.variable} ${alanisHand.variable}`}>
       <body>
+        <a className="tf-skip" href="#main">본문으로 건너뛰기</a>
         <AuthProvider>
           {children}
         </AuthProvider>

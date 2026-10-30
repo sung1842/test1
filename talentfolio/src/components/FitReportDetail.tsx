@@ -5,9 +5,9 @@ import { Check, Minus, Quote, ChevronDown, Sparkles } from "lucide-react";
 import type { AgentResult, FitReport } from "@/types/fitReport";
 
 const VERDICT = {
-  strong_fit:   { label: "Strong Fit", ko: "강력 적합", color: "#22c55e", bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.4)" },
-  possible_fit: { label: "Possible",   ko: "검토 권장", color: "#ffae2e", bg: "rgba(255,174,46,0.12)", border: "rgba(255,174,46,0.4)" },
-  weak_fit:     { label: "Weak Fit",   ko: "적합도 낮음", color: "#f6042e", bg: "rgba(246,4,46,0.12)",   border: "rgba(246,4,46,0.4)" },
+  strong_fit:   { label: "● 잘 맞음",   ko: "잘 맞음",   color: "var(--ok)",   bg: "var(--ok-bg)",   border: "transparent" },
+  possible_fit: { label: "◐ 부분 일치", ko: "부분 일치", color: "var(--warn)", bg: "var(--warn-bg)", border: "transparent" },
+  weak_fit:     { label: "○ 덜 맞음",   ko: "덜 맞음",   color: "var(--text-secondary)", bg: "#E8EDF5", border: "transparent" },
 } as const;
 
 const AGENT_LABEL: Record<AgentResult["agent"], string> = {
@@ -17,9 +17,9 @@ const AGENT_LABEL: Record<AgentResult["agent"], string> = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 75) return "#22c55e";
-  if (score >= 50) return "#ffae2e";
-  return "#f6042e";
+  if (score >= 75) return "var(--ok)";
+  if (score >= 50) return "var(--des-color)";
+  return "var(--dev-color)";
 }
 
 function AgentSection({ result }: { result: AgentResult }) {
@@ -27,13 +27,13 @@ function AgentSection({ result }: { result: AgentResult }) {
   const color = scoreColor(result.score);
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-color)", background: "#0b0812" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-color)", background: "var(--surface)" }}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-3.5 py-3"
       >
         <div className="flex items-center gap-2.5">
-          <span className="text-sm font-bold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+          <span className="text-sm font-bold" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
             {AGENT_LABEL[result.agent]}
           </span>
           <span className="text-sm font-bold tabular-nums" style={{ color }}>{result.score}</span>
@@ -59,12 +59,12 @@ function AgentSection({ result }: { result: AgentResult }) {
 
           {result.matched_items.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#22c55e" }}>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--ok)" }}>
                 적합한 부분
               </span>
               {result.matched_items.map((item, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <Check size={13} className="mt-0.5 shrink-0" style={{ color: "#22c55e" }} />
+                  <Check size={13} className="mt-0.5 shrink-0" style={{ color: "var(--ok)" }} />
                   <span className="text-[12px] leading-snug" style={{ color: "var(--text-primary)" }}>{item}</span>
                 </div>
               ))}
@@ -73,7 +73,7 @@ function AgentSection({ result }: { result: AgentResult }) {
 
           {result.missing_items.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
                 보완할 부분
               </span>
               {result.missing_items.map((item, i) => (
@@ -94,7 +94,7 @@ function AgentSection({ result }: { result: AgentResult }) {
                   style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
                 >
                   <Quote size={12} className="mt-0.5 shrink-0" style={{ color: "var(--text-secondary)", opacity: 0.6 }} />
-                  <span className="text-[11px] italic leading-snug" style={{ color: "var(--text-secondary)" }}>{ev}</span>
+                  <span className="text-xs italic leading-snug" style={{ color: "var(--text-secondary)" }}>{ev}</span>
                 </div>
               ))}
             </div>
@@ -118,7 +118,7 @@ export default function FitReportDetail({ report }: { report: FitReport }) {
         <Sparkles size={13} style={{ color: v.color }} />
         <h3
           className="text-xs font-semibold uppercase tracking-wider"
-          style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-secondary)" }}
+          style={{ fontFamily: "Pretendard Variable, sans-serif", color: "var(--text-secondary)" }}
         >
           JD 적합도 분석
         </h3>
@@ -131,14 +131,14 @@ export default function FitReportDetail({ report }: { report: FitReport }) {
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold tabular-nums leading-none" style={{ color: v.color, fontFamily: "DM Sans, sans-serif" }}>
+            <span className="text-3xl font-bold tabular-nums leading-none" style={{ color: v.color, fontFamily: "Pretendard Variable, sans-serif" }}>
               {report.overallScore}
             </span>
             <span className="text-sm" style={{ color: "var(--text-secondary)" }}>/ 100</span>
           </div>
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: v.color, color: "#0b0812" }}
+            style={{ background: v.color, color: "var(--surface)" }}
           >
             {v.ko}
           </span>

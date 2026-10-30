@@ -14,13 +14,13 @@ const sizeMap = {
 };
 
 export default function Avatar({ name, avatar, size = "md", role }: AvatarProps) {
-  const initials = name
-    .split("")
-    .slice(0, 2)
-    .join("");
+  const initials = Array.from(name.trim())[0] ?? "?";
 
   const { container, text } = sizeMap[size];
-  const bgColor = role === "developer" ? "rgba(246,4,46,0.15)" : "rgba(255,174,46,0.12)";
+  // 메인 랜딩 후보 아바타와 같은 문법: 하늘 계열 배경 + 손글씨 이니셜. 같은 이름이면 항상 같은 색.
+  const tints = ["#DCEBFF", "#BFDDFF", "#FFE7A3", "#EFE4FA"];
+  const hash = Array.from(name).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const bgColor = tints[hash % tints.length];
   const textColor = role === "developer" ? "var(--dev-color)" : "var(--des-color)";
 
   if (avatar) {
@@ -40,12 +40,11 @@ export default function Avatar({ name, avatar, size = "md", role }: AvatarProps)
       className={`${container} rounded-full flex items-center justify-center flex-shrink-0`}
       style={{
         backgroundColor: bgColor,
-        border: `2px solid ${textColor}30`,
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "var(--f-hand)",
         color: textColor,
       }}
     >
-      <span className={`${text} font-bold`}>{initials}</span>
+      <span className={text} style={{ fontSize: "1.35em", lineHeight: 1 }} aria-hidden="true">{initials}</span>
     </div>
   );
 }

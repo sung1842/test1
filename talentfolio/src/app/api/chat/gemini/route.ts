@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI, ApiError } from "@google/genai";
 
 interface MessageItem {
   role: "user" | "model";
@@ -120,51 +121,48 @@ ${
     parts: [{ text: m.content }],
   }));
 
-  const body = {
-    system_instruction: { parts: [{ text: systemInstruction }] },
-    contents,
-    generationConfig: {
-      temperature: 0.9,
-      maxOutputTokens: 512,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const ai = new GoogleGenAI({});
 
   // Gemini가 일시적으로 과부하(503)일 때가 잦아, 짧게 대기 후 최대 2회 재시도
-  let resp: Response | null = null;
+  let reply: string | undefined;
   let lastErr = "";
   for (let attempt = 0; attempt < 3; attempt++) {
-    resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.9,
+          maxOutputTokens: 512,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      });
+      reply = response.text ?? "";
+      break;
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : String(e);
+      const status = e instanceof ApiError ? e.status : undefined;
+      const isRetryable = status === 503 || status === 429;
+      if (!isRetryable || attempt === 2) break;
 
-    if (resp.ok) break;
+      // 429(쿼터 초과) 응답에 포함된 retryDelay(예: "20s")를 우선 사용, 없으면 짧게 백오프
+      const retryDelayMatch = lastErr.match(/"retryDelay"\s*:\s*"(\d+)s"/);
+      const waitMs = retryDelayMatch
+        ? Math.min(parseInt(retryDelayMatch[1], 10) * 1000, 15000)
+        : 1000 * (attempt + 1);
 
-    lastErr = await resp.text();
-    const isRetryable = resp.status === 503 || resp.status === 429;
-    if (!isRetryable || attempt === 2) break;
-
-    // 429(쿼터 초과) 응답에 포함된 retryDelay(예: "20s")를 우선 사용, 없으면 짧게 백오프
-    const retryDelayMatch = lastErr.match(/"retryDelay"\s*:\s*"(\d+)s"/);
-    const waitMs = retryDelayMatch
-      ? Math.min(parseInt(retryDelayMatch[1], 10) * 1000, 15000)
-      : 1000 * (attempt + 1);
-
-    await new Promise((r) => setTimeout(r, waitMs));
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
   }
 
-  if (!resp || !resp.ok) {
+  if (reply === undefined) {
     console.error("Gemini API error:", lastErr);
     return NextResponse.json({ error: "AI 응답 생성 실패" }, { status: 502 });
   }
 
-  const data = await resp.json();
-  const reply: string =
-    data.candidates?.[0]?.content?.parts?.[0]?.text ?? "죄송합니다, 잠시 후 다시 시도해주세요.";
+  if (!reply) reply = "죄송합니다, 잠시 후 다시 시도해주세요.";
 
   return NextResponse.json({ reply });
 }

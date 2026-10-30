@@ -27,15 +27,15 @@ const SPRING_MAIN = { type: "spring" as const, stiffness: 280, damping: 28, mass
 const SPRING_CHILD = { type: "spring" as const, stiffness: 380, damping: 28, mass: 0.6 };
 
 const containerVariants = {
-  hidden: { opacity: 0, y: 32, scale: 0.96, filter: "blur(6px)" },
-  visible: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", transition: SPRING_MAIN },
+  hidden: { opacity: 0, y: 32, scale: 0.96 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: SPRING_MAIN },
   rest: { scale: 1, y: 0 },
   hover: { scale: 1.025, y: -5, transition: SPRING_MAIN },
 };
 
 const childVariants = {
-  hidden: { opacity: 0, y: 14, filter: "blur(4px)" },
-  visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: SPRING_CHILD },
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: SPRING_CHILD },
 };
 
 const linkIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -77,25 +77,24 @@ export default function CandidateCard({
   const cardImage = getCardImage(candidate.id);
 
   const glowColor = candidate.role === "developer"
-    ? { shadow: "rgba(246,4,46,0.3)", border: "#f6042e" }
-    : { shadow: "rgba(255,174,46,0.3)", border: "#ffae2e" };
+    ? { shadow: "rgba(var(--dev-color-rgb), 0.3)", border: "var(--dev-color)" }
+    : { shadow: "rgba(var(--des-color-rgb), 0.3)", border: "var(--des-color)" };
 
   // JD 분석 결과가 있으면 적합도(verdict)에 따라 카드를 강하게 강조한다.
   const fitAccent = fitReport
     ? {
-        strong_fit:   { color: "#22c55e", glow: "rgba(34,197,94,0.55)",  soft: "rgba(34,197,94,0.22)" },
-        possible_fit: { color: "#ffae2e", glow: "rgba(255,174,46,0.5)",  soft: "rgba(255,174,46,0.2)" },
-        weak_fit:     { color: "#f6042e", glow: "rgba(246,4,46,0.45)",   soft: "rgba(246,4,46,0.18)" },
+        strong_fit:   { color: "var(--ok)", glow: "rgba(var(--ok-rgb), 0.55)",  soft: "rgba(var(--ok-rgb), 0.22)" },
+        possible_fit: { color: "var(--warn)", glow: "",  soft: "" },
+        weak_fit:     { color: "var(--border-color)", glow: "",   soft: "" },
       }[fitReport.verdict]
     : null;
 
-  const boxShadow = fitAccent
-    ? `0 0 0 2px ${fitAccent.color}, 0 0 28px ${fitAccent.glow}, 0 18px 44px rgba(0,0,0,0.6), 0 6px 14px ${fitAccent.soft}`
-    : isSelected
-    ? `0 0 0 1px ${glowColor.border}, 0 8px 40px ${glowColor.shadow}`
+  // 글로우 없음. 선택·적합도는 테두리 색과 얕은 그림자로만 표시한다.
+  const boxShadow = fitAccent || isSelected
+    ? `0 0 0 1px ${fitAccent ? fitAccent.color : glowColor.border}, var(--shadow-card)`
     : isHovered
-    ? `0 0 48px ${glowColor.shadow}, 0 8px 32px rgba(0,0,0,0.5)`
-    : "0 4px 24px rgba(0,0,0,0.4)";
+    ? "var(--shadow-pop)"
+    : "var(--shadow-card)";
 
   const borderColor = fitAccent
     ? fitAccent.color
@@ -105,24 +104,22 @@ export default function CandidateCard({
     ? glowColor.border
     : "var(--border-color)";
 
-  // 강한 적합(strong_fit) 카드는 은은하게 펄스 애니메이션으로 시선을 끈다.
-  // (animate에 object를 넘기면 자식 variant 전파가 끊겨 내용이 사라지므로 펄스는 CSS로 처리)
-  const isStrongPulse = fitReport?.verdict === "strong_fit" && !shouldReduceMotion;
 
   return (
     <motion.div
       initial={shouldReduceMotion ? "visible" : "hidden"}
       animate="visible"
-      whileHover={{ y: fitAccent ? -8 : -4, scale: fitAccent ? 1.025 : 1.01 }}
+      whileHover={{ y: -4 }}
       variants={containerVariants}
       transition={{ delay: animationDelay / 1000 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => onSelect(candidate)}
-      className={cn("relative rounded-2xl overflow-hidden cursor-pointer", isStrongPulse && "fit-pulse-strong")}
+      className="relative overflow-hidden cursor-pointer"
       style={{
         backgroundColor: "var(--surface)",
-        border: `1px solid ${borderColor}`,
+        borderRadius: "var(--r-card)",
+        border: `1.5px solid ${borderColor}`,
         boxShadow,
         transformStyle: "preserve-3d",
         transition: "box-shadow 0.25s ease, border-color 0.25s ease",
@@ -149,7 +146,7 @@ export default function CandidateCard({
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 60%, var(--surface) 100%)",
+              "linear-gradient(to bottom, rgba(255,255,255,0) 55%, var(--surface) 100%)",
           }}
         />
 
@@ -159,11 +156,10 @@ export default function CandidateCard({
           style={{
             height: fitAccent ? 3 : 2,
             background: fitAccent
-              ? `linear-gradient(to right, transparent, ${fitAccent.color}, transparent)`
+              ? fitAccent.color
               : candidate.role === "developer"
-              ? "linear-gradient(to right, transparent, rgba(246,4,46,0.7), transparent)"
-              : "linear-gradient(to right, transparent, rgba(255,174,46,0.5), transparent)",
-            boxShadow: fitAccent ? `0 0 12px ${fitAccent.glow}` : "none",
+              ? "var(--dev-color)"
+              : "var(--des-color)",
           }}
         />
 
@@ -172,12 +168,14 @@ export default function CandidateCard({
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
           onClick={(e) => onBookmark(candidate.id, e)}
-          className="absolute top-3 right-3 z-10 p-2 rounded-xl"
+          aria-label={isBookmarked ? "북마크 해제" : "북마크"}
+          aria-pressed={isBookmarked}
+          className="absolute top-3 right-3 z-10 p-2 rounded-full grid place-items-center"
           style={{
-            backgroundColor: isBookmarked ? "rgba(196,144,110,0.2)" : "rgba(0,0,0,0.4)",
-            border: `1px solid ${isBookmarked ? "rgba(196,144,110,0.5)" : "rgba(245,237,228,0.1)"}`,
-            color: isBookmarked ? "var(--accent-alt)" : "rgba(245,237,228,0.6)",
-            backdropFilter: "blur(8px)",
+            backgroundColor: isBookmarked ? "var(--sun)" : "rgba(255,255,255,0.92)",
+            border: "1.5px solid var(--border-color)",
+            color: isBookmarked ? "var(--warn)" : "var(--text-secondary)",
+            minWidth: 36, minHeight: 36,
           }}
         >
           <Bookmark className="w-3.5 h-3.5" fill={isBookmarked ? "currentColor" : "none"} />
@@ -212,13 +210,13 @@ export default function CandidateCard({
         <motion.div variants={shouldReduceMotion ? {} : childVariants}>
           <h3
             className="text-lg font-bold leading-tight"
-            style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
+            style={{ fontFamily: "Pretendard Variable, sans-serif", color: "var(--text-primary)" }}
           >
             {candidate.name}
           </h3>
           <p
-            className="text-[11px] mt-0.5"
-            style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-secondary)" }}
+            className="text-xs mt-0.5"
+            style={{ fontFamily: "Pretendard Variable, sans-serif", color: "var(--text-secondary)" }}
           >
             {candidate.title}
           </p>
@@ -243,11 +241,11 @@ export default function CandidateCard({
           ))}
           {candidate.skills.length > 4 && (
             <span
-              className="text-[10px] px-2 py-0.5 self-center rounded-full"
+              className="text-xs px-2 py-0.5 self-center rounded-full"
               style={{
                 color: "var(--text-secondary)",
                 backgroundColor: "var(--tag-bg)",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
             >
               +{candidate.skills.length - 4}
@@ -273,20 +271,10 @@ export default function CandidateCard({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 rounded-lg transition-all duration-200 group/link"
-                  style={{ color: "var(--text-secondary)", border: "1px solid var(--border-color)" }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.color = "#f5ede4";
-                    el.style.borderColor = "rgba(245,237,228,0.3)";
-                    el.style.backgroundColor = "rgba(245,237,228,0.06)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.color = "var(--text-secondary)";
-                    el.style.borderColor = "var(--border-color)";
-                    el.style.backgroundColor = "transparent";
-                  }}
+                  aria-label={`${candidate.name} ${key}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="grid place-items-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-[var(--mist)] hover:text-[var(--accent)]"
+                  style={{ color: "var(--text-secondary)", border: "1.5px solid var(--border-color)" }}
                 >
                   <Icon className="w-3.5 h-3.5" />
                 </a>
@@ -303,7 +291,7 @@ export default function CandidateCard({
               title="메시지 보내기"
               className="btn-brand btn-brand--shadow-sm flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold"
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
             >
               <MessageSquare className="w-3 h-3" />

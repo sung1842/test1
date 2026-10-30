@@ -9,6 +9,8 @@ export interface AgentResult {
   missing_items: string[];
   evidence: string[];
   flags?: string[];
+  citedCardIds?: string[];
+  citedCards?: { id: string; trust: string }[];
 }
 
 export interface FitReport {
@@ -21,6 +23,30 @@ export interface FitReport {
   cultureFit?: AgentResult;
   ceoSummary: string;
   generatedAt: string;
+  review?: FitReview;
+}
+
+export interface FitReview {
+  decision: "approved" | "rejected";
+  reason: string | null;
+  decidedBy: string | null;
+  decidedAt: string;
+}
+
+export type FitReportStatus = "queued" | "processing" | "completed" | "pending_review" | "approved" | "rejected" | "expired";
+
+export interface FitReportRecord {
+  id: string;
+  jobId: string;
+  jd: string;
+  jdHash: string;
+  candidateId: string;
+  candidateName: string | null;
+  userId: string;
+  status: FitReportStatus;
+  report: FitReport | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // SSE progress stage labels (runFitAnalysis.ts 기준)

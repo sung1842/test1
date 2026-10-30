@@ -1,0 +1,101 @@
+/* Login "두 개의 문" (draft LG3). Scoped under .tf-login, tokens match .sky-landing. */
+.tf-login{--paper:#F5F9FF;--mist:#DCEBFF;--sky:#BFDDFF;--cerulean:#4AA3F2;--cobalt:#1F4FD6;--ink:#0B1C45;--ink-2:#44527A;--sun:#FFE7A3;--line:#D3E3F7;--err:#C2321F;
+--f-disp:'Wanted Sans Variable','Pretendard Variable',Pretendard,sans-serif;--f-acc:'MaruBuriSemiBold','MaruBuri',serif;--f-body:'Pretendard Variable',Pretendard,system-ui,sans-serif;--f-logo:var(--font-sky-lora),'Lora',serif;--ease:cubic-bezier(.22,.8,.24,1);
+min-height:100vh;background:var(--paper);color:var(--ink);font-family:var(--f-body);-webkit-font-smoothing:antialiased}
+.tf-login *{box-sizing:border-box;margin:0;padding:0}
+.tf-login main a{color:var(--cobalt)}
+.tf-login .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tf-login .skip{position:absolute;left:12px;top:-60px;z-index:99;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px}
+.tf-login .skip:focus{top:12px}
+.tf-login :focus-visible{outline:2px solid var(--cobalt);outline-offset:3px;border-radius:6px}
+
+/* H2 minimal bar (solid state) */
+.tf-login .nav{position:sticky;top:0;z-index:20;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(11,28,69,.08)}
+.tf-login .logo{text-decoration:none;color:var(--ink)}
+.tf-login .logo-type{position:relative;font-family:var(--f-logo);font-style:italic;font-weight:500;font-size:26px;letter-spacing:-.03em;line-height:1}
+.tf-login .logo-type b{font-weight:700;background:linear-gradient(100deg,var(--cobalt),var(--cerulean));-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+.tf-login .logo-swash{position:absolute;right:-2px;bottom:-7px;width:58%;height:9px;overflow:visible}
+.tf-login .logo-swash path{stroke-dasharray:80;stroke-dashoffset:80;animation:tf-swash 1.1s .4s cubic-bezier(.65,0,.35,1) forwards}
+@keyframes tf-swash{to{stroke-dashoffset:0}}
+.tf-login .nav-help{font-size:14px;color:var(--ink-2);text-decoration:none}
+.tf-login .nav-help:hover{color:var(--cobalt)}
+
+/* form atoms */
+.tf-login .field{display:grid;gap:6px;margin-bottom:14px}
+.tf-login .field label{font-size:14px;font-weight:600}
+.tf-login .input{width:100%;height:48px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;font-size:16px;color:var(--ink);background:#fff;transition:border-color .2s,box-shadow .2s}
+.tf-login .input:hover{border-color:var(--sky)}
+.tf-login .input:focus{outline:none;border-color:var(--cobalt);box-shadow:0 0 0 4px rgba(31,79,214,.14)}
+.tf-login .input[aria-invalid=true]{border-color:var(--err);box-shadow:0 0 0 4px rgba(194,50,31,.1)}
+.tf-login .err{font-size:13px;color:var(--err)}
+.tf-login .err:empty{display:none}
+.tf-login .pw{position:relative}
+.tf-login .pw .input{padding-right:64px}
+.tf-login .pw button{position:absolute;right:6px;top:6px;height:36px;padding:0 10px;border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;border-radius:8px;cursor:pointer}
+.tf-login .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 0 18px;font-size:14px;flex-wrap:wrap}
+.tf-login .check{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+.tf-login .check input{width:18px;height:18px;accent-color:var(--cobalt)}
+.tf-login .btn{width:100%;height:52px;border:0;border-radius:999px;background:var(--cobalt);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:box-shadow .25s,transform .2s,opacity .2s}
+.tf-login .btn:hover{box-shadow:0 10px 22px -10px rgba(31,79,214,.7)}
+.tf-login .btn:active{transform:scale(.98)}
+.tf-login .btn:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}
+.tf-login .btn i{font-style:normal;transition:transform .3s var(--ease)}
+.tf-login .btn:hover i{transform:translateX(4px)}
+.tf-login .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:600}
+.tf-login .btn.ghost:hover{box-shadow:none;border-color:var(--cobalt)}
+.tf-login .or{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--ink-2);font-size:13px}
+.tf-login .or::before,.tf-login .or::after{content:"";flex:1;height:1px;background:var(--line)}
+.tf-login .social{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tf-login .social .btn{height:48px;font-size:14px}
+.tf-login .tag{font-size:12px;color:var(--ink-2);border:1px solid var(--line);border-radius:99px;padding:1px 7px;font-weight:500}
+.tf-login .alert{display:flex;gap:8px;padding:12px 14px;border-radius:12px;background:#FDECEA;color:var(--err);font-size:14px;margin-bottom:14px}
+.tf-login .acc{font-family:var(--f-acc);color:var(--cobalt);font-weight:600}
+
+/* doors */
+.tf-login .wrap{max-width:1120px;margin:0 auto;padding:56px 24px 72px}
+.tf-login .top{margin-bottom:32px}
+.tf-login .top h1{font-family:var(--f-disp);font-size:clamp(30px,4.4vw,56px);font-weight:700;letter-spacing:-.035em;line-height:1.12}
+.tf-login .top p{margin-top:12px;color:var(--ink-2);font-size:16px}
+.tf-login .doors{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.tf-login .door{position:relative;border-radius:24px;border:1px solid var(--line);background:#fff;overflow:hidden;transition:box-shadow .3s,border-color .3s,opacity .3s}
+.tf-login .door.company{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tf-login .dh{font:inherit}
+.tf-login .door-head{width:100%;text-align:left;border:0;background:transparent;color:inherit;font:inherit;padding:28px 28px 24px;cursor:pointer;display:grid;gap:8px}
+.tf-login .door-head .k{font-size:12px;letter-spacing:.16em;font-weight:600;color:var(--cobalt)}
+.tf-login .company .door-head .k{color:var(--sun)}
+.tf-login .door-head .t{font-family:var(--f-disp);font-size:26px;font-weight:700;letter-spacing:-.02em}
+.tf-login .door-head .d{font-size:15px;line-height:1.55;color:var(--ink-2)}
+.tf-login .company .door-head .d{color:#B9C6E6}
+.tf-login .door-head .go{margin-top:6px;font-weight:600;font-size:14px;color:var(--cobalt)}
+.tf-login .company .door-head .go{color:var(--sun)}
+.tf-login .door[data-open=true] .go{display:none}
+.tf-login .door[data-open=false]{opacity:.82}
+.tf-login .door[data-open=false]:hover{opacity:1}
+.tf-login .door[data-open=true]{box-shadow:0 30px 60px -40px rgba(11,28,69,.5)}
+.tf-login .door-body{padding:0 28px 28px;animation:tf-open .45s var(--ease)}
+@keyframes tf-open{from{opacity:0;transform:translateY(-8px)}}
+.tf-login .company .input{background:#13285C;border-color:#2A4486;color:#fff}
+.tf-login .company .input::placeholder{color:#8496C4}
+.tf-login .company .field label,.tf-login .company .row,.tf-login .company .row a{color:#E6ECFA}
+.tf-login .company .btn{background:var(--sun);color:var(--ink)}
+.tf-login .company .btn.ghost{background:transparent;color:#fff;border-color:#2A4486}
+.tf-login .company .tag{color:#B9C6E6;border-color:#2A4486}
+.tf-login .company .or{color:#8496C4}
+.tf-login .company .err{color:#FFB4A6}
+.tf-login .company .input[aria-invalid=true]{border-color:#FFB4A6}
+.tf-login .company .alert{background:#3A1F2A;color:#FFC9BE}
+.tf-login .company .pw button{color:#B9C6E6}
+.tf-login .company :focus-visible{outline-color:var(--sun)}
+.tf-login .company .input:focus{border-color:var(--sun);box-shadow:0 0 0 4px rgba(255,231,163,.2)}
+.tf-login .jump{display:none;margin:-12px 0 16px}
+.tf-login .jump button{border:0;background:none;color:var(--cobalt);font:inherit;font-weight:600;font-size:14px;padding:8px 0;cursor:pointer}
+.tf-login .foot2{text-align:center;font-size:14px;color:var(--ink-2);margin-top:18px}
+@media (max-width:760px){
+.tf-login .jump{display:block}
+.tf-login .wrap{padding:32px 16px 56px}
+.tf-login .doors{grid-template-columns:1fr}
+.tf-login .door-head{padding:22px 20px 18px}
+.tf-login .door-body{padding:0 20px 22px}
+.tf-login .door-head .t{font-size:22px}}
+@media (max-width:600px){.tf-login .nav{padding:0 16px}}
+@media (prefers-reduced-motion:reduce){.tf-login *,.tf-login *::before,.tf-login *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.tf-login .logo-swash path{stroke-dashoffset:0}}

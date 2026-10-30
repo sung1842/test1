@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { X, Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link } from "lucide-react";
+import Link from "next/link";
+import { X, Bookmark, Mail, MessageSquare, GitBranch, Globe, ExternalLink, Link as LinkIcon, UserRound } from "lucide-react";
 import { Candidate } from "@/types/candidate";
 import type { FitReport } from "@/types/fitReport";
 import Avatar from "./Avatar";
@@ -36,7 +37,7 @@ function LinkButton({
       style={{
         border: "1px solid var(--border-color)",
         color: "var(--text-secondary)",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Pretendard Variable, sans-serif",
       }}
       className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),0.1)]"
     >
@@ -83,10 +84,12 @@ export default function DetailPanel({
     },
     candidate.links.linkedin && {
       href: candidate.links.linkedin,
-      icon: Link,
+      icon: LinkIcon,
       label: "LinkedIn",
     },
   ].filter(Boolean) as { href: string; icon: React.ComponentType<{ className?: string }>; label: string }[];
+
+  const portfolioId = candidate.supabaseId ?? candidate.id;
 
   return (
     <>
@@ -107,7 +110,7 @@ export default function DetailPanel({
             <span
               style={{
                 color: "var(--text-secondary)",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
               className="text-xs"
             >
@@ -133,7 +136,7 @@ export default function DetailPanel({
               <div className="flex items-start justify-between gap-2">
                 <h2
                   style={{
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "Pretendard Variable, sans-serif",
                     color: "var(--text-primary)",
                   }}
                   className="text-2xl font-bold leading-tight"
@@ -159,7 +162,7 @@ export default function DetailPanel({
               </div>
               <p
                 style={{
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                   color: "var(--text-secondary)",
                 }}
                 className="text-sm mt-1"
@@ -174,13 +177,31 @@ export default function DetailPanel({
 
           {fitReport && <FitReportDetail report={fitReport} />}
 
+          <div className="mb-6">
+            <Link
+              href={`/talent/${portfolioId}`}
+              target="_blank"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+              style={{
+                background: "rgba(var(--accent-rgb), 0.1)",
+                border: "1px solid rgba(var(--accent-rgb), 0.3)",
+                color: "var(--accent)",
+                fontFamily: "Pretendard Variable, sans-serif",
+              }}
+            >
+              <UserRound className="w-4 h-4" />
+              포트폴리오 페이지 보기
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+            </Link>
+          </div>
+
           <div
             className="mb-6 pb-6"
             style={{ borderBottom: "1px solid var(--border-color)" }}
           >
             <h3
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -201,7 +222,7 @@ export default function DetailPanel({
           >
             <h3
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -229,7 +250,7 @@ export default function DetailPanel({
             >
               <h3
                 style={{
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                   color: "var(--text-secondary)",
                 }}
                 className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -247,7 +268,7 @@ export default function DetailPanel({
           <div>
             <h3
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
                 color: "var(--text-secondary)",
               }}
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -259,7 +280,7 @@ export default function DetailPanel({
               <button
                 onClick={() => onMessage?.(candidate)}
                 className="btn-brand btn-brand--shadow-lg flex items-center justify-center gap-2 flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90"
-                style={{ fontFamily: "DM Sans, sans-serif" }}
+                style={{ fontFamily: "Pretendard Variable, sans-serif" }}
               >
                 <MessageSquare className="w-4 h-4" />
                 메시지 보내기
@@ -270,7 +291,7 @@ export default function DetailPanel({
                 style={{
                   border: "1px solid var(--border-color)",
                   color: "var(--text-secondary)",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                 }}
                 className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >

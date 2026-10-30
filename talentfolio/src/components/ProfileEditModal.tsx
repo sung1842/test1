@@ -6,6 +6,7 @@ import { X, Loader2, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { BACKEND_UNAVAILABLE_MSG, isSupabaseConfigured } from "@/lib/features";
+import { notifyProfileChanged } from "@/lib/profileNormalizeHook";
 
 interface ProfileEditModalProps {
   onClose: () => void;
@@ -87,11 +88,12 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
       return;
     }
     setSaved(true);
+    notifyProfileChanged(); // 매칭 정규화 예약 (비차단)
     onSaved?.();
     setTimeout(() => { setSaved(false); onClose(); }, 1000);
   };
 
-  const roleColor = profile?.role === "developer" ? "#f6042e" : "#ffae2e";
+  const roleColor = profile?.role === "developer" ? "var(--dev-color)" : "var(--des-color)";
 
   return (
     <motion.div
@@ -115,8 +117,8 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         style={{
           width: "100%", maxWidth: 560, maxHeight: "90vh",
           overflowY: "auto",
-          background: "#0d0918",
-          border: "1px solid #271c32",
+          background: "var(--surface-2)",
+          border: "1px solid var(--border-color)",
           borderRadius: 20,
           padding: "28px 28px 24px",
           display: "flex", flexDirection: "column", gap: 20,
@@ -125,29 +127,29 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
         {/* 헤더 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h2 style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 18, color: "var(--text-primary)", margin: 0 }}>
+            <h2 style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 700, fontSize: 18, color: "var(--text-primary)", margin: 0 }}>
               내 프로필 편집
             </h2>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
+            <p style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
               {profile?.name} · <span style={{ color: roleColor }}>{profile?.role === "developer" ? "개발자" : "디자이너"}</span>
             </p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid #271c32", borderRadius: 8, padding: 7, cursor: "pointer", color: "var(--text-secondary)", display: "flex" }}>
+          <button onClick={onClose} style={{ background: "rgba(11, 28, 69, 0.04)", border: "1px solid var(--border-color)", borderRadius: 8, padding: 7, cursor: "pointer", color: "var(--text-secondary)", display: "flex" }}>
             <X size={15} />
           </button>
         </div>
 
         {/* 공개 여부 토글 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #271c32", borderRadius: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(11, 28, 69, 0.02)", border: "1px solid var(--border-color)", borderRadius: 12 }}>
           <div>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, color: "var(--text-primary)", margin: 0 }}>인재 목록에 공개</p>
-            <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--text-secondary)", margin: "2px 0 0" }}>켜면 메인 페이지 목록에 표시됩니다</p>
+            <p style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 600, fontSize: 13, color: "var(--text-primary)", margin: 0 }}>인재 목록에 공개</p>
+            <p style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>켜면 메인 페이지 목록에 표시됩니다</p>
           </div>
           <button
             onClick={() => setIsPublic((v) => !v)}
             style={{
               width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
-              backgroundColor: isPublic ? "var(--accent)" : "#16101f",
+              backgroundColor: isPublic ? "var(--accent)" : "var(--surface-2)",
               position: "relative", transition: "background-color 0.2s", flexShrink: 0,
             }}
           >
@@ -183,9 +185,9 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
 
         {/* 스킬 */}
         <Field label="스킬 태그" hint="Enter 또는 쉼표로 추가">
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#0b0812", border: "1px solid #271c32", borderRadius: 10 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "var(--surface)", border: "1px solid var(--border-color)", borderRadius: 10 }}>
             {skills.map((s) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 6, fontSize: 12, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
+              <span key={s} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 6, fontSize: 12, color: "var(--accent)", fontFamily: "Pretendard Variable, sans-serif" }}>
                 {s}
                 <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", opacity: 0.6, padding: 0, display: "flex", lineHeight: 1 }}>
                   <X size={11} />
@@ -197,7 +199,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
               onChange={(e) => setSkillInput(e.target.value)}
               onKeyDown={handleSkillKeyDown}
               placeholder={skills.length === 0 ? "React, TypeScript, Figma..." : ""}
-              style={{ background: "none", border: "none", outline: "none", color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif", fontSize: 13, minWidth: 120, flex: 1 }}
+              style={{ background: "none", border: "none", outline: "none", color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif", fontSize: 13, minWidth: 120, flex: 1 }}
             />
           </div>
         </Field>
@@ -217,7 +219,7 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
           {error && (
             <motion.p
               initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "#f87171", margin: 0 }}
+              style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, color: "var(--danger)", margin: 0 }}
             >
               {error}
             </motion.p>
@@ -232,9 +234,9 @@ export default function ProfileEditModal({ onClose, onSaved }: ProfileEditModalP
           className={saved ? undefined : "btn-brand btn-brand--shadow-btn"}
           style={{
             width: "100%", padding: "12px",
-            background: saved ? "linear-gradient(135deg, #22c55e, #16a34a)" : undefined,
+            background: saved ? "linear-gradient(135deg, var(--ok), #16a34a)" : undefined,
             border: "none", borderRadius: 12, cursor: "pointer",
-            color: "white", fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 14,
+            color: "white", fontFamily: "Pretendard Variable, sans-serif", fontWeight: 700, fontSize: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             transition: "background 0.3s",
           }}
@@ -251,8 +253,8 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <label style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{label}</label>
-        {hint && <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--text-secondary)" }}>{hint}</span>}
+        <label style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{label}</label>
+        {hint && <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, color: "var(--text-secondary)" }}>{hint}</span>}
       </div>
       {children}
     </div>
@@ -262,7 +264,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function LinkInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--text-secondary)", minWidth: 64, textAlign: "right" }}>{label}</span>
+      <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, color: "var(--text-secondary)", minWidth: 64, textAlign: "right" }}>{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -276,11 +278,11 @@ function LinkInput({ label, value, onChange, placeholder }: { label: string; val
 const inputStyle: React.CSSProperties = {
   width: "100%",
   background: "#0f0b18",
-  border: "1px solid #271c32",
+  border: "1px solid var(--border-color)",
   borderRadius: 10,
   padding: "9px 12px",
   color: "var(--text-primary)",
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "Pretendard Variable, sans-serif",
   fontSize: 13,
   outline: "none",
   boxSizing: "border-box",

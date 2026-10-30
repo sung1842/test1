@@ -27,3 +27,8 @@ export async function fetchBriefReport(
     return null;
   }
 }
+
+/** 공개 포트폴리오의 근거 카드 앵커 링크 (/talent/[id] 의 card-<id>) */
+export function evidenceCardHref(candidateId: string, cardId: string): string {
+  return `/talent/${encodeURIComponent(candidateId)}#card-${encodeURIComponent(cardId)}`;
+}

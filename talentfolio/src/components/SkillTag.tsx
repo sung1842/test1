@@ -20,7 +20,7 @@ interface SkillConfig {
 const SKILL_MAP: Record<string, SkillConfig> = {
   "React":        { icon: SiReact,           color: "#61DAFB", bg: "rgba(97,218,251,0.12)"  },
   "TypeScript":   { icon: SiTypescript,      color: "#3178C6", bg: "rgba(49,120,198,0.12)"  },
-  "Next.js":      { icon: SiNextdotjs,       color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
+  "Next.js":      { icon: SiNextdotjs,       color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
   "Node.js":      { icon: SiNodedotjs,       color: "#6DBF4B", bg: "rgba(109,191,75,0.12)"  },
   "PostgreSQL":   { icon: SiPostgresql,      color: "#699aca", bg: "rgba(105,154,202,0.12)" },
   "Docker":       { icon: SiDocker,          color: "#2496ED", bg: "rgba(36,150,237,0.12)"  },
@@ -32,22 +32,22 @@ const SKILL_MAP: Record<string, SkillConfig> = {
   "SwiftUI":      { icon: SiSwift,           color: "#F05138", bg: "rgba(240,81,56,0.12)"   },
   "Figma":        { icon: SiFigma,           color: "#F24E1E", bg: "rgba(242,78,30,0.12)"   },
   "Blender":      { icon: SiBlender,         color: "#F5792A", bg: "rgba(245,121,42,0.12)"  },
-  "Three.js":     { icon: SiThreedotjs,      color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
+  "Three.js":     { icon: SiThreedotjs,      color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
   "Framer":       { icon: SiFramer,          color: "#0055FF", bg: "rgba(0,85,255,0.12)"    },
   "Tailwind":     { icon: SiTailwindcss,     color: "#06B6D4", bg: "rgba(6,182,212,0.12)"   },
   "Terraform":    { icon: SiTerraform,       color: "#7B42BC", bg: "rgba(123,66,188,0.12)"  },
   "Redis":        { icon: SiRedis,           color: "#DC382D", bg: "rgba(220,56,45,0.12)"   },
-  "Kafka":        { icon: SiApachekafka,     color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
+  "Kafka":        { icon: SiApachekafka,     color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
   "FastAPI":      { icon: SiFastapi,         color: "#009688", bg: "rgba(0,150,136,0.12)"   },
   "PyTorch":      { icon: SiPytorch,         color: "#EE4C2C", bg: "rgba(238,76,44,0.12)"   },
   "Prometheus":   { icon: SiPrometheus,      color: "#E6522C", bg: "rgba(230,82,44,0.12)"   },
-  "Vercel":       { icon: SiVercel,          color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
-  "GitHub":       { icon: SiGithub,          color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
+  "Vercel":       { icon: SiVercel,          color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
+  "GitHub":       { icon: SiGithub,          color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
   "Rust":         { icon: SiRust,            color: "#CE422B", bg: "rgba(206,66,43,0.12)"   },
   "GSAP":         { icon: Zap,               color: "#88CE02", bg: "rgba(136,206,2,0.12)"   },
   "WebGL":        { icon: Globe,              color: "#990000", bg: "rgba(153,0,0,0.12)"     },
   "Spline":       { icon: Box,               color: "#4353FF", bg: "rgba(67,83,255,0.12)"   },
-  "Notion":       { icon: SiNotion,          color: "#ffffff", bg: "rgba(255,255,255,0.08)" },
+  "Notion":       { icon: SiNotion,          color: "#0B1C45", bg: "rgba(11, 28, 69, 0.06)" },
   "LangChain":    { icon: Layers,            color: "#1DB954", bg: "rgba(29,185,84,0.12)"   },
   "CUDA":         { icon: Box,               color: "#76B900", bg: "rgba(118,185,0,0.12)"   },
   "ArgoCD":       { icon: Layers,            color: "#EF7B4D", bg: "rgba(239,123,77,0.12)"  },
@@ -83,37 +83,36 @@ interface SkillTagProps {
   small?: boolean;
 }
 
+// 색은 메인 팔레트 하나로 통일한다 (브랜드별 무지개색은 쓰지 않고 아이콘으로만 구분).
 export default function SkillTag({ skill, onClick, small }: SkillTagProps) {
   const config = SKILL_MAP[skill] ?? DEFAULT;
-  const Icon = config.icon as React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
-
+  const Icon = config.icon as React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string; "aria-hidden"?: boolean }>;
+  const style: React.CSSProperties = {
+    backgroundColor: "var(--mist)",
+    color: "var(--accent)",
+    fontSize: small ? 12 : 13,
+    fontWeight: 600,
+    padding: small ? "4px 10px" : "6px 12px",
+    minHeight: onClick ? 32 : undefined,
+    whiteSpace: "nowrap",
+  };
+  const body = (
+    <>
+      <Icon size={13} aria-hidden style={{ flexShrink: 0, opacity: 0.8 }} />
+      {skill}
+    </>
+  );
+  if (!onClick) {
+    return <span className="inline-flex items-center gap-1.5 rounded-full" style={style}>{body}</span>;
+  }
   return (
     <button
-      onClick={() => onClick?.(skill)}
-      className="inline-flex items-center gap-1.5 rounded-full transition-all duration-200"
-      style={{
-        backgroundColor: config.bg,
-        border: `1px solid ${config.color}30`,
-        color: config.color,
-        fontFamily: "DM Sans, sans-serif",
-        fontSize: small ? "10px" : "11px",
-        padding: small ? "3px 8px" : "4px 10px",
-        cursor: onClick ? "pointer" : "default",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={(e) => {
-        if (!onClick) return;
-        (e.currentTarget as HTMLElement).style.backgroundColor = config.color + "25";
-        (e.currentTarget as HTMLElement).style.borderColor = config.color + "80";
-      }}
-      onMouseLeave={(e) => {
-        if (!onClick) return;
-        (e.currentTarget as HTMLElement).style.backgroundColor = config.bg;
-        (e.currentTarget as HTMLElement).style.borderColor = config.color + "30";
-      }}
+      type="button"
+      onClick={() => onClick(skill)}
+      className="inline-flex items-center gap-1.5 rounded-full transition-colors duration-200 hover:bg-[var(--sky)]"
+      style={style}
     >
-      <Icon size={small ? 10 : 12} style={{ color: config.color, flexShrink: 0 }} />
-      {skill}
+      {body}
     </button>
   );
 }

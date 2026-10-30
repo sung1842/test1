@@ -75,14 +75,14 @@ function clockTime(iso: string): string {
 
 function UserAvatar({ user, size = 38 }: { user: UIParticipant; size?: number }) {
   const isDev  = user.role === "developer";
-  const color  = isDev ? "#f6042e" : "#ffae2e";
-  const bg     = isDev ? "rgba(246,4,46,0.15)" : "rgba(255,174,46,0.12)";
+  const color  = isDev ? "var(--dev-color)" : "var(--des-color)";
+  const bg     = isDev ? "rgba(var(--dev-color-rgb), 0.15)" : "rgba(var(--des-color-rgb), 0.12)";
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
       backgroundColor: bg, border: `1.5px solid ${color}40`,
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "DM Sans, sans-serif", color, fontWeight: 700, fontSize: size * 0.38,
+      fontFamily: "Pretendard Variable, sans-serif", color, fontWeight: 700, fontSize: size * 0.38,
     }}>
       {user.name.slice(0, 2)}
     </div>
@@ -93,21 +93,21 @@ function OnlineDot({ online }: { online: boolean }) {
   return (
     <div style={{
       width: 9, height: 9, borderRadius: "50%",
-      border: "2px solid #020005",
-      backgroundColor: online ? "#22c55e" : "#3a2a4a",
+      border: "2px solid var(--background)",
+      backgroundColor: online ? "var(--ok)" : "var(--text-3)",
     }} />
   );
 }
 
 function TypingDots() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "10px 14px", background: "#0b0812", border: "1px solid #271c32", borderRadius: "4px 16px 16px 16px", width: "fit-content" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border-color)", borderRadius: "4px 16px 16px 16px", width: "fit-content" }}>
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
           animate={{ y: [0, -5, 0] }}
           transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.18, ease: "easeInOut" as const }}
-          style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#3a2a4a" }}
+          style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "var(--text-3)" }}
         />
       ))}
     </div>
@@ -126,7 +126,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", fontSize: 12 }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif", fontSize: 12 }}>
         <Loader2 size={18} style={{ animation: "spin 1s linear infinite", color: "var(--accent)" }} />
         불러오는 중...
       </div>
@@ -137,8 +137,8 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)" }}>
         <MessageSquare size={28} opacity={0.25} />
-        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12 }}>아직 대화가 없습니다</span>
-        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, opacity: 0.6, textAlign: "center", padding: "0 20px" }}>
+        <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12 }}>아직 대화가 없습니다</span>
+        <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, opacity: 0.6, textAlign: "center", padding: "0 20px" }}>
           인재 카드의 메시지 버튼으로<br />대화를 시작해보세요
         </span>
       </div>
@@ -149,7 +149,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
     <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
       <AnimatePresence>
         {conversations.map((conv) => {
-                        const roleColor = conv.participant.role === "developer" ? "#f6042e" : "#ffae2e";
+                        const roleColor = conv.participant.role === "developer" ? "var(--dev-color)" : "var(--des-color)";
           const isHov = hovered === conv.id;
           return (
             <motion.div
@@ -167,7 +167,7 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                 style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 10,
                   padding: "10px 14px",
-                  background: isHov ? "rgba(255,255,255,0.05)" : "transparent",
+                  background: isHov ? "rgba(11, 28, 69, 0.05)" : "transparent",
                   border: "none", cursor: "pointer", textAlign: "left",
                   transition: "background 0.15s",
                 }}
@@ -182,22 +182,22 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                      <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
                         {conv.participant.name}
                       </span>
                         {conv.isAI && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 4, fontSize: 9, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 2, padding: "1px 5px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 4, fontSize: 12, color: "var(--accent)", fontFamily: "Pretendard Variable, sans-serif" }}>
                           <Bot size={8} /> AI
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", flexShrink: 0, marginLeft: 8 }}>
+                    <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif", flexShrink: 0, marginLeft: 8 }}>
                       {conv.lastMessageAt ? relativeTime(conv.lastMessageAt) : ""}
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                     <span style={{
-                      fontSize: 11.5, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif",
+                      fontSize: 12, color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif",
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
                     }}>
                       {conv.lastMessage || "대화를 시작해보세요"}
@@ -208,14 +208,14 @@ function ConversationList({ conversations, loading, onSelect, onDelete }: {
                         style={{
                         minWidth: 18, height: 18, borderRadius: 9, padding: "0 5px",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 10, fontWeight: 700,
-                        fontFamily: "DM Sans, sans-serif", flexShrink: 0,
+                        fontSize: 12, fontWeight: 700,
+                        fontFamily: "Pretendard Variable, sans-serif", flexShrink: 0,
                       }}>
                         {formatBadgeCount(conv.unreadCount)}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: roleColor, fontFamily: "DM Sans, sans-serif" }}>
+                  <span style={{ fontSize: 12, color: roleColor, fontFamily: "Pretendard Variable, sans-serif" }}>
                     {conv.participant.role === "developer" ? "개발자" : "디자이너"}
                   </span>
                 </div>
@@ -271,7 +271,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
     setInput("");
   };
 
-  const roleColor = conversation.participant.role === "developer" ? "#f6042e" : "#ffae2e";
+  const roleColor = conversation.participant.role === "developer" ? "var(--dev-color)" : "var(--des-color)";
 
   const shouldShowTime = (i: number) =>
     i === conversation.messages.length - 1 ||
@@ -282,10 +282,10 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
       {/* Sub-header */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "9px 12px", borderBottom: "1px solid #271c32", flexShrink: 0,
+        padding: "9px 12px", borderBottom: "1px solid var(--border-color)", flexShrink: 0,
       }}>
         <button onClick={onBack} style={{
-          background: "rgba(255,255,255,0.03)", border: "1px solid #271c32",
+          background: "rgba(11, 28, 69, 0.03)", border: "1px solid var(--border-color)",
           borderRadius: 8, padding: "5px 6px", cursor: "pointer",
           color: "var(--text-secondary)", display: "flex", transition: "color 0.15s",
         }}
@@ -299,18 +299,18 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+            <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
               {conversation.participant.name}
             </span>
               {conversation.isAI ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 5, fontSize: 9, color: "var(--accent)", fontFamily: "DM Sans, sans-serif" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 3, padding: "1px 6px", background: "rgba(var(--accent-rgb), 0.12)", border: "1px solid rgba(var(--accent-rgb), 0.25)", borderRadius: 5, fontSize: 12, color: "var(--accent)", fontFamily: "Pretendard Variable, sans-serif" }}>
                 <Bot size={9} /> AI 채팅
               </span>
             ) : (
               <OnlineDot online={conversation.participant.is_online} />
             )}
           </div>
-          <span style={{ fontSize: 10, color: roleColor, fontFamily: "DM Sans, sans-serif" }}>
+          <span style={{ fontSize: 12, color: roleColor, fontFamily: "Pretendard Variable, sans-serif" }}>
             {conversation.participant.title}
           </span>
         </div>
@@ -319,15 +319,15 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 3 }}>
         {conversation.isAI && conversation.messages.length === 0 && (
-          <div style={{ textAlign: "center", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", fontSize: 12, marginTop: 20, padding: "0 12px" }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>👋</div>
+          <div style={{ textAlign: "center", color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, marginTop: 20, padding: "0 12px" }}>
+            <div aria-hidden="true" style={{ fontFamily: "var(--f-hand)", fontSize: 26, color: "var(--accent)", marginBottom: 6 }}>안녕하세요</div>
             <strong style={{ color: "var(--text-primary)" }}>{conversation.participant.name}</strong>와 AI 채팅을 시작하세요.<br />
-            <span style={{ opacity: 0.6, fontSize: 11 }}>Gemini가 해당 인물 역할로 답변합니다</span>
+            <span style={{ opacity: 0.6, fontSize: 12 }}>Gemini가 해당 인물 역할로 답변합니다</span>
           </div>
         )}
         {!conversation.isAI && conversation.messages.length === 0 && (
-          <div style={{ textAlign: "center", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", fontSize: 12, marginTop: 30, opacity: 0.7 }}>
-            대화를 시작해보세요 👋
+          <div style={{ textAlign: "center", color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, marginTop: 30, opacity: 0.7 }}>
+            대화를 시작해 보세요
           </div>
         )}
 
@@ -347,16 +347,16 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
                 maxWidth: "80%", padding: "8px 12px",
                 borderRadius: isOwn ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
                 background: isOwn ? undefined : "#0f0b18",
-                border: isOwn ? "none" : "1px solid #271c32",
+                border: isOwn ? "none" : "1px solid var(--border-color)",
                 color: isOwn ? "white" : "var(--text-primary)",
-                fontSize: 13, fontFamily: "DM Sans, sans-serif", lineHeight: 1.5,
+                fontSize: 13, fontFamily: "Pretendard Variable, sans-serif", lineHeight: 1.5,
                 boxShadow: isOwn ? "var(--brand-shadow-btn)" : "none",
                 wordBreak: "break-word",
               }}>
                 {msg.content}
               </div>
               {shouldShowTime(i) && (
-                <span style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif", marginTop: 3, padding: "0 3px" }}>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif", marginTop: 3, padding: "0 3px" }}>
                   {clockTime(msg.created_at)}
                 </span>
               )}
@@ -382,7 +382,7 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
 
       {/* Input */}
       <div style={{
-        padding: "10px 12px", borderTop: "1px solid #271c32",
+        padding: "10px 12px", borderTop: "1px solid var(--border-color)",
         flexShrink: 0, display: "flex", gap: 8, alignItems: "center",
       }}>
         <input
@@ -393,14 +393,14 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
           placeholder={isAIThinking ? "AI가 응답 중..." : "메시지를 입력하세요..."}
           disabled={isAIThinking}
           style={{
-            flex: 1, background: "#0b0812", border: "1px solid #271c32",
+            flex: 1, background: "var(--surface)", border: "1px solid var(--border-color)",
             borderRadius: 10, padding: "8px 12px",
-            color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif",
+            color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif",
             fontSize: 13, outline: "none", transition: "border-color 0.15s",
             opacity: isAIThinking ? 0.5 : 1,
           }}
           onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)")}
-          onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
+          onBlur={e  => (e.currentTarget.style.borderColor = "var(--border-color)")}
         />
         <motion.button
           whileHover={{ scale: isAIThinking ? 1 : 1.08 }} whileTap={{ scale: isAIThinking ? 1 : 0.92 }}
@@ -410,8 +410,8 @@ function MessageArea({ conversation, myId, isAIThinking, onBack, onSend }: {
           style={{
             width: 36, height: 36, borderRadius: 10, border: "none",
             cursor: (input.trim() && !isAIThinking) ? "pointer" : "default",
-            background: (input.trim() && !isAIThinking) ? undefined : "#0b0812",
-            color: (input.trim() && !isAIThinking) ? "white" : "#3a2a4a",
+            background: (input.trim() && !isAIThinking) ? undefined : "var(--surface)",
+            color: (input.trim() && !isAIThinking) ? "white" : "var(--text-3)",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, transition: "background 0.2s, color 0.2s",
           }}
@@ -865,7 +865,7 @@ export default function FloatingChat({
               width: "min(360px, calc(100vw - 32px))",
               height: "min(520px, calc(100svh - 120px))",
               background: "rgba(2,0,5,0.97)",
-              border: "1px solid #271c32", borderRadius: 20,
+              border: "1px solid var(--border-color)", borderRadius: 20,
               backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)",
               boxShadow: "0 28px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(var(--accent-rgb), 0.06)",
               display: "flex", flexDirection: "column", overflow: "hidden",
@@ -874,7 +874,7 @@ export default function FloatingChat({
             {/* 패널 헤더 */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "13px 14px", borderBottom: "1px solid #271c32", flexShrink: 0,
+              padding: "13px 14px", borderBottom: "1px solid var(--border-color)", flexShrink: 0,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div
@@ -886,16 +886,16 @@ export default function FloatingChat({
                 }}>
                   <MessageSquare size={14} color="white" />
                 </div>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>
+                <span style={{ fontFamily: "Pretendard Variable, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>
                   메시지
                 </span>
                 {!activeConv && totalUnread > 0 && (
                   <span
                     className="badge-brand"
                     style={{
-                    fontSize: 10, fontWeight: 700,
+                    fontSize: 12, fontWeight: 700,
                     borderRadius: 10, padding: "1px 7px",
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "Pretendard Variable, sans-serif",
                   }}>
                     {formatBadgeCount(totalUnread)}
                   </span>
@@ -992,7 +992,7 @@ export default function FloatingChat({
                 position: "absolute", top: -5, right: -5,
                 minWidth: 18, height: 18, borderRadius: 9, padding: "0 4px",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 700, fontFamily: "DM Sans, sans-serif",
+                fontSize: 12, fontWeight: 700, fontFamily: "Pretendard Variable, sans-serif",
                 border: "2px solid #080808",
               }}
               className="badge-brand"

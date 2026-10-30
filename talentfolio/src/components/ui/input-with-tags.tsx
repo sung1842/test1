@@ -14,22 +14,22 @@ interface TagProps {
 const Tag = ({ text, onRemove }: TagProps) => {
   return (
     <motion.span
-      initial={{ opacity: 0, scale: 0.8, y: -10, filter: "blur(10px)" }}
-      animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 0.8, y: -10, filter: "blur(10px)" }}
+      initial={{ opacity: 0, scale: 0.8, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: -10 }}
       transition={{
         duration: 0.4,
         ease: "circInOut",
         type: "spring",
       }}
-      className="bg-[#11111198] px-2 py-1 rounded-xl text-sm flex items-center gap-1 shadow-[0_0_10px_rgba(0,0,0,0.2)] backdrop-blur-sm"
-      style={{ color: "var(--accent)", border: "1px solid rgba(91,110,245,0.3)" }}
+      className="px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1"
+      style={{ background: "var(--mist)", color: "var(--accent)" }}
     >
       {text}
       <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
         <Button
           onClick={onRemove}
-          className="bg-transparent text-xs h-fit flex items-center rounded-full justify-center p-1 hover:bg-[#11111136]"
+          className="bg-transparent text-xs h-fit flex items-center rounded-full justify-center p-1 hover:bg-white"
           style={{ color: "var(--accent)" }}
         >
           <X className="w-3 h-3" />
@@ -78,8 +78,8 @@ const InputWithTags = ({
   return (
     <div className={cn("flex flex-col gap-3 w-full", className)}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
-        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
       >
         <motion.input
@@ -88,14 +88,13 @@ const InputWithTags = ({
           onChange={(e) => onInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? "이름, 스킬, 직함으로 검색 후 Enter..."}
-          whileHover={{ scale: 1.005 }}
-          className="w-full px-5 py-3.5 rounded-2xl backdrop-blur-sm outline-none ring-0 text-sm"
+                    className="w-full px-5 py-3.5 outline-none text-[15px] focus-visible:border-[var(--accent)]"
           style={{
-            backgroundColor: "rgba(17,17,17,0.6)",
-            border: "1px solid var(--border-color)",
+            backgroundColor: "var(--surface)",
+            border: "1.5px solid #8FA6CC",
+            borderRadius: "var(--r-input)",
             color: "var(--text-primary)",
-            fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 0 20px rgba(0,0,0,0.2)",
+            fontFamily: "Pretendard Variable, sans-serif",
           }}
           disabled={limit ? tags.length >= limit : false}
         />

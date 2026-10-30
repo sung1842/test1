@@ -8,12 +8,14 @@ import { useAuth } from "@/context/AuthContext";
 import { JD_ANALYZER_URL, isJdAnalyzerConfigured } from "@/types/fitReport";
 import ServiceUnavailable from "@/components/ServiceUnavailable";
 import type { CandidateSourcingSummary } from "@/types/sourcing";
+import { SiteHeader } from "@/components/site/SiteHeader";
+import { DeskTabs } from "@/components/desk/DeskTabs";
 
 const inputBase: React.CSSProperties = {
-  background: "#0b0812",
-  border: "1px solid #271c32",
+  background: "var(--surface)",
+  border: "1px solid var(--border-color)",
   color: "var(--text-primary)",
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "Pretendard Variable, sans-serif",
   padding: "10px 12px",
   borderRadius: 12,
   outline: "none",
@@ -113,8 +115,10 @@ export default function SourcingPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#060309" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px 80px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--background)" }}>
+      <SiteHeader crumb="스카우트 건" />
+      <main id="main" style={{ maxWidth: 720, margin: "0 auto", padding: "88px 20px 80px" }}>
+        <div className="dk" style={{ padding: 0, maxWidth: "none" }}><DeskTabs /></div>
         {!sourcingAvailable ? (
           <ServiceUnavailable title="소싱 기능" description="jd-fit-analyzer·Slack 연동이 배포되면 후보 검색과 Slack 승인 요청을 사용할 수 있습니다." />
         ) : (
@@ -122,43 +126,44 @@ export default function SourcingPage() {
         {/* ── Top nav ── */}
         <div className="flex items-center justify-between mb-8">
           <Link
-            href="/"
-            className="flex items-center gap-1.5 text-sm"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            href="/desk"
+            className="flex items-center gap-1.5 text-sm min-h-[44px]"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
             <ArrowLeft size={15} />
-            메인으로
+            데스크로
           </Link>
           <Link
             href="/sourcing/review"
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold"
             style={{
-              background: "rgba(255,174,46,0.1)",
-              border: "1px solid rgba(255,174,46,0.3)",
-              color: "#ffae2e",
-              fontFamily: "DM Sans, sans-serif",
+              background: "rgba(var(--des-color-rgb), 0.1)",
+              border: "1px solid rgba(var(--des-color-rgb), 0.3)",
+              color: "var(--des-color)",
+              fontFamily: "Pretendard Variable, sans-serif",
             }}
           >
             <ClipboardCheck size={15} />
-            승인 검토
+            Slack 발송 승인
           </Link>
         </div>
 
         {/* ── Title ── */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1.5" style={{ color: "var(--text-primary)", fontFamily: "Syne, sans-serif" }}>
-            B2B 인재 소싱
+          <span className="tf-label">데스크 · 스카우트 건</span>
+          <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>
+            스카우트 건 <em>만들기</em>
           </h1>
-          <p className="text-sm" style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}>
-            인재 DB를 검색해 Slack으로 연락 승인을 요청합니다. 승인 전에는 외부로 전송되지 않습니다.
+          <p className="tf-lead">
+            후보를 찾아 고르고, 팀에 연락 승인을 요청하세요. <b>승인 전에는 후보에게 아무것도 나가지 않아요.</b>
           </p>
         </div>
 
         {/* ── 1. Search ── */}
         <section className="mb-8">
-          <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+          <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
             <span
-              className="w-5 h-5 rounded-md flex items-center justify-center text-[11px]"
+              className="w-5 h-5 rounded-md flex items-center justify-center text-xs"
               style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)", color: "var(--accent)" }}
             >
               1
@@ -189,7 +194,7 @@ export default function SourcingPage() {
               onClick={search}
               disabled={searching}
               className="btn-brand btn-brand--shadow-btn flex items-center gap-1.5 px-4 rounded-xl text-sm font-semibold disabled:opacity-40"
-              style={{ color: "white", fontFamily: "DM Sans, sans-serif" }}
+              style={{ color: "white", fontFamily: "Pretendard Variable, sans-serif" }}
             >
               {searching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
               검색
@@ -203,7 +208,7 @@ export default function SourcingPage() {
           )}
 
           {candidates.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #271c32" }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-color)" }}>
               <div
                 className="px-4 py-2.5 flex items-center justify-between text-xs font-semibold"
                 style={{ background: "var(--surface)", color: "var(--text-secondary)" }}
@@ -214,7 +219,7 @@ export default function SourcingPage() {
                   {selectedIds.length}명 선택
                 </span>
               </div>
-              <div style={{ background: "#0b0812" }}>
+              <div style={{ background: "var(--surface)" }}>
                 {candidates.map((c) => {
                   const active = selectedIds.includes(c.id);
                   return (
@@ -226,14 +231,14 @@ export default function SourcingPage() {
                       <input type="checkbox" checked={active} onChange={() => toggleCandidate(c.id)} className="accent-[var(--accent)]" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+                          <span className="text-sm font-medium truncate" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
                             {c.name}
                           </span>
                           <span
-                            className="text-[10px] px-1.5 py-0.5 rounded shrink-0"
+                            className="text-xs px-1.5 py-0.5 rounded shrink-0"
                             style={{
-                              background: c.role === "developer" ? "rgba(246,4,46,0.12)" : "rgba(255,174,46,0.12)",
-                              color: c.role === "developer" ? "#f6042e" : "#ffae2e",
+                              background: c.role === "developer" ? "rgba(var(--dev-color-rgb), 0.12)" : "rgba(var(--des-color-rgb), 0.12)",
+                              color: c.role === "developer" ? "var(--dev-color)" : "var(--des-color)",
                             }}
                           >
                             {c.role === "developer" ? "개발자" : "디자이너"}
@@ -245,7 +250,7 @@ export default function SourcingPage() {
                           )}
                         </div>
                         {c.skills.length > 0 && (
-                          <div className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
+                          <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
                             {c.skills.join(" · ")}
                           </div>
                         )}
@@ -260,9 +265,9 @@ export default function SourcingPage() {
 
         {/* ── 2. Compose ── */}
         <section>
-          <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+          <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
             <span
-              className="w-5 h-5 rounded-md flex items-center justify-center text-[11px]"
+              className="w-5 h-5 rounded-md flex items-center justify-center text-xs"
               style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)", color: "var(--accent)" }}
             >
               2
@@ -282,7 +287,7 @@ export default function SourcingPage() {
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
                   className="flex-1 bg-transparent text-sm outline-none py-2.5 pr-3"
-                  style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}
+                  style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}
                 />
               </div>
             </div>
@@ -306,7 +311,7 @@ export default function SourcingPage() {
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-1">
-              <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
                 작성자: {profile?.name ?? user?.email ?? "demo-user"}
               </span>
               <motion.button
@@ -316,7 +321,7 @@ export default function SourcingPage() {
                 className="btn-brand btn-brand--shadow-btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   color: "white",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                 }}
               >
                 {submitting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
@@ -333,19 +338,19 @@ export default function SourcingPage() {
               style={{
                 background:
                   result.kind === "ok"
-                    ? "rgba(34,197,94,0.08)"
+                    ? "rgba(var(--ok-rgb), 0.08)"
                     : result.kind === "warn"
-                      ? "rgba(255,174,46,0.08)"
+                      ? "rgba(var(--des-color-rgb), 0.08)"
                       : "rgba(var(--accent-rgb), 0.08)",
                 border: `1px solid ${
                   result.kind === "ok"
-                    ? "rgba(34,197,94,0.3)"
+                    ? "rgba(var(--ok-rgb), 0.3)"
                     : result.kind === "warn"
-                      ? "rgba(255,174,46,0.3)"
+                      ? "rgba(var(--des-color-rgb), 0.3)"
                       : "rgba(var(--accent-rgb), 0.3)"
                 }`,
-                color: result.kind === "ok" ? "#4ade80" : result.kind === "warn" ? "#ffae2e" : "#f87171",
-                fontFamily: "DM Sans, sans-serif",
+                color: result.kind === "ok" ? "var(--ok)" : result.kind === "warn" ? "var(--des-color)" : "var(--danger)",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
             >
               {result.kind === "ok" ? (
@@ -359,7 +364,7 @@ export default function SourcingPage() {
         </section>
         </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

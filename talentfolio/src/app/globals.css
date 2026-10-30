@@ -1,43 +1,72 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+@import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap");
 @import "tailwindcss";
 
-/* ── Color Palette: 조합 B — Midnight × Copper(brand) × Crimson(dev) × Amber(des) ── */
-/*   기저: 미드나잇 #020005 | 브랜드: 코퍼 #E07A5F | 개발자: 크림슨 #f6042e | 디자이너: 앰버 #ffae2e */
+/* ── 전역 토큰: 메인 "맑은 아침 하늘"(components/landing/sky-landing.css)과 동일 계열 ── */
+/*   바탕 paper #F5F9FF | 브랜드 cobalt #1F4FD6 | 글자 ink #0B1C45 | 선 #D3E3F7 | 포인트 sun #FFE7A3 */
 :root {
-  /* Background layers — midnight base */
-  --background: #020005;
-  --surface: #0b0812;
-  --surface-elevated: #16101f;
-  --border-color: #271c32;
+  /* 표면 */
+  --background: #F5F9FF;
+  --surface: #FFFFFF;
+  --surface-2: #EEF5FF;
+  --surface-elevated: #FFFFFF;
+  --border-color: #D3E3F7;
+  --border-strong: #0B1C45;
+  --mist: #DCEBFF;
+  --sky: #BFDDFF;
+  --cerulean: #4AA3F2;   /* 장식·포커스 전용, 텍스트 금지(대비 2.7) */
+  --sun: #FFE7A3;
 
-  /* Brand accent (logo, CTA, 배너, 메시지 버튼) */
-  --accent: #E07A5F;          /* copper — primary brand */
-  --accent-dark: #C96F4A;     /* darker copper — gradient endpoint */
-  --accent-rgb: 224, 122, 95;
-  --accent-alt: #ffae2e;      /* amber — designer / use sparingly */
+  /* 브랜드 */
+  --accent: #1F4FD6;
+  --accent-dark: #0B1C45;
+  --accent-rgb: 31, 79, 214;
+  --accent-alt: #7A3FB0;
 
-  /* Role badge colors — 개발자/디자이너 전용 (브랜드와 분리) */
-  --dev-color: #f6042e;       /* crimson */
-  --dev-color-rgb: 246, 4, 46;
-  --des-color: #ffae2e;       /* amber */
-  --des-color-rgb: 255, 174, 46;
+  /* 직군 (crimson/amber 폐기 — 빨강이 오류로 읽힘) */
+  --dev-color: #1F4FD6;
+  --dev-color-rgb: 31, 79, 214;
+  --des-color: #7A3FB0;
+  --des-color-rgb: 122, 63, 176;
 
-  /* 브랜드 그림자/장식 (그라데이션은 .btn-brand 클래스에서만 — 인라인 var() 배경은 깨짐) */
-  --brand-shadow-sm: 0 4px 14px rgba(var(--accent-rgb), 0.4);
-  --brand-shadow-md: 0 4px 16px rgba(var(--accent-rgb), 0.4);
-  --brand-shadow-lg: 0 6px 20px rgba(var(--accent-rgb), 0.35);
-  --brand-shadow-btn: 0 4px 14px rgba(var(--accent-rgb), 0.35);
-  --brand-shadow-fab: 0 8px 24px rgba(var(--accent-rgb), 0.45);
-  --brand-glow-hero: radial-gradient(ellipse 60% 40% at 50% 45%, rgba(var(--accent-rgb), 0.12) 0%, transparent 70%);
-  --brand-line: linear-gradient(to right, transparent, rgba(var(--accent-rgb), 0.5), transparent);
+  /* 시맨틱 (흰 바탕 AA 이상) */
+  --ok: #0B6B45;
+  --ok-rgb: 11, 107, 69;
+  --ok-bg: #DDF3E7;
+  --warn: #7A4E00;
+  --warn-bg: #FFEFC2;
+  --danger: #A82A23;
+  --danger-bg: #FDE3E0;
 
-  /* Text */
-  --text-primary: #f0ecf8;    /* near-white, slight cool tint */
-  --text-secondary: #7a6a8a;  /* muted purple-grey */
-  --tag-bg: #0b0812;
+  /* 그림자 — 얕은 파란 그림자만, 글로우 없음 */
+  --shadow-card: 0 8px 28px -12px rgba(31, 79, 214, 0.18);
+  --shadow-pop: 0 24px 50px -28px rgba(11, 28, 69, 0.35);
+  --brand-shadow-sm: none;
+  --brand-shadow-md: none;
+  --brand-shadow-lg: var(--shadow-card);
+  --brand-shadow-btn: none;
+  --brand-shadow-fab: var(--shadow-pop);
+  --brand-glow-hero: none;
+  --brand-line: linear-gradient(to right, transparent, var(--border-color), transparent);
 
-  /* Brand fonts (set by next/font/local via layout.tsx) */
-  /* --font-serreria, --font-alanis */
+  /* 글자 */
+  --text-primary: #0B1C45;
+  --text-secondary: #44527A;
+  --text-3: #5C6A8E;
+  --tag-bg: #DCEBFF;
+
+  /* 폰트 */
+  --f-body: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  --f-display: "Wanted Sans Variable", "Pretendard Variable", Pretendard, sans-serif;
+  --f-accent: "MaruBuriSemiBold", "MaruBuri", serif;
+  --f-hand: "Nanum Pen Script", cursive;
+  --font-product: var(--f-body);
+
+  /* 모서리 */
+  --r-card: 24px;
+  --r-input: 14px;
+  --r-pill: 999px;
 }
 
 * {
@@ -48,7 +77,8 @@ html,
 body {
   background-color: var(--background);
   color: var(--text-primary);
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--f-body);
+  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -81,16 +111,8 @@ body {
 .animate-fadeInUp    { animation: fadeInUp 0.4s ease-out forwards; }
 .animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
 
-/* JD 적합도 최상위(strong_fit) 카드 강조 펄스 — 초록 글로우가 은은하게 맥동 */
-@keyframes fitPulseStrong {
-  0%, 100% { box-shadow: 0 0 0 2px #22c55e, 0 0 22px rgba(34,197,94,0.45), 0 18px 44px rgba(0,0,0,0.6); }
-  50%      { box-shadow: 0 0 0 2px #22c55e, 0 0 42px rgba(34,197,94,0.7),  0 18px 44px rgba(0,0,0,0.6); }
-}
-.fit-pulse-strong { animation: fitPulseStrong 2.4s ease-in-out infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .fit-pulse-strong { animation: none; }
-}
+/* strong_fit 강조: 글로우·무한 펄스 대신 정적인 초록 테두리 */
+.fit-pulse-strong { box-shadow: 0 0 0 2px var(--ok), var(--shadow-card); }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -106,11 +128,16 @@ body {
 button.btn-brand,
 a.btn-brand {
   background-color: var(--accent);
-  background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  background-image: none;
   color: #ffffff;
-  border: none;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-pill) !important;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform .2s, background-color .2s, border-color .2s;
 }
+button.btn-brand:hover:not(:disabled),
+a.btn-brand:hover { transform: translateY(-2px); background-color: var(--accent-dark); border-color: var(--accent-dark); }
 .btn-brand--shadow-sm { box-shadow: var(--brand-shadow-sm); }
 .btn-brand--shadow-md { box-shadow: var(--brand-shadow-md); }
 .btn-brand--shadow-lg { box-shadow: var(--brand-shadow-lg); }
@@ -119,17 +146,66 @@ a.btn-brand {
 button.btn-brand--open,
 a.btn-brand--open {
   background-image: none;
-  background-color: rgba(var(--accent-rgb), 0.1);
-  border: 1px solid rgba(var(--accent-rgb), 0.35);
-  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.2);
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-strong);
+  box-shadow: none;
 }
 /* 버튼이 아닌 요소(말풍선, 뱃지)용 브랜드 채움 */
 .surface-brand {
   background-color: var(--accent);
-  background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  background-image: none;
   color: #ffffff;
 }
 .badge-brand {
   background-color: var(--accent);
   color: #ffffff;
 }
+
+/* ── 공용 기본값 ── */
+:focus-visible { outline: 3px solid var(--cerulean); outline-offset: 3px; border-radius: 8px; }
+h1, h2, h3 { font-family: var(--f-display); letter-spacing: -0.03em; }
+::selection { background: var(--mist); color: var(--text-primary); }
+
+/* 공용 스켈레톤 */
+@keyframes tf-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.tf-skeleton { border-radius: 8px; background: linear-gradient(90deg, var(--mist) 0%, var(--surface-2) 50%, var(--mist) 100%); background-size: 200% 100%; animation: tf-shimmer 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tf-skeleton { animation: none; } }
+
+/* 공용 카드·칩·버튼 (아침 하늘 규격) */
+.tf-card { background: var(--surface); border: 1.5px solid var(--border-color); border-radius: var(--r-card); box-shadow: var(--shadow-card); }
+.tf-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px; border-radius: var(--r-pill); border: 1.5px solid var(--border-color); background: var(--surface); color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+.tf-chip[aria-pressed="true"], .tf-chip.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tf-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: var(--r-pill); border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); font-weight: 600; font-size: 14px; transition: transform .2s, background .2s; cursor: pointer; text-decoration: none; }
+.tf-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.tf-btn.fill { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tf-btn.fill:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+.tf-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* 공용 페이지 머리말 (작업 화면용 — 메인 hero 의 축약판) */
+.tf-page-head { padding: 112px 0 28px; background: linear-gradient(180deg, var(--mist) 0%, var(--background) 100%); border-bottom: 1.5px solid var(--border-color); }
+.tf-label { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.tf-h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(30px, 4.4vw, 52px); line-height: 1.1; letter-spacing: -.045em; color: var(--text-primary); text-wrap: balance; margin: 0; }
+.tf-h1 em { font-family: var(--f-accent); font-style: normal; font-weight: 400; color: var(--accent); letter-spacing: -.02em; }
+.tf-lead { margin-top: 12px; max-width: 620px; font-size: 15px; line-height: 1.65; color: var(--text-secondary); }
+.tf-lead b { color: var(--text-primary); }
+
+/* 상태 화면 (components/state/StateView.tsx) */
+.tf-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 48px 24px; }
+.tf-state[data-compact] { padding: 28px 16px; }
+.tf-state-title { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -.035em; color: var(--text-primary); margin: 10px 0 0; }
+.tf-state-note { font-family: var(--f-hand); font-size: 22px; color: var(--accent); transform: rotate(-2deg); }
+.tf-state-body { max-width: 420px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+.tf-state-acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.tf-skel-list { display: grid; gap: 12px; }
+.tf-skel-row { display: flex; gap: 14px; align-items: center; padding: 16px; box-shadow: none; }
+@keyframes tf-kite { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+.tf-kite-tail { transform-origin: 150px 78px; animation: tf-kite 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tf-kite-tail { animation: none; } }
+
+/* 본문으로 건너뛰기 (키보드 사용자) */
+.tf-skip { position: fixed; left: 16px; top: -60px; z-index: 1000; padding: 10px 16px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; text-decoration: none; transition: top .2s; }
+.tf-skip:focus { top: 12px; }
+
+
+

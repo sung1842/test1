@@ -39,11 +39,11 @@ export default function FilterTabs({
               key={tab.value}
               onClick={() => onFilterChange(tab.value)}
               style={{
-                color: isActive ? "#f0ecf8" : "var(--text-secondary)",
+                color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                 borderBottom: isActive
                   ? `2px solid ${activeLine}`
                   : "2px solid transparent",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
               className="flex items-center gap-2 px-4 py-4 text-sm font-medium transition-all duration-200 hover:text-[var(--text-primary)]"
             >
@@ -52,7 +52,7 @@ export default function FilterTabs({
                 style={{
                   backgroundColor: isActive ? activeBadgeBg : "var(--tag-bg)",
                   color: isActive ? activeBadgeColor : "var(--text-secondary)",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                 }}
                 className="text-xs px-2 py-0.5 rounded-full"
               >

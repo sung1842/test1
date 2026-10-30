@@ -65,9 +65,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
   const baseInputStyle: React.CSSProperties = {
     width: "100%", background: "#0f0b18",
-    border: "1px solid #271c32", borderRadius: 10,
+    border: "1px solid var(--border-color)", borderRadius: 10,
     padding: "10px 12px 10px 38px",
-    color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif",
+    color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif",
     fontSize: 14, outline: "none", boxSizing: "border-box",
     transition: "border-color 0.15s",
   };
@@ -99,29 +99,29 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             width: "min(440px, 92vw)",
             maxHeight: "90vh",
             overflowY: "auto",
-            background: "#0d0918",
-            border: "1px solid #271c32",
+            background: "var(--surface-2)",
+            border: "1px solid var(--border-color)",
             borderRadius: 20,
             boxShadow: "0 28px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(var(--accent-rgb), 0.06)",
             scrollbarWidth: "thin",
-            scrollbarColor: "#271c32 transparent",
+            scrollbarColor: "var(--border-color) transparent",
           } as React.CSSProperties}
         >
           {/* ── 헤더 ── */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 20px", borderBottom: "1px solid #271c32",
-            position: "sticky", top: 0, background: "#0d0918", zIndex: 1,
+            padding: "18px 20px", borderBottom: "1px solid var(--border-color)",
+            position: "sticky", top: 0, background: "var(--surface-2)", zIndex: 1,
           }}>
             <div>
               <h2 style={{
-                fontFamily: "DM Sans, sans-serif", fontWeight: 700, fontSize: 18,
+                fontFamily: "Pretendard Variable, sans-serif", fontWeight: 700, fontSize: 18,
                 color: "var(--text-primary)", margin: 0,
               }}>
                 {mode === "login" ? "로그인" : "회원가입"}
               </h2>
               <p style={{
-                fontFamily: "DM Sans, sans-serif", fontSize: 11,
+                fontFamily: "Pretendard Variable, sans-serif", fontSize: 12,
                 color: "var(--text-secondary)", margin: "3px 0 0",
               }}>
                 {mode === "login" ? "TalentFolio에 오신 걸 환영합니다" : "새 계정을 만들어보세요"}
@@ -130,12 +130,12 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             <button
               onClick={onClose}
               style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid #271c32",
+                background: "rgba(11, 28, 69, 0.04)", border: "1px solid var(--border-color)",
                 borderRadius: 8, padding: 7, cursor: "pointer",
                 color: "var(--text-secondary)", display: "flex", transition: "all 0.15s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "rgba(11, 28, 69, 0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "rgba(11, 28, 69, 0.04)"; }}
             >
               <X size={15} />
             </button>
@@ -144,15 +144,15 @@ export default function AuthModal({ onClose }: AuthModalProps) {
           {/* ── 폼 바디 ── */}
           <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
             {!authAvailable && (
-              <p style={{ fontSize: 13, color: "#ffae2e", marginBottom: 16, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: "var(--des-color)", marginBottom: 16, lineHeight: 1.5 }}>
                 {BACKEND_UNAVAILABLE_MSG}
               </p>
             )}
 
             {/* 탭 전환 */}
             <div style={{
-              display: "flex", background: "#0b0812", borderRadius: 10,
-              padding: 3, marginBottom: 20, border: "1px solid #271c32",
+              display: "flex", background: "var(--surface)", borderRadius: 10,
+              padding: 3, marginBottom: 20, border: "1px solid var(--border-color)",
             }}>
               {(["login", "signup"] as const).map(m => (
                 <button
@@ -161,7 +161,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   className={mode === m ? "btn-brand btn-brand--shadow-btn" : undefined}
                   style={{
                     flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
-                    cursor: "pointer", fontFamily: "DM Sans, sans-serif",
+                    cursor: "pointer", fontFamily: "Pretendard Variable, sans-serif",
                     fontSize: 13, fontWeight: 600, transition: "all 0.2s",
                     background: mode === m ? undefined : "transparent",
                     color: mode === m ? "white" : "var(--text-secondary)",
@@ -194,7 +194,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         onChange={e => setName(e.target.value)}
                         style={baseInputStyle}
                         onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.6)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "var(--border-color)")}
                       />
                     </div>
 
@@ -202,20 +202,20 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     <div style={{ display: "flex", gap: 8 }}>
                       {(["developer", "designer"] as const).map(r => {
                         const active = role === r;
-                        const color  = r === "developer" ? "#f6042e" : "#ffae2e";
+                        const color  = r === "developer" ? "var(--dev-color)" : "var(--des-color)";
                         return (
                           <button
                             key={r} type="button" onClick={() => setRole(r)}
                             style={{
                               flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer",
-                              fontFamily: "DM Sans, sans-serif", fontSize: 11, fontWeight: 600,
+                              fontFamily: "Pretendard Variable, sans-serif", fontSize: 12, fontWeight: 600,
                               border: `1px solid ${active ? color + "60" : "#5c3828"}`,
-                              background: active ? color + "20" : "#0b0812",
+                              background: active ? color + "20" : "var(--surface)",
                               color: active ? color : "var(--text-secondary)",
                               transition: "all 0.15s",
                             }}
                           >
-                            {r === "developer" ? "👨‍💻 개발자" : "🎨 디자이너"}
+                            {r === "developer" ? "개발자" : "디자이너"}
                           </button>
                         );
                       })}
@@ -229,7 +229,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                         value={title} onChange={e => setTitle(e.target.value)}
                         style={baseInputStyle}
                         onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.6)")}
-                        onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
+                        onBlur={e  => (e.currentTarget.style.borderColor = "var(--border-color)")}
                       />
                     </div>
                   </motion.div>
@@ -244,7 +244,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   onChange={e => setEmail(e.target.value)} required
                   style={baseInputStyle}
                   onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.6)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "var(--border-color)")}
                 />
               </div>
 
@@ -256,7 +256,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   value={password} onChange={e => setPassword(e.target.value)} required
                   style={{ ...baseInputStyle, paddingRight: 40 }}
                   onFocus={e => (e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.6)")}
-                  onBlur={e  => (e.currentTarget.style.borderColor = "#271c32")}
+                  onBlur={e  => (e.currentTarget.style.borderColor = "var(--border-color)")}
                 />
                 <button type="button" onClick={() => setShowPw(v => !v)} style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
@@ -275,7 +275,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     style={{
                       margin: 0, padding: "8px 12px", borderRadius: 8,
                       background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)",
-                      color: "#f87171", fontFamily: "DM Sans, sans-serif", fontSize: 13,
+                      color: "var(--danger)", fontFamily: "Pretendard Variable, sans-serif", fontSize: 13,
                     }}
                   >
                     {error}
@@ -293,9 +293,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 style={{
                   width: "100%", padding: "12px 0", borderRadius: 12, border: "none",
                   cursor: loading ? "default" : "pointer",
-                  background: loading ? "#0b0812" : undefined,
+                  background: loading ? "var(--surface)" : undefined,
                   color: loading ? "var(--text-secondary)" : "white",
-                  fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 700,
+                  fontFamily: "Pretendard Variable, sans-serif", fontSize: 14, fontWeight: 700,
                   boxShadow: loading ? "none" : undefined,
                   transition: "all 0.2s", marginTop: 4,
                 }}
@@ -306,7 +306,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
               {/* 하단 안내 */}
               <p style={{
                 margin: 0, textAlign: "center", fontSize: 12,
-                color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif",
+                color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif",
               }}>
                 {mode === "login" ? (
                   <>계정이 없으신가요?{" "}

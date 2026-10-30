@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, CheckCircle, XCircle, Loader2, Code2, Palette } from "lucide-react";
+import { X, Zap, CheckCircle, XCircle, Loader2, Code2, Palette, Send, CheckSquare, Square } from "lucide-react";
 import type { FitReport } from "@/types/fitReport";
 import { JD_ANALYZER_URL, STAGE_LABELS, isJdAnalyzerConfigured } from "@/types/fitReport";
 import { BACKEND_UNAVAILABLE_MSG } from "@/lib/features";
@@ -63,9 +63,9 @@ const BATCH_SIZE = 5;
 
 function StatusDot({ status }: { status: CandidateStatus }) {
   if (status.state === "queued")    return <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 animate-pulse" />;
-  if (status.state === "analyzing") return <Loader2 size={10} className="shrink-0 animate-spin" style={{ color: "#ffae2e" }} />;
-  if (status.state === "done")      return <CheckCircle size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
-  if (status.state === "failed")    return <XCircle size={11} className="shrink-0" style={{ color: "#f6042e" }} />;
+  if (status.state === "analyzing") return <Loader2 size={10} className="shrink-0 animate-spin" style={{ color: "var(--des-color)" }} />;
+  if (status.state === "done")      return <CheckCircle size={11} className="shrink-0" style={{ color: "var(--ok)" }} />;
+  if (status.state === "failed")    return <XCircle size={11} className="shrink-0" style={{ color: "var(--dev-color)" }} />;
   return <span className="w-2 h-2 rounded-full bg-gray-600 shrink-0" />;
 }
 
@@ -94,10 +94,10 @@ function parseKeywords(text: string): string[] {
 }
 
 const inputBase: React.CSSProperties = {
-  background: "#0b0812",
-  border: "1px solid #271c32",
+  background: "var(--surface)",
+  border: "1px solid var(--border-color)",
   color: "var(--text-primary)",
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "Pretendard Variable, sans-serif",
   padding: "10px 12px",
   lineHeight: 1.5,
 };
@@ -118,8 +118,9 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
   const [statuses, setStatuses] = useState<Map<string, CandidateStatus>>(new Map());
   const esRefs = useRef<EventSource[]>([]);
   const sessionResultsRef = useRef<Map<string, FitReport>>(new Map());
-  const autoSourcingSentRef = useRef(false);
-  const [autoSourcingNotice, setAutoSourcingNotice] = useState<string | null>(null);
+  const [slackNotice, setSlackNotice] = useState<string | null>(null);
+  const [slackSending, setSlackSending] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     return () => { esRefs.current.forEach((es) => es.close()); };
@@ -144,36 +145,59 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
     setStatuses((prev) => new Map(prev).set(id, status));
   };
 
-  // JD 분석 세션 완료 시 strong_fit 쇼트리스트 → Slack HIL 승인 요청 자동 등록 (M2.5)
-  const triggerAutoSourcing = async (reports: FitReport[]) => {
-    if (!userId || autoSourcingSentRef.current || reports.length === 0) return;
-    autoSourcingSentRef.current = true;
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
+  const selectAllDone = () => {
+    const doneIds = [...statuses.entries()]
+      .filter(([, st]) => st.state === "done")
+      .map(([id]) => id);
+    setSelectedIds(new Set(doneIds));
+  };
+
+  const getSelectedReports = (): FitReport[] =>
+    [...selectedIds]
+      .map((id) => sessionResultsRef.current.get(id))
+      .filter((r): r is FitReport => Boolean(r));
+
+  const sendManualSlackApproval = async () => {
+    if (!userId || slackSending) return;
+    const reports = getSelectedReports();
+    if (reports.length === 0) {
+      setSlackNotice("Slack으로 보낼 후보를 선택해주세요.");
+      return;
+    }
+
+    setSlackSending(true);
+    setSlackNotice(null);
     try {
       const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jd: jdText, userId, reports }),
+        body: JSON.stringify({ jd: jdText, userId, reports, manualSelection: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `서버 오류 (${res.status})`);
 
       if (data.created) {
-        const n = data.shortlist?.length ?? 0;
-        setAutoSourcingNotice(`strong_fit ${n}명 쇼트리스트 — Slack 승인 요청을 보냈습니다. /sourcing/review 에서도 확인할 수 있습니다.`);
-      } else if (data.reason === "no_strong_fit") {
-        setAutoSourcingNotice("strong_fit 후보가 없어 자동 소싱 요청은 보내지 않았습니다.");
+        setSlackNotice(`선택 ${reports.length}명 — Slack 승인 요청을 보냈습니다. /sourcing/review 에서 확인할 수 있습니다.`);
+        setSelectedIds(new Set());
+      } else if (data.reason === "no_selection") {
+        setSlackNotice("선택된 후보가 없습니다.");
       } else if (data.reason === "already_pending") {
-        setAutoSourcingNotice("이 JD에 대한 승인 요청이 이미 대기 중입니다.");
+        setSlackNotice("이 JD에 대한 승인 요청이 이미 대기 중입니다.");
       }
     } catch (err) {
-      autoSourcingSentRef.current = false;
-      setAutoSourcingNotice(err instanceof Error ? err.message : "자동 소싱 요청 실패");
+      setSlackNotice(err instanceof Error ? err.message : "Slack 승인 요청 실패");
+    } finally {
+      setSlackSending(false);
     }
-  };
-
-  const finalizeAnalysisSession = async (reports: Map<string, FitReport>) => {
-    await triggerAutoSourcing([...reports.values()]);
   };
 
   const formValid =
@@ -229,11 +253,6 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         setAnalyzedCount(nextCount);
         batchResults.forEach((r, id) => sessionResultsRef.current.set(id, r));
         if (batchResults.size > 0) onResults(new Map(batchResults));
-
-        const allAnalyzed = nextCount >= activePlan.ranked.length;
-        if (allAnalyzed) {
-          void finalizeAnalysisSession(sessionResultsRef.current);
-        }
       }
     };
 
@@ -304,7 +323,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
 
   const roleLabel = (plan?.role ?? role) === "designer" ? "디자이너" : "개발자";
   const RoleIcon = (plan?.role ?? role) === "designer" ? Palette : Code2;
-  const roleColor = (plan?.role ?? role) === "designer" ? "#ffae2e" : "#f6042e";
+  const roleColor = (plan?.role ?? role) === "designer" ? "var(--des-color)" : "var(--dev-color)";
 
   return (
     <motion.div
@@ -327,8 +346,8 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         transition={{ type: "spring", stiffness: 340, damping: 28 }}
         className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden"
         style={{
-          background: "#0d0918",
-          border: "1px solid #271c32",
+          background: "var(--surface-2)",
+          border: "1px solid var(--border-color)",
           boxShadow: "0 0 60px rgba(var(--accent-rgb), 0.15), 0 24px 64px rgba(0,0,0,0.6)",
           maxHeight: "calc(100vh - 7rem)",   // 상/하 여백을 뺀 높이로 축소
           display: "flex",
@@ -336,17 +355,17 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: "1px solid #271c32" }}>
+        <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: "1px solid var(--border-color)" }}>
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)" }}>
               <Zap size={14} style={{ color: "var(--accent)" }} />
             </div>
             <div>
-              <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+              <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
                 JD 매칭 분석
               </h2>
-              <p className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
                 채용 정보를 입력하면 적합한 후보부터 정밀 분석합니다
               </p>
             </div>
@@ -375,8 +394,8 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {([
-                      { value: "developer", label: "개발자", Icon: Code2, color: "#f6042e" },
-                      { value: "designer",  label: "디자이너", Icon: Palette, color: "#ffae2e" },
+                      { value: "developer", label: "개발자", Icon: Code2, color: "var(--dev-color)" },
+                      { value: "designer",  label: "디자이너", Icon: Palette, color: "var(--des-color)" },
                     ] as const).map(({ value, label, Icon, color }) => {
                       const active = role === value;
                       return (
@@ -385,10 +404,10 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                           onClick={() => patchForm({ role: value })}
                           className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
                           style={{
-                            background: active ? `${color}1f` : "#0b0812",
-                            border: `1px solid ${active ? color : "#271c32"}`,
+                            background: active ? `${color}1f` : "var(--surface)",
+                            border: `1px solid ${active ? color : "var(--border-color)"}`,
                             color: active ? color : "var(--text-secondary)",
-                            fontFamily: "DM Sans, sans-serif",
+                            fontFamily: "Pretendard Variable, sans-serif",
                           }}
                         >
                           <Icon size={15} />
@@ -413,7 +432,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     className="w-28 rounded-xl text-sm outline-none transition-all"
                     style={inputBase}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; }}
                   />
                   <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }}>명</span>
                 </div>
@@ -433,9 +452,9 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     className="w-full rounded-xl resize-y text-sm outline-none transition-all"
                     style={inputBase}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; }}
                   />
-                  <p className="text-[10px] mt-1" style={{ color: "var(--text-secondary)" }}>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
                     입력한 기술을 가진 후보를 우선 분석합니다 (비우면 직군 전체 대상)
                   </p>
                 </div>
@@ -453,7 +472,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     className="w-full rounded-xl resize-y text-sm outline-none transition-all"
                     style={inputBase}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; }}
                   />
                 </div>
 
@@ -470,7 +489,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     className="w-full rounded-xl resize-none text-sm outline-none transition-all"
                     style={inputBase}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; }}
                   />
                 </div>
 
@@ -487,11 +506,11 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     className="w-full rounded-xl resize-none text-sm outline-none transition-all"
                     style={inputBase}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--accent-rgb), 0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#271c32"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; }}
                   />
                 </div>
 
-                {planError && <p className="text-[11px]" style={{ color: "#f6042e" }}>{planError}</p>}
+                {planError && <p className="text-xs" style={{ color: "var(--dev-color)" }}>{planError}</p>}
               </>
             )}
 
@@ -512,14 +531,14 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     {plan.keywords.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {plan.keywords.map((kw) => (
-                          <span key={kw} className="text-[11px] px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,174,46,0.1)", border: "1px solid rgba(255,174,46,0.25)", color: "#ffae2e" }}>
+                          <span key={kw} className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(var(--des-color-rgb), 0.1)", border: "1px solid rgba(var(--des-color-rgb), 0.25)", color: "var(--des-color)" }}>
                             {kw}
                           </span>
                         ))}
                       </div>
                     )}
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
                       {roleLabel} {plan.totalInRole}명 중 키워드 매칭{" "}
                       <span style={{ color: "var(--accent)", fontWeight: 600 }}>{plan.matchedCount}명</span>
                       {" "}· 적합도 높은 순 {BATCH_SIZE}명씩 분석
@@ -527,42 +546,74 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   </motion.div>
                 )}
 
-                {autoSourcingNotice && (
-                  <p className="text-[11px] px-1" style={{ color: autoSourcingNotice.includes("실패") ? "#f6042e" : "#22c55e" }}>
-                    {autoSourcingNotice}
+                {slackNotice && (
+                  <p className="text-xs px-1" style={{ color: slackNotice.includes("실패") || slackNotice.includes("선택") ? "var(--dev-color)" : "var(--ok)" }}>
+                    {slackNotice}
                   </p>
                 )}
 
                 {visibleCandidates.length > 0 && (
-                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #271c32" }}>
-                    <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "var(--surface)" }}>
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-color)" }}>
+                    <div className="px-4 py-2.5 flex items-center justify-between gap-2" style={{ background: "var(--surface)" }}>
                       <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
                         분석 결과 {doneCount}명 완료{failCount > 0 ? ` · ${failCount}명 실패` : ""}
                       </span>
-                      {batchRunning && <Loader2 size={12} className="animate-spin" style={{ color: "#ffae2e" }} />}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {doneCount > 0 && !batchRunning && (
+                          <button
+                            type="button"
+                            onClick={selectAllDone}
+                            className="text-xs font-semibold px-2 py-0.5 rounded-md transition-opacity hover:opacity-80"
+                            style={{ color: "var(--accent)", fontFamily: "Pretendard Variable, sans-serif" }}
+                          >
+                            완료 전체 선택
+                          </button>
+                        )}
+                        {batchRunning && <Loader2 size={12} className="animate-spin" style={{ color: "var(--des-color)" }} />}
+                      </div>
                     </div>
-                    <div className="px-4 py-2 space-y-2" style={{ borderTop: "1px solid #271c32", background: "#0b0812" }}>
+                    <div className="px-4 py-2 space-y-2" style={{ borderTop: "1px solid var(--border-color)", background: "var(--surface)" }}>
                       {visibleCandidates.map((c, idx) => {
                         const st = statuses.get(c.candidateId) ?? { state: "idle" as const };
+                        const isDone = st.state === "done";
+                        const isSelected = selectedIds.has(c.candidateId);
                         return (
                           <div key={c.candidateId} className="flex items-center justify-between gap-3 py-1">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-[10px] tabular-nums w-4 shrink-0" style={{ color: "var(--text-secondary)" }}>{idx + 1}</span>
+                              {isDone ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSelect(c.candidateId)}
+                                  className="shrink-0 p-0.5 rounded transition-opacity hover:opacity-80"
+                                  style={{ color: isSelected ? "var(--accent)" : "var(--text-secondary)" }}
+                                  aria-label={isSelected ? "선택 해제" : "선택"}
+                                >
+                                  {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
+                                </button>
+                              ) : (
+                                <span className="w-[18px] shrink-0" />
+                              )}
+                              <span className="text-xs tabular-nums w-4 shrink-0" style={{ color: "var(--text-secondary)" }}>{idx + 1}</span>
                               <StatusDot status={st} />
-                              <span className="text-xs truncate" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>{c.name}</span>
-                              <span className="text-[10px] px-1 py-0.5 rounded shrink-0"
+                              <span className="text-xs truncate" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>{c.name}</span>
+                              <span className="text-xs px-1 py-0.5 rounded shrink-0"
                                 style={{ background: "var(--surface-elevated)", color: "var(--text-secondary)" }}>{c.matchCount}개 일치</span>
                             </div>
                             <div className="shrink-0">
-                              {st.state === "analyzing" && <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>{st.stage}</span>}
+                              {st.state === "analyzing" && <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{st.stage}</span>}
                               {st.state === "done" && <FitScoreBadge report={st.report} compact />}
-                              {st.state === "failed" && <span className="text-[10px]" style={{ color: "#f6042e" }}>오류</span>}
-                              {st.state === "queued" && <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>대기</span>}
+                              {st.state === "failed" && <span className="text-xs" style={{ color: "var(--dev-color)" }}>오류</span>}
+                              {st.state === "queued" && <span className="text-xs" style={{ color: "var(--text-secondary)" }}>대기</span>}
                             </div>
                           </div>
                         );
                       })}
                     </div>
+                    {doneCount > 0 && selectedIds.size > 0 && (
+                      <p className="text-xs px-4 py-2" style={{ borderTop: "1px solid var(--border-color)", color: "var(--text-secondary)" }}>
+                        {selectedIds.size}명 선택됨 — 결과를 검토한 뒤 Slack 승인 요청을 보내세요.
+                      </p>
+                    )}
                   </div>
                 )}
               </>
@@ -573,12 +624,12 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex items-center gap-3 shrink-0" style={{ borderTop: "1px solid #271c32" }}>
+        <div className="px-6 py-4 flex items-center gap-3 shrink-0" style={{ borderTop: "1px solid var(--border-color)" }}>
           {!jdAvailable ? (
             <button
               onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
             >
               닫기
             </button>
@@ -591,7 +642,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
               className="btn-brand btn-brand--shadow-btn flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
                 color: "white",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Pretendard Variable, sans-serif",
               }}
             >
               <Zap size={14} />
@@ -601,7 +652,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
 
           {phase === "planning" && (
             <button disabled className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
-              style={{ background: "var(--surface-elevated)", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}>
+              style={{ background: "var(--surface-elevated)", color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}>
               <Loader2 size={14} className="animate-spin" />
               후보 선별 중...
             </button>
@@ -619,7 +670,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   style={{
                     background: batchRunning ? "var(--surface-elevated)" : undefined,
                     color: batchRunning ? "var(--text-secondary)" : "white",
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "Pretendard Variable, sans-serif",
                     boxShadow: batchRunning ? "none" : undefined,
                   }}
                 >
@@ -630,14 +681,32 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   )}
                 </button>
               )}
+              {doneCount > 0 && userId && (
+                <button
+                  onClick={() => void sendManualSlackApproval()}
+                  disabled={slackSending || selectedIds.size === 0}
+                  className="py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    flex: remaining > 0 ? "0 0 auto" : 1,
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                    background: "rgba(var(--des-color-rgb), 0.12)",
+                    border: "1px solid rgba(var(--des-color-rgb), 0.35)",
+                    color: "var(--des-color)",
+                    fontFamily: "Pretendard Variable, sans-serif",
+                  }}
+                >
+                  {slackSending ? (
+                    <><Loader2 size={14} className="animate-spin" />전송 중...</>
+                  ) : (
+                    <><Send size={14} />Slack 승인 ({selectedIds.size || 0})</>
+                  )}
+                </button>
+              )}
               <button
-                onClick={async () => {
-                  if (remaining === 0) {
-                    await finalizeAnalysisSession(sessionResultsRef.current);
-                    onViewResults();
-                  } else {
-                    onClose();
-                  }
+                onClick={() => {
+                  if (remaining === 0) onViewResults();
+                  else onClose();
                 }}
                 disabled={doneCount === 0 && remaining === 0}
                 className={remaining > 0
@@ -649,7 +718,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   background: remaining > 0 ? "var(--surface-elevated)" : undefined,
                   border: remaining > 0 ? "1px solid var(--border-color)" : "none",
                   color: remaining > 0 ? "var(--text-secondary)" : "white",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                   boxShadow: remaining > 0 ? "none" : undefined,
                 }}
               >

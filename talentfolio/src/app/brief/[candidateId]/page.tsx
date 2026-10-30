@@ -1,8 +1,10 @@
+import { SiteHeader } from "@/components/site/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getCandidateById } from "@/lib/getCandidate";
-import { fetchBriefReport } from "@/lib/briefReport";
+import { ExternalLink } from "lucide-react";
+import { getCandidateById, getPublicEvidenceCards } from "@/lib/getCandidate";
+import { evidenceCardHref, fetchBriefReport } from "@/lib/briefReport";
+import { sourceLabel, trustLabel } from "@/lib/lifeApi";
 import FitReportDetail from "@/components/FitReportDetail";
 import RoleBadge from "@/components/RoleBadge";
 import SkillTag from "@/components/SkillTag";
@@ -56,6 +58,7 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
 
   const candidate = await getCandidateById(candidateId);
   const brief = jdHash ? await fetchBriefReport(candidateId, jdHash) : null;
+  const evidence = candidate ? await getPublicEvidenceCards(candidate.supabaseId ?? candidate.id) : [];
 
   if (!candidate) {
     return (
@@ -71,25 +74,9 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      <header
-        className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3 border-b"
-        style={{ background: "var(--surface)", borderColor: "var(--border-color)" }}
-      >
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          <ArrowLeft size={16} />
-          TalentFolio
-        </Link>
-        <span style={{ color: "var(--border-color)" }}>|</span>
-        <span className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
-          Candidate Brief
-        </span>
-      </header>
+      <SiteHeader crumb="Candidate Brief" />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main id="main" className="max-w-2xl mx-auto px-4 pb-8" style={{ paddingTop: 88 }}>
         {jdHeadline && (
           <p
             className="text-xs font-semibold uppercase tracking-wider mb-4 px-3 py-2 rounded-lg"
@@ -116,7 +103,7 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+                <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
                   {candidate.name}
                 </h1>
                 <RoleBadge role={candidate.role} />
@@ -184,7 +171,7 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
             <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
               {jdHash
                 ? "해당 JD에 대한 분석 결과가 아직 저장되지 않았습니다."
-                : "URL에 ?jd=<jdHash> 를 붙이면 분석 리포트를 불러올 수 있습니다."}
+                : "데스크의 승인함에서 공고를 고른 뒤 열면 이 후보의 적합도 근거가 함께 보여요."}
             </p>
           </div>
         )}
@@ -200,6 +187,34 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
             <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text-primary)" }}>
               {candidate.longBio}
             </p>
+          </section>
+        )}
+
+        {evidence.length > 0 && (
+          <section className="mt-6">
+            <h2
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              근거 카드 {evidence.length}
+            </h2>
+            <ul className="grid gap-2">
+              {evidence.map((c) => (
+                <li key={c.id}>
+                  <a
+                    href={evidenceCardHref(candidateId, c.id)}
+                    className="block rounded-xl px-4 py-3 text-sm transition-opacity hover:opacity-80"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                  >
+                    {c.claim}
+                    <span className="block mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {sourceLabel(c.source)} · 신뢰 등급: {trustLabel(c.trust_level)}
+                      {c.ai_edited && " · AI 교정"}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </main>

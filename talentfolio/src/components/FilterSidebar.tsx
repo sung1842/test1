@@ -46,27 +46,27 @@ export default function FilterSidebar({
             style={{ color: "var(--text-secondary)" }}
           />
           <span
-            className="text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            className="text-sm font-bold"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
-            Advanced Filters
+            필터
           </span>
         </div>
 
         {/* Role Type */}
         <div>
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            className="text-xs font-semibold tracking-wide mb-3"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
-            Role Type
+            직군
           </p>
           <div className="space-y-1.5">
             {ROLE_OPTIONS.map(({ value, label }) => {
               const isActive = activeFilter === value;
               const dot =
-                value === "developer" ? "#f6042e" :
-                value === "designer"  ? "#ffae2e" :
+                value === "developer" ? "var(--dev-color)" :
+                value === "designer"  ? "var(--des-color)" :
                 "var(--text-secondary)";
               return (
                 <button
@@ -75,15 +75,15 @@ export default function FilterSidebar({
                   className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200"
                   style={{
                     background: isActive
-                      ? value === "developer" ? "rgba(246,4,46,0.1)"
-                      : value === "designer"  ? "rgba(255,174,46,0.08)"
-                      : "rgba(255,255,255,0.04)"
+                      ? value === "developer" ? "rgba(var(--dev-color-rgb), 0.1)"
+                      : value === "designer"  ? "rgba(var(--des-color-rgb), 0.08)"
+                      : "rgba(11, 28, 69, 0.04)"
                       : "transparent",
                     border: `1px solid ${
                       isActive
-                        ? value === "developer" ? "rgba(246,4,46,0.35)"
-                        : value === "designer"  ? "rgba(255,174,46,0.3)"
-                        : "rgba(255,255,255,0.08)"
+                        ? value === "developer" ? "rgba(var(--dev-color-rgb), 0.35)"
+                        : value === "designer"  ? "rgba(var(--des-color-rgb), 0.3)"
+                        : "rgba(11, 28, 69, 0.08)"
                         : "transparent"
                     }`,
                   }}
@@ -97,7 +97,7 @@ export default function FilterSidebar({
                       className="text-sm"
                       style={{
                         color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Pretendard Variable, sans-serif",
                         fontWeight: isActive ? 600 : 400,
                       }}
                     >
@@ -105,17 +105,17 @@ export default function FilterSidebar({
                     </span>
                   </div>
                   <span
-                    className="text-[10px] px-1.5 py-0.5 rounded-full"
+                    className="text-xs px-1.5 py-0.5 rounded-full"
                     style={{
-                      fontFamily: "DM Sans, sans-serif",
+                      fontFamily: "Pretendard Variable, sans-serif",
                       background: isActive ? (
-                        value === "developer" ? "rgba(246,4,46,0.18)" :
-                        value === "designer"  ? "rgba(255,174,46,0.15)" :
-                        "rgba(255,255,255,0.06)"
+                        value === "developer" ? "rgba(var(--dev-color-rgb), 0.18)" :
+                        value === "designer"  ? "rgba(var(--des-color-rgb), 0.15)" :
+                        "rgba(11, 28, 69, 0.06)"
                       ) : "var(--surface-elevated)",
                       color: isActive ? (
-                        value === "developer" ? "#f6042e" :
-                        value === "designer"  ? "#ffae2e" :
+                        value === "developer" ? "var(--dev-color)" :
+                        value === "designer"  ? "var(--des-color)" :
                         "var(--text-primary)"
                       ) : "var(--text-secondary)",
                     }}
@@ -134,10 +134,10 @@ export default function FilterSidebar({
         {/* Tech Stack Quick Filter */}
         <div>
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            className="text-xs font-semibold tracking-wide mb-3"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
-            Tech Stack
+            기술 스택
           </p>
           <div className="flex flex-wrap gap-1.5">
             {QUICK_SKILLS.map((skill) => {
@@ -146,9 +146,9 @@ export default function FilterSidebar({
                 <button
                   key={skill}
                   onClick={() => onSkillToggle(skill)}
-                  className="text-[11px] px-2.5 py-1 rounded-full transition-all duration-200"
+                  className="text-xs px-2.5 py-1 rounded-full transition-all duration-200"
                   style={{
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "Pretendard Variable, sans-serif",
                     background: isActive ? "rgba(var(--accent-rgb), 0.15)" : "var(--surface-elevated)",
                     border: `1px solid ${isActive ? "rgba(var(--accent-rgb), 0.4)" : "var(--border-color)"}`,
                     color: isActive ? "var(--accent)" : "var(--text-secondary)",

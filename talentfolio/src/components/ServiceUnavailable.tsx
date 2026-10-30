@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { CloudOff } from "lucide-react";
+import { StateView } from "@/components/state/StateView";
 
 interface ServiceUnavailableProps {
   title: string;
@@ -10,29 +9,18 @@ interface ServiceUnavailableProps {
 
 export default function ServiceUnavailable({
   title,
-  description = "현재 웹 데모만 배포된 상태입니다. Supabase·jd-fit-analyzer 연동 후 이용할 수 있습니다.",
+  description = "지금은 미리보기 버전이라 이 기능이 꺼져 있어요. 정식 연결이 끝나면 바로 쓸 수 있어요.",
   backHref = "/",
-  backLabel = "메인으로",
+  backLabel = "홈으로",
 }: ServiceUnavailableProps) {
   return (
-    <div
-      className="rounded-2xl px-6 py-10 text-center"
-      style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
-    >
-      <CloudOff size={32} className="mx-auto mb-4 opacity-50" style={{ color: "var(--text-secondary)" }} />
-      <h2 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
-        {title}
-      </h2>
-      <p className="text-sm mb-6 max-w-md mx-auto leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-        {description}
-      </p>
-      <Link
-        href={backHref}
-        className="inline-flex px-4 py-2 rounded-xl text-sm font-semibold"
-        style={{ border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
-      >
-        {backLabel}
-      </Link>
+    <div className="tf-card">
+      <StateView
+        art="umbrella"
+        title={`${title}은(는) 준비 중이에요`}
+        body={description}
+        action={{ href: backHref, label: backLabel }}
+      />
     </div>
   );
 }

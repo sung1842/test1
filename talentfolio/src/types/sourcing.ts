@@ -16,6 +16,7 @@ export interface SlackNotifyPayload {
   text: string;
   candidateIds?: string[];
   candidateNames?: string[];
+  autoSource?: "jd_analysis" | "jd_manual" | "manual" | "channel_invite";
 }
 
 export interface SourcingActionRecord {

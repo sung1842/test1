@@ -9,15 +9,18 @@ import { JD_ANALYZER_URL, isJdAnalyzerConfigured } from "@/types/fitReport";
 import ServiceUnavailable from "@/components/ServiceUnavailable";
 import { SOURCING_STATUS_LABEL } from "@/types/sourcing";
 import type { SourcingActionRecord, SourcingActionStatus } from "@/types/sourcing";
+import { SiteHeader } from "@/components/site/SiteHeader";
+import { DeskTabs } from "@/components/desk/DeskTabs";
+import { SkeletonList, StateView } from "@/components/state/StateView";
 
 const POLL_MS = 4000;
 
 const STATUS_COLOR: Record<SourcingActionStatus, string> = {
-  pending: "#ffae2e",
-  approved: "#ffae2e",
+  pending: "var(--des-color)",
+  approved: "var(--des-color)",
   rejected: "#737373",
-  executed: "#4ade80",
-  failed: "#f87171",
+  executed: "var(--ok)",
+  failed: "var(--danger)",
 };
 
 export default function SourcingReviewPage() {
@@ -32,6 +35,11 @@ export default function SourcingReviewPage() {
 
   const load = useCallback(async () => {
     if (!sourcingAvailable) {
+      setActions([]);
+      setLoading(false);
+      return;
+    }
+    if (filterRef.current === "all" && !user?.id) {
       setActions([]);
       setLoading(false);
       return;
@@ -78,8 +86,10 @@ export default function SourcingReviewPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#060309" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px 80px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--background)" }}>
+      <SiteHeader crumb="승인함 · Slack 발송" />
+      <main id="main" style={{ maxWidth: 720, margin: "0 auto", padding: "88px 20px 80px" }}>
+        <div className="dk" style={{ padding: 0, maxWidth: "none" }}><DeskTabs /></div>
         {!sourcingAvailable ? (
           <ServiceUnavailable title="승인 검토" />
         ) : (
@@ -88,16 +98,16 @@ export default function SourcingReviewPage() {
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/sourcing"
-            className="flex items-center gap-1.5 text-sm"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            className="flex items-center gap-1.5 text-sm min-h-[44px]"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
             <ArrowLeft size={15} />
-            소싱 화면으로
+            스카우트 건으로
           </Link>
           <button
             onClick={load}
-            className="flex items-center gap-1.5 text-sm"
-            style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+            className="flex items-center gap-1.5 text-sm min-h-[44px]"
+            style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
           >
             <RefreshCw size={14} />
             새로고침
@@ -107,23 +117,24 @@ export default function SourcingReviewPage() {
         {/* ── Title + filter ── */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1.5" style={{ color: "var(--text-primary)", fontFamily: "Syne, sans-serif" }}>
-              소싱 승인 검토
+            <span className="tf-label">데스크 · 승인함</span>
+            <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>
+              Slack <em>발송</em> 승인
             </h1>
-            <p className="text-sm" style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}>
-              승인하면 Slack으로 실제 전송됩니다. Slack 버튼으로 처리한 결과도 자동 반영됩니다.
+            <p className="tf-lead" role="note" style={{ padding: "10px 14px", background: "var(--warn-bg)", color: "var(--warn)", borderRadius: 14, fontWeight: 600 }}>
+              승인하면 Slack 채널로 바로 보내져요. Slack 버튼으로 처리한 결과도 여기 자동으로 반영돼요.
             </p>
           </div>
-          <div className="flex rounded-lg overflow-hidden shrink-0" style={{ border: "1px solid #271c32" }}>
+          <div className="flex rounded-full overflow-hidden shrink-0" role="tablist" aria-label="보기" style={{ border: "1.5px solid var(--border-color)" }}>
             {(["pending", "all"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="px-3 py-1.5 text-xs font-semibold transition-colors"
+                className="px-4 min-h-[40px] text-sm font-semibold transition-colors"
                 style={{
                   background: filter === f ? "rgba(var(--accent-rgb), 0.15)" : "transparent",
                   color: filter === f ? "var(--accent)" : "var(--text-secondary)",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Pretendard Variable, sans-serif",
                 }}
               >
                 {f === "pending" ? "승인 대기" : "전체"}
@@ -133,17 +144,15 @@ export default function SourcingReviewPage() {
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-16" style={{ color: "var(--text-secondary)" }}>
-            <Loader2 size={16} className="animate-spin" />
-            <span className="text-sm">불러오는 중...</span>
-          </div>
+          <SkeletonList rows={3} label="발송 요청을 불러오는 중" />
         )}
 
-        {!loading && actions.length === 0 && (
-          <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
-            <Inbox size={28} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm">{filter === "pending" ? "승인 대기 중인 요청이 없습니다." : "등록된 소싱 액션이 없습니다."}</p>
-          </div>
+        {!loading && filter === "all" && !user && (
+          <StateView compact art="door" title="로그인하면 내가 보낸 요청이 보여요" action={{ href: "/login", label: "로그인" }} />
+        )}
+
+        {!loading && actions.length === 0 && !(filter === "all" && !user) && (
+          <StateView compact art="plane" title={filter === "pending" ? "승인 기다리는 요청이 없어요" : "아직 보낸 요청이 없어요"} action={{ href: "/sourcing", label: "스카우트 건 만들기" }} />
         )}
 
         <div className="space-y-3">
@@ -158,19 +167,19 @@ export default function SourcingReviewPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   className="rounded-2xl p-5"
-                  style={{ background: "#0d0918", border: "1px solid #271c32" }}
+                  style={{ background: "var(--surface-2)", border: "1px solid var(--border-color)" }}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
+                    <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
                       <Hash size={14} style={{ color: "var(--text-secondary)" }} />
                       {action.payload.channel.replace(/^#/, "")}
                     </div>
                     <span
-                      className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                      className="text-xs px-2 py-0.5 rounded-full font-semibold"
                       style={{
                         background: `${STATUS_COLOR[action.status]}1f`,
                         color: STATUS_COLOR[action.status],
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Pretendard Variable, sans-serif",
                       }}
                     >
                       {SOURCING_STATUS_LABEL[action.status]}
@@ -179,7 +188,7 @@ export default function SourcingReviewPage() {
 
                   <pre
                     className="text-sm whitespace-pre-wrap mb-3"
-                    style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif", margin: 0 }}
+                    style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif", margin: 0 }}
                   >
                     {action.payload.text}
                   </pre>
@@ -197,7 +206,7 @@ export default function SourcingReviewPage() {
                         onClick={() => review(action.id, "approve")}
                         disabled={busyId === action.id}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
-                        style={{ background: "linear-gradient(135deg, #16a34a, #15803d)", color: "white", fontFamily: "DM Sans, sans-serif" }}
+                        style={{ background: "linear-gradient(135deg, #16a34a, #15803d)", color: "white", fontFamily: "Pretendard Variable, sans-serif" }}
                       >
                         {busyId === action.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                         승인 (Slack 전송)
@@ -206,14 +215,14 @@ export default function SourcingReviewPage() {
                         onClick={() => review(action.id, "reject")}
                         disabled={busyId === action.id}
                         className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
-                        style={{ background: "var(--surface-elevated)", border: "1px solid #271c32", color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+                        style={{ background: "var(--surface-elevated)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
                       >
                         <X size={15} />
                         반려
                       </button>
                     </div>
                   ) : (
-                    <div className="text-[11px] pt-1" style={{ color: "var(--text-secondary)" }}>
+                    <div className="text-xs pt-1" style={{ color: "var(--text-secondary)" }}>
                       {new Date(action.updatedAt).toLocaleString("ko-KR")}
                       {typeof action.result?.decidedBy === "string" && action.result.decidedBy ? ` · 처리자: ${action.result.decidedBy}` : ""}
                     </div>
@@ -225,7 +234,7 @@ export default function SourcingReviewPage() {
         </div>
         </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

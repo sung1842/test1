@@ -1,9 +1,11 @@
 "use client";
 
+import { SkeletonList } from "@/components/state/StateView";
+import { SiteHeader } from "@/components/site/SiteHeader";
+import { DeskTabs } from "@/components/desk/DeskTabs";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Database, ExternalLink, Loader2, Unlink } from "lucide-react";
+import { Database, ExternalLink, Hash, Loader2, Unlink } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isJdAnalyzerConfigured } from "@/lib/features";
 import ServiceUnavailable from "@/components/ServiceUnavailable";
@@ -15,6 +17,12 @@ import {
   notionOAuthStartUrl,
   saveNotionDatabase,
 } from "@/lib/notionApi";
+import {
+  deleteSlackChannelConfig,
+  fetchSlackChannelConfigs,
+  saveSlackChannelConfig,
+  type SlackChannelConfig,
+} from "@/lib/slackChannelApi";
 import type { NotionIntegrationPublic } from "@/types/notion";
 
 const DEFAULT_MAPPING: NotionIntegrationPublic["propertyMapping"] = {
@@ -39,6 +47,11 @@ function IntegrationsContent() {
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedDb, setSelectedDb] = useState("");
 
+  const [slackConfigs, setSlackConfigs] = useState<SlackChannelConfig[]>([]);
+  const [slackChannelId, setSlackChannelId] = useState("");
+  const [slackJdText, setSlackJdText] = useState("");
+  const [slackSaving, setSlackSaving] = useState(false);
+
   const notionParam = searchParams.get("notion");
   const notionReason = searchParams.get("reason");
 
@@ -49,9 +62,13 @@ function IntegrationsContent() {
     }
     setLoading(true);
     try {
-      const data = await fetchNotionIntegration(user.id);
+      const [data, slack] = await Promise.all([
+        fetchNotionIntegration(user.id),
+        fetchSlackChannelConfigs(user.id).catch(() => [] as SlackChannelConfig[]),
+      ]);
       setIntegration(data);
       setSelectedDb(data.dataSourceId ?? "");
+      setSlackConfigs(slack);
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "연동 상태 로드 실패");
     } finally {
@@ -108,6 +125,42 @@ function IntegrationsContent() {
     }
   };
 
+  const handleSaveSlackChannel = async () => {
+    if (!user || !slackChannelId.trim() || !slackJdText.trim()) return;
+    setSlackSaving(true);
+    setNotice(null);
+    try {
+      await saveSlackChannelConfig({
+        channelId: slackChannelId.trim(),
+        userId: user.id,
+        jdText: slackJdText.trim(),
+      });
+      const slack = await fetchSlackChannelConfigs(user.id);
+      setSlackConfigs(slack);
+      setSlackChannelId("");
+      setSlackJdText("");
+      setNotice("Slack 채널 자동 소싱 설정이 저장되었습니다. 해당 채널에 봇을 초대하면 자동으로 후보 분석·승인 요청이 시작됩니다.");
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Slack 설정 저장 실패");
+    } finally {
+      setSlackSaving(false);
+    }
+  };
+
+  const handleDeleteSlackChannel = async (channelId: string) => {
+    if (!user) return;
+    setSlackSaving(true);
+    try {
+      await deleteSlackChannelConfig(channelId, user.id);
+      setSlackConfigs((prev) => prev.filter((c) => c.slackChannelId !== channelId));
+      setNotice("채널 설정을 삭제했습니다.");
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "삭제 실패");
+    } finally {
+      setSlackSaving(false);
+    }
+  };
+
   const handleDisconnect = async () => {
     if (!user) return;
     setSaving(true);
@@ -143,19 +196,17 @@ function IntegrationsContent() {
             <Database size={20} />
           </div>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "var(--text-primary)", fontFamily: "DM Sans, sans-serif" }}>
-              Notion 연동
-            </h1>
+            <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+              Notion
+            </h2>
             <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-              JD 쇼트리스트 Slack 승인 후 개인 Notion 후보 DB에 자동 sync합니다.
+              Slack에서 승인한 후보를 내 Notion 후보 표에 자동으로 옮겨 적어요.
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-            <Loader2 size={16} className="animate-spin" /> 불러오는 중...
-          </div>
+          <SkeletonList rows={2} label="연동 상태를 불러오는 중" />
         ) : !user ? (
           <button
             type="button"
@@ -186,7 +237,7 @@ function IntegrationsContent() {
                 onClick={handleDisconnect}
                 disabled={saving}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm"
-                style={{ border: "1px solid var(--border-color)", color: "#f6042e" }}
+                style={{ border: "1px solid var(--border-color)", color: "var(--dev-color)" }}
               >
                 <Unlink size={14} /> 연동 해제
               </button>
@@ -202,10 +253,10 @@ function IntegrationsContent() {
                   onChange={(e) => setSelectedDb(e.target.value)}
                   className="w-full rounded-xl px-3 py-2.5 text-sm"
                   style={{
-                    background: "#0b0812",
-                    border: "1px solid #271c32",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border-color)",
                     color: "var(--text-primary)",
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "Pretendard Variable, sans-serif",
                   }}
                 >
                   <option value="">선택...</option>
@@ -238,7 +289,7 @@ function IntegrationsContent() {
 
             <div
               className="rounded-xl px-3 py-3 text-xs leading-relaxed"
-              style={{ background: "#0b0812", border: "1px solid #271c32", color: "var(--text-secondary)" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border-color)", color: "var(--text-secondary)" }}
             >
               <p className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Notion DB 필수 컬럼</p>
               <p>Name (title), Score (number), Verdict, CEO Summary, Matched Skills, TalentFolio (url), External ID (text)</p>
@@ -255,9 +306,103 @@ function IntegrationsContent() {
         )}
 
         {notice && (
-          <p className="text-xs mt-4 px-1" style={{ color: notice.includes("실패") ? "#f6042e" : "#22c55e" }}>
+          <p className="text-xs mt-4 px-1" style={{ color: notice.includes("실패") ? "var(--dev-color)" : "var(--ok)" }}>
             {notice}
           </p>
+        )}
+      </section>
+
+      <section
+        className="rounded-2xl p-6 mt-6"
+        style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "rgba(var(--des-color-rgb), 0.12)", color: "var(--des-color)" }}
+          >
+            <Hash size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
+              Slack 채널 자동 소싱
+            </h2>
+            <p className="text-sm mt-1 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              채널 ID와 JD를 등록한 뒤 봇을 초대하면, 후보를 분석해 승인 요청 카드를 보냅니다.
+              채널 ID는 Slack 채널 상세 → 하단 ID에서 확인 (C로 시작).
+            </p>
+          </div>
+        </div>
+
+        {!user ? (
+          <button
+            type="button"
+            onClick={() => setShowAuth(true)}
+            className="btn-brand btn-brand--shadow-btn px-4 py-2.5 rounded-xl text-sm font-semibold"
+          >
+            로그인 후 설정
+          </button>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "var(--text-secondary)" }}>
+                Slack 채널 ID
+              </label>
+              <input
+                value={slackChannelId}
+                onChange={(e) => setSlackChannelId(e.target.value)}
+                placeholder="C0123456789"
+                className="w-full rounded-xl text-sm px-3 py-2.5 outline-none"
+                style={{ background: "var(--surface)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "var(--text-secondary)" }}>
+                채용 JD (자동 소싱 기준)
+              </label>
+              <textarea
+                value={slackJdText}
+                onChange={(e) => setSlackJdText(e.target.value)}
+                rows={6}
+                placeholder={"[채용공고]\n모집 직군: 개발자\n[필수 기술]\nReact\nTypeScript\n..."}
+                className="w-full rounded-xl text-sm px-3 py-2.5 outline-none resize-y"
+                style={{ background: "var(--surface)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveSlackChannel}
+              disabled={slackSaving || !slackChannelId.trim() || !slackJdText.trim()}
+              className="btn-brand btn-brand--shadow-btn px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
+            >
+              {slackSaving ? "저장 중..." : "채널 설정 저장"}
+            </button>
+
+            {slackConfigs.length > 0 && (
+              <ul className="space-y-2 pt-2">
+                {slackConfigs.map((c) => (
+                  <li
+                    key={c.slackChannelId}
+                    className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
+                  >
+                    <span style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, monospace" }}>
+                      {c.slackChannelId}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSlackChannel(c.slackChannelId)}
+                      disabled={slackSaving}
+                      className="text-xs shrink-0"
+                      style={{ color: "var(--dev-color)" }}
+                    >
+                      삭제
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </section>
 
@@ -269,22 +414,17 @@ function IntegrationsContent() {
 export default function IntegrationsSettingsPage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      <header
-        className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3 border-b"
-        style={{ background: "var(--surface)", borderColor: "var(--border-color)" }}
-      >
-        <Link href="/" className="flex items-center gap-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
-          <ArrowLeft size={16} /> TalentFolio
-        </Link>
-        <span style={{ color: "var(--border-color)" }}>|</span>
-        <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>연동 설정</span>
-      </header>
+      <SiteHeader crumb="연동" />
 
-      <main className="max-w-xl mx-auto px-4 py-8">
+      <main id="main" className="max-w-xl mx-auto px-4 pb-16" style={{ paddingTop: 88 }}>
+        <div className="dk" style={{ padding: 0, maxWidth: "none" }}><DeskTabs /></div>
+        <span className="tf-label">데스크 · 설정</span>
+        <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>연동</h1>
+        <p className="tf-lead" style={{ marginBottom: 24 }}>승인한 후보를 Slack으로 알리고 Notion에 기록하도록 연결해요.</p>
         {!isJdAnalyzerConfigured() ? (
           <ServiceUnavailable title="연동 설정" description="jd-fit-analyzer가 배포되면 Notion·Slack 연동을 설정할 수 있습니다." />
         ) : (
-        <Suspense fallback={<p className="text-sm" style={{ color: "var(--text-secondary)" }}>로딩 중...</p>}>
+        <Suspense fallback={<SkeletonList rows={2} />}>
           <IntegrationsContent />
         </Suspense>
         )}

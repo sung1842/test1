@@ -60,7 +60,7 @@ function Marquee({ images }: { images: string[] }) {
               className="w-full h-full object-cover rounded-2xl"
               style={{
                 boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                border: "1px solid rgba(11, 28, 69, 0.06)",
               }}
               loading="lazy"
             />
@@ -68,7 +68,7 @@ function Marquee({ images }: { images: string[] }) {
               className="absolute inset-0 rounded-2xl"
               style={{
                 background:
-                  "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, transparent 60%)",
+                  "linear-gradient(160deg, rgba(11, 28, 69, 0.04) 0%, transparent 60%)",
               }}
             />
           </div>
@@ -120,7 +120,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
         <motion.h1
           {...fadeUp(0.15)}
           className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] text-center w-full"
-          style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
+          style={{ fontFamily: "Pretendard Variable, sans-serif", color: "var(--text-primary)" }}
         >
           {title}
         </motion.h1>
@@ -154,13 +154,13 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
               <div className="flex flex-col items-center gap-0.5">
                 <span
                   className="text-2xl font-bold"
-                  style={{ fontFamily: "DM Sans, sans-serif", color: "var(--text-primary)" }}
+                  style={{ fontFamily: "Pretendard Variable, sans-serif", color: "var(--text-primary)" }}
                 >
                   {value}
                 </span>
                 <span
                   className="text-xs"
-                  style={{ color: "var(--text-secondary)", fontFamily: "DM Sans, sans-serif" }}
+                  style={{ color: "var(--text-secondary)", fontFamily: "Pretendard Variable, sans-serif" }}
                 >
                   {label}
                 </span>
@@ -197,7 +197,7 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
       >
         <span
           className="text-xs"
-          style={{ fontFamily: "DM Sans, sans-serif" }}
+          style={{ fontFamily: "Pretendard Variable, sans-serif" }}
         >
           scroll
         </span>
