@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python / 크롤 산출물 (공개 저장소에 수집 데이터 미포함)
+__pycache__/
+scripts/output/
