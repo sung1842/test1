@@ -18,7 +18,6 @@ const LANDING_LINKS: NavLink[] = [
   { href: "/#roles", label: "역할" },
   { href: "/#demo", label: "작동 방식" },
   { href: "/#works", label: "작업물" },
-  { href: "/desk", label: "기업" },
 ];
 
 // 역할별 메뉴. 데스크톱 바와 모바일 메뉴가 같은 데이터를 쓴다.
