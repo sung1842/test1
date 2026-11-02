@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { Lora } from "next/font/google";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { accountTypeOf, homeOf, zoneOwner, ACCOUNT_LABEL } from "@/lib/accountType";
 import "./login-doors.css";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
@@ -44,7 +46,7 @@ function toKoreanError(err: string) {
 
 function DoorForm({ door }: { door: Door }) {
   const { signIn } = useAuth();
-  const router = useRouter();
+  const next = useSearchParams().get("next");
   const cfg = DOORS[door];
   const id = (s: string) => `${door}-${s}`;
   const emailRef = useRef<HTMLInputElement>(null);
@@ -77,7 +79,19 @@ function DoorForm({ door }: { door: Door }) {
       requestAnimationFrame(() => alertRef.current?.focus());
       return;
     }
-    router.push(cfg.next);
+    // 문(door)이 아니라 계정 유형이 갈 곳을 정한다. 다른 문으로 들어왔으면 알리고 내 홈으로 보낸다.
+    const { data } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
+    const type = accountTypeOf(data.user);
+    if (!type) {
+      setAlert("계정 유형이 지정되지 않은 계정입니다. 관리자에게 문의해 주세요.");
+      requestAnimationFrame(() => alertRef.current?.focus());
+      return;
+    }
+    if (type !== door) window.alert(`${ACCOUNT_LABEL[type]} 계정이라 ${ACCOUNT_LABEL[type]} 화면으로 이동합니다.`);
+    // proxy 가 막았던 화면(?next=)이 내 유형의 화면이면 그리로, 아니면 내 홈으로.
+    const back = next?.startsWith("/") && !next.startsWith("//") && zoneOwner(next.split("?")[0]) !== (type === "seeker" ? "company" : "seeker") ? next : null;
+    // 쿠키가 바뀌었으니 서버(proxy)가 새 세션으로 판정하도록 전체 이동한다.
+    window.location.assign(back ?? homeOf(type));
   };
 
   return (
@@ -178,7 +192,7 @@ export function LoginDoors() {
             );
           })}
         </div>
-        <p className="foot2">계정이 없나요? <Link href="/start">구직자로 시작하기</Link> · <Link href="/desk">기업 데스크 둘러보기</Link></p>
+        <p className="foot2">계정이 없나요? <Link href="/signup">구직자로 가입</Link> · <Link href="/signup?type=company">기업으로 가입</Link></p>
       </main>
     </div>
   );

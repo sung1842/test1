@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { readRole, writeRole } from "@/lib/productData";
+import { writeRole } from "@/lib/productData";
+import { homeOf } from "@/lib/accountType";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import "@/components/start/start.css";
 
@@ -32,12 +33,12 @@ const DOORS = [
 ];
 
 export default function StartPage() {
-  const { user, loading } = useAuth();
+  const { user, accountType, loading } = useAuth();
   const router = useRouter();
   // 이미 로그인했다면 입구를 다시 고르게 하지 않고 내 홈으로 보낸다.
   useEffect(() => {
-    if (!loading && user) router.replace(readRole() === "hunter" ? "/desk" : "/studio");
-  }, [loading, user, router]);
+    if (!loading && user && accountType) router.replace(homeOf(accountType));
+  }, [loading, user, accountType, router]);
 
   return (
     <div className="tf-start">
@@ -67,7 +68,7 @@ export default function StartPage() {
             </Link>
           ))}
         </div>
-        <p className="note">이미 계정이 있나요? <Link href="/login">로그인</Link></p>
+        <p className="note">계정이 없나요? <Link href="/signup">회원가입</Link> · 이미 있나요? <Link href="/login">로그인</Link></p>
       </main>
     </div>
   );

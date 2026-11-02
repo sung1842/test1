@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/genai": "^2.31.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.107.0",
     "animejs": "^4.0.2",
     "class-variance-authority": "^0.7.1",

@@ -42,7 +42,7 @@ const DESK_PREFIXES = ["/desk", "/review", "/sourcing", "/settings", "/discover"
 function zoneOf(path: string): Zone | null {
   if (path.startsWith("/studio")) return "studio";
   if (DESK_PREFIXES.some((p) => path.startsWith(p))) return "desk";
-  if (path === "/" || path === "/start" || path === "/login") return "landing";
+  if (path === "/" || path === "/start" || path === "/login" || path === "/signup") return "landing";
   return null; // /talent 등 공용 화면은 저장된 역할을 따른다
 }
 
@@ -63,7 +63,7 @@ function isCurrent(path: string, href: string) {
  * - crumb / actions: optional page-specific extras on the right.
  */
 export function SiteHeader({ overlay = false, crumb, actions }: { overlay?: boolean; crumb?: string; actions?: ReactNode }) {
-  const { user, signOut } = useAuth();
+  const { user, accountType, signOut } = useAuth();
   const rootRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
@@ -72,13 +72,15 @@ export function SiteHeader({ overlay = false, crumb, actions }: { overlay?: bool
   const [active, setActive] = useState("");
   const path = usePathname() ?? "/";
   // 저장된 역할(localStorage). 서버 렌더에서는 null.
-  const storedRole = useSyncExternalStore(subscribeStorage, readRole, () => null);
+  const savedRole = useSyncExternalStore(subscribeStorage, readRole, () => null);
+  // 로그인했으면 계정 유형이 우선이고, 비로그인 방문자만 /start 에서 고른 역할을 따른다.
+  const storedRole = accountType ? (accountType === "company" ? "hunter" : "talent") : savedRole;
   const zone: Zone = zoneOf(path) ?? (storedRole === "hunter" ? "desk" : storedRole === "talent" ? "studio" : "landing");
   const LINKS = zone === "studio" ? STUDIO_LINKS : zone === "desk" ? DESK_LINKS : LANDING_LINKS;
   // 데스크는 본문 위 DeskTabs(대기 건수 배지 포함)가 같은 메뉴라, 데스크톱 바에서는 겹치지 않게 비운다.
   const BAR_LINKS = zone === "desk" ? [] : LINKS;
   const home = zone === "desk" || storedRole === "hunter" ? { href: "/desk", label: "데스크로" } : { href: "/studio", label: "내 스튜디오" };
-  const cta = user ? home : { href: "/start", label: "시작하기" };
+  const cta = user ? home : { href: "/signup", label: "시작하기" };
 
   // Scroll state + progress line.
   useEffect(() => {

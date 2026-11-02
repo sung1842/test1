@@ -49,7 +49,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     } else {
       if (!name.trim())  { setError("이름을 입력해주세요.");  setLoading(false); return; }
       if (!title.trim()) { setError("직함을 입력해주세요."); setLoading(false); return; }
-      err = await signUp(email, password, name.trim(), role, title.trim());
+      err = await signUp({ email, password, name: name.trim(), title: title.trim(), role, accountType: "seeker" });
     }
 
     setLoading(false);
