@@ -33,7 +33,7 @@ export interface FitReview {
   decidedAt: string;
 }
 
-export type FitReportStatus = "queued" | "processing" | "completed" | "pending_review" | "approved" | "rejected" | "expired";
+export type FitReportStatus = "queued" | "processing" | "completed" | "pending_review" | "approved" | "rejected" | "expired" | "failed";
 
 export interface FitReportRecord {
   id: string;
@@ -65,3 +65,11 @@ import { getJdAnalyzerUrl, isJdAnalyzerConfigured } from "@/lib/features";
 
 export { isJdAnalyzerConfigured };
 export const JD_ANALYZER_URL = getJdAnalyzerUrl();
+
+// 내부 테스트 모드(CEO_MOCK) 문구가 저장된 옛 리포트를 사용자에게 그대로 보이지 않게 바꾼다
+export function displaySummary(summary: string | null | undefined): string {
+  if (!summary) return "";
+  return summary.startsWith("[CEO_MOCK]")
+    ? "종합 의견 없이 기술·경험·컬처핏 점수를 가중 평균한 참고 점수입니다. 근거와 면접 확인 질문을 보고 판단하세요."
+    : summary;
+}

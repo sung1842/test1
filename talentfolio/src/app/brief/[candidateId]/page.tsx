@@ -1,3 +1,4 @@
+import { displaySummary } from "@/types/fitReport";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -28,7 +29,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     : `${name} · TalentFolio Brief`;
 
   const description = report
-    ? report.ceoSummary.slice(0, 160)
+    ? displaySummary(report.ceoSummary).slice(0, 160)
     : candidate?.shortBio?.slice(0, 160) ?? "TalentFolio 후보자 브리프";
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -70,6 +71,7 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
   }
 
   const report = brief?.report;
+  const card = brief?.card;
   const jdHeadline = brief?.jdHeadline;
 
   return (
@@ -159,6 +161,23 @@ export default async function BriefPage({ params, searchParams }: PageProps) {
             style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
           >
             <FitReportDetail report={report} />
+          </div>
+        ) : card ? (
+          <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}>
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              JD 적합도 {card.overallScore}점 · 기술 {card.techScore} · 경험 {card.experienceScore}
+            </p>
+            {card.matchedSkills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {card.matchedSkills.map((s) => (
+                  <SkillTag key={s} skill={s} small />
+                ))}
+              </div>
+            )}
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{displaySummary(card.ceoSummary)}</p>
+            <p className="text-xs mt-4" style={{ color: "var(--text-secondary)" }}>
+              근거·면접 확인 질문이 담긴 전체 리포트는 분석한 기업 계정의 <Link href={`/review?jd=${encodeURIComponent(jdHash ?? "")}`} style={{ color: "var(--accent)" }}>승인함</Link>에서 볼 수 있어요.
+            </p>
           </div>
         ) : (
           <div

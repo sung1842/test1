@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Minus, Quote, ChevronDown, Sparkles } from "lucide-react";
-import type { AgentResult, FitReport } from "@/types/fitReport";
+import { displaySummary, type AgentResult, type FitReport } from "@/types/fitReport";
 
 const VERDICT = {
   strong_fit:   { label: "● 잘 맞음",   ko: "잘 맞음",   color: "var(--ok)",   bg: "var(--ok-bg)",   border: "transparent" },
@@ -144,7 +144,7 @@ export default function FitReportDetail({ report }: { report: FitReport }) {
           </span>
         </div>
         <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-primary)" }}>
-          {report.ceoSummary}
+          {displaySummary(report.ceoSummary)}
         </p>
       </div>
 

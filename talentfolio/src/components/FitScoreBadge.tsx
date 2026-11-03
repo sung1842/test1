@@ -1,6 +1,6 @@
 "use client";
 
-import type { FitReport } from "@/types/fitReport";
+import { displaySummary, type FitReport } from "@/types/fitReport";
 import { TONE_STYLE, VERDICT_LABEL } from "@/lib/labels";
 
 interface FitScoreBadgeProps {
@@ -21,7 +21,7 @@ export default function FitScoreBadge({ report, compact = false }: FitScoreBadge
         color: tone.color,
         fontSize: compact ? 12 : 13,
       }}
-      title={report.ceoSummary}
+      title={displaySummary(report.ceoSummary)}
     >
       <span aria-hidden="true">{v.mark}</span>
       <span>{v.label}</span>

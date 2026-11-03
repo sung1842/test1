@@ -214,7 +214,7 @@ function Home({
                         <div className="dk-mini" aria-hidden="true"><i style={{ width: w(c.matched - c.analyzed) }} /><i style={{ width: w(c.analyzed - c.approved) }} /><i style={{ width: w(c.approved) }} /></div>
                         <div className="dk-mini-l">매칭 {c.matched} · 분석 {c.analyzed} · 승인 {c.approved}{c.replied !== null && ` · 응답 ${c.replied}`}</div>
                       </div>
-                      {c.pending > 0 ? <span className="dk-pill wait">승인 대기 {c.pending}</span> : c.analyzed < c.matched ? <span className="dk-pill ok">분석 진행 중</span> : <span className="dk-pill ok">검토 완료</span>}
+                      {c.pending > 0 ? <span className="dk-pill wait">승인 대기 {c.pending}</span> : c.analyzed + (c.failed ?? 0) < c.matched ? <span className="dk-pill ok">분석 진행 중</span> : c.failed ? <span className="dk-pill wait">분석 실패 {c.failed}</span> : <span className="dk-pill ok">검토 완료</span>}
                     </Link>
                   );
                 })}
@@ -335,11 +335,17 @@ function Offers({ offers, reload }: { offers: DeskOffer[] | null | undefined; re
           {open.map((o) => (
             <li key={o.id}>
               <span><b>{o.payload?.candidateName ?? "후보"}</b> · {o.status === "pending" ? "발송 승인 대기" : `발송 ${relTime(o.sent_at)} · 응답 기다림`}</span>
+              {o.status === "pending" && (
+                // 발송 승인 전에 후보에게 갈 본문을 보고 판단한다 (HIL: 실제로 읽고 승인)
+                <blockquote className="dk-offer-msg" style={{ margin: "6px 0", padding: "8px 10px", borderLeft: "3px solid var(--border-color, #ddd)", whiteSpace: "pre-wrap", fontSize: 13 }}>
+                  {o.payload?.message?.trim() || "(본문 없음 — 근거 카드만 공유됩니다)"}
+                </blockquote>
+              )}
               <div className="row">
                 {o.status === "pending" ? (
                   <>
                     <button type="button" disabled={busy === o.id} onClick={() => act(o.id, () => deskApi.decideOffer(o.id, "approve"))}>발송 승인</button>
-                    <button type="button" disabled={busy === o.id} onClick={() => act(o.id, () => deskApi.decideOffer(o.id, "reject"))}>반려</button>
+                    <button type="button" disabled={busy === o.id} onClick={() => { if (window.confirm(`${o.payload?.candidateName ?? "후보"}님에게 보낼 제안을 반려할까요? 되돌릴 수 없습니다.`)) act(o.id, () => deskApi.decideOffer(o.id, "reject")); }}>반려</button>
                   </>
                 ) : (
                   <>

@@ -5,7 +5,10 @@ export interface BriefReportResponse {
   candidateId: string;
   jdHash: string | null;
   jdHeadline: string | null;
+  /** 분석을 돌린 기업 본인만 받는다 (공개 조회에는 null) */
   report: FitReport | null;
+  /** 공개 요약 카드 (Slack unfurl·OG) */
+  card?: { overallScore: number; verdict: string; techScore: number; experienceScore: number; matchedSkills: string[]; ceoSummary: string } | null;
 }
 
 /** jd-fit-analyzer orchestrator에서 FitReport 조회 (Brief 페이지·OG용) */

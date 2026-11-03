@@ -77,9 +77,12 @@ export const LANE_LABEL: Record<JobLane, string> = {
 };
 
 export function skillHit(skill: string, needles: string[]) {
-  const s = skill.toLowerCase();
+  const s = skill.trim().toLowerCase();
+  // 빈 직함·소개("")는 모든 조건의 부분 문자열이라 전부 충족으로 잡혔다 → 빈 값·한 글자는 매칭하지 않는다
+  if (s.length < 2) return false;
   return needles.some((n) => {
-    const q = n.toLowerCase();
+    const q = n.trim().toLowerCase();
+    if (q.length < 2) return false;
     return s.includes(q) || q.includes(s);
   });
 }
