@@ -403,6 +403,37 @@ export async function removeEvidenceFile(url: string) {
   await supabase.storage.from("evidence").remove([url.slice("storage://evidence/".length)]);
 }
 
+// ---------- 프로필 사진 (evidence 버킷 <uid>/profile/, 경로는 auth user_metadata.photo_path) ----------
+export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+export const PHOTO_ACCEPT = "image/png,image/jpeg,image/webp";
+
+export async function uploadProfilePhoto(userId: string, file: File, oldPath?: string | null) {
+  if (!supabase) throw new Error("Supabase 가 설정되지 않았습니다");
+  if (file.size > PHOTO_MAX_BYTES) throw new Error("5MB 이하 사진만 올릴 수 있어요");
+  if (!PHOTO_ACCEPT.split(",").includes(file.type)) throw new Error("PNG·JPG·WEBP 사진만 올릴 수 있어요");
+  const ext = file.type.split("/")[1].replace("jpeg", "jpg");
+  const path = `${userId}/profile/photo-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("evidence").upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  const { error: e2 } = await supabase.auth.updateUser({ data: { photo_path: path } });
+  if (e2) throw new Error(e2.message);
+  if (oldPath) await supabase.storage.from("evidence").remove([oldPath]);
+  return path;
+}
+
+export async function removeProfilePhoto(path: string) {
+  if (!supabase) return;
+  await supabase.auth.updateUser({ data: { photo_path: null } });
+  await supabase.storage.from("evidence").remove([path]);
+}
+
+/** 본인 사진 보기용 임시 주소 (1시간) */
+export async function profilePhotoUrl(path: string | null | undefined) {
+  if (!supabase || !path) return null;
+  const { data } = await supabase.storage.from("evidence").createSignedUrl(path, 3600);
+  return data?.signedUrl ?? null;
+}
+
 // ---------- 공고 상세 (목록은 요약 컬럼만, 상세는 열 때 1건씩) ----------
 export interface PostingDetail extends Posting {
   description: string | null;

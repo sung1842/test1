@@ -44,7 +44,7 @@ const EMPTY: StudioState = { cards: [], activities: [], reports: [], basics: nul
  * 계정별 데이터: 근거 카드(SQL 015·017) · 이력서·자기소개서·공고 핀(016). "기업에게 보이는 화면" 은 공개 항목만 남긴 미리보기.
  */
 export function StudioApp() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   // 탭을 주소(?tab=)에 남겨 새로고침·공유·뒤로가기가 되게 한다.
   const [view, setViewState] = useState<StudioView>(() => {
     if (typeof window === "undefined") return "overview";
@@ -142,6 +142,7 @@ export function StudioApp() {
             <span className="sw" /><span className="lb">기업에게 보이는 화면</span>
           </button>
           <span className="nm">{name}</span><span className="av">{name.slice(0, 1)}</span>
+          <button className="btn logout" onClick={() => void signOut()}>로그아웃</button>
         </div>
       </header>
       <nav className="mtabs" aria-label="스튜디오 메뉴">{NAV.map(navBtn)}</nav>
