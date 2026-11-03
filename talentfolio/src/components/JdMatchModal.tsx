@@ -7,6 +7,7 @@ import type { FitReport } from "@/types/fitReport";
 import { JD_ANALYZER_URL, STAGE_LABELS, isJdAnalyzerConfigured } from "@/types/fitReport";
 import { BACKEND_UNAVAILABLE_MSG } from "@/lib/features";
 import FitScoreBadge from "./FitScoreBadge";
+import { authFetch, withAccessToken } from "@/lib/lifeApi";
 
 export interface JdFormState {
   role: "developer" | "designer";
@@ -177,7 +178,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
     setSlackSending(true);
     setSlackNotice(null);
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jd: jdText, userId, reports, manualSelection: true }),
@@ -217,7 +218,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
     const keywords = parseKeywords(requiredSkills);
 
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/jd/plan`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/jd/plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jd, role, keywords }),
@@ -261,7 +262,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         const cid = candidate.candidateId;
         updateStatus(cid, { state: "queued" });
         try {
-          const res = await fetch(`${JD_ANALYZER_URL}/api/analyze`, {
+          const res = await authFetch(`${JD_ANALYZER_URL}/api/analyze`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ jd, candidateId: cid, userId: uid, tier: "free" }),
@@ -279,7 +280,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
 
           updateStatus(cid, { state: "analyzing", stage: STAGE_LABELS.queued });
 
-          const es = new EventSource(`${JD_ANALYZER_URL}/api/jobs/${data.jobId}/stream?tier=free`);
+          const es = new EventSource(await withAccessToken(`${JD_ANALYZER_URL}/api/jobs/${data.jobId}/stream?tier=free`));
           esRefs.current.push(es);
 
           es.addEventListener("progress", (e) => {

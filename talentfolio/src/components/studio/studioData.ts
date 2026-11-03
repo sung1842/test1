@@ -403,35 +403,21 @@ export async function removeEvidenceFile(url: string) {
   await supabase.storage.from("evidence").remove([url.slice("storage://evidence/".length)]);
 }
 
-// ---------- 프로필 사진 (evidence 버킷 <uid>/profile/, 경로는 auth user_metadata.photo_path) ----------
-export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+// ---------- 프로필 사진 (공개 버킷 avatars → profiles.avatar_url, 23 문서 G8) ----------
 export const PHOTO_ACCEPT = "image/png,image/jpeg,image/webp";
 
-export async function uploadProfilePhoto(userId: string, file: File, oldPath?: string | null) {
-  if (!supabase) throw new Error("Supabase 가 설정되지 않았습니다");
-  if (file.size > PHOTO_MAX_BYTES) throw new Error("5MB 이하 사진만 올릴 수 있어요");
-  if (!PHOTO_ACCEPT.split(",").includes(file.type)) throw new Error("PNG·JPG·WEBP 사진만 올릴 수 있어요");
-  const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const path = `${userId}/profile/photo-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from("evidence").upload(path, file, { contentType: file.type, upsert: false });
-  if (error) throw new Error(error.message);
-  const { error: e2 } = await supabase.auth.updateUser({ data: { photo_path: path } });
-  if (e2) throw new Error(e2.message);
-  if (oldPath) await supabase.storage.from("evidence").remove([oldPath]);
-  return path;
+export async function uploadProfilePhoto(file: File): Promise<string> {
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch("/api/profile/photo", { method: "POST", body });
+  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  if (!res.ok || !data.url) throw new Error(data.error ?? "사진을 올리지 못했어요");
+  return data.url;
 }
 
-export async function removeProfilePhoto(path: string) {
-  if (!supabase) return;
-  await supabase.auth.updateUser({ data: { photo_path: null } });
-  await supabase.storage.from("evidence").remove([path]);
-}
-
-/** 본인 사진 보기용 임시 주소 (1시간) */
-export async function profilePhotoUrl(path: string | null | undefined) {
-  if (!supabase || !path) return null;
-  const { data } = await supabase.storage.from("evidence").createSignedUrl(path, 3600);
-  return data?.signedUrl ?? null;
+export async function removeProfilePhoto(): Promise<void> {
+  const res = await fetch("/api/profile/photo", { method: "DELETE" });
+  if (!res.ok) throw new Error("사진을 지우지 못했어요");
 }
 
 // ---------- 공고 상세 (목록은 요약 컬럼만, 상세는 열 때 1건씩) ----------

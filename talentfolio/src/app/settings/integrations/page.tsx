@@ -107,7 +107,7 @@ function IntegrationsContent() {
       setShowAuth(true);
       return;
     }
-    window.location.href = notionOAuthStartUrl(user.id);
+    void notionOAuthStartUrl(user.id).then((url) => { window.location.href = url; });
   };
 
   const handleSaveDb = async () => {

@@ -172,6 +172,23 @@ async function authHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
+/**
+ * orchestrator 원본 응답이 필요한 호출용 fetch — Bearer 만 붙인다 (23 문서 G2).
+ * talentfolio → orchestrator 호출은 이것이나 lifeFetch 만 쓴다. plain fetch 금지.
+ */
+export async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const token = await accessToken();
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(url, { ...init, headers });
+}
+
+/** 헤더를 못 싣는 브라우저 이동·EventSource 용 (?access_token= 허용 경로만) */
+export async function withAccessToken(url: string): Promise<string> {
+  const token = await accessToken();
+  return token ? `${url}${url.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(token)}` : url;
+}
+
 export async function lifeFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const base = lifeApiBase();
   if (!base) throw new Error("분석 서버가 연결되지 않았습니다");

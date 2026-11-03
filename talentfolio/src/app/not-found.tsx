@@ -13,7 +13,7 @@ export default function NotFound() {
           note="404 · 이 페이지는 없어요"
           body="주소가 바뀌었거나 정리된 페이지예요."
           action={{ href: "/", label: "홈으로" }}
-          secondary={{ href: "/start", label: "어디로 갈지 고르기" }}
+          secondary={{ href: "/", label: "메인으로" }}
         />
       </main>
     </div>

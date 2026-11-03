@@ -63,21 +63,6 @@ export function saveJson(key: string, value: unknown) {
   } catch {}
 }
 
-export type ProductRole = "talent" | "hunter";
-
-const ROLE_KEY = "tf-role";
-
-export function readRole(): ProductRole | null {
-  if (typeof window === "undefined") return null;
-  const v = localStorage.getItem(ROLE_KEY);
-  return v === "talent" || v === "hunter" ? v : null;
-}
-
-export function writeRole(role: ProductRole) {
-  try {
-    localStorage.setItem(ROLE_KEY, role);
-  } catch {}
-}
 
 export const KIND_LABEL: Record<WorkItem["kind"], string> = {
   case: "케이스",

@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { readRole } from "@/lib/productData";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import "./site-header.css";
 
@@ -41,14 +40,10 @@ const DESK_PREFIXES = ["/desk", "/review", "/sourcing", "/settings", "/discover"
 function zoneOf(path: string): Zone | null {
   if (path.startsWith("/studio")) return "studio";
   if (DESK_PREFIXES.some((p) => path.startsWith(p))) return "desk";
-  if (path === "/" || path === "/start" || path === "/login" || path === "/signup") return "landing";
+  if (path === "/" || path === "/login" || path === "/signup") return "landing";
   return null; // /talent 등 공용 화면은 저장된 역할을 따른다
 }
 
-function subscribeStorage(cb: () => void) {
-  addEventListener("storage", cb);
-  return () => removeEventListener("storage", cb);
-}
 
 function isCurrent(path: string, href: string) {
   if (href.startsWith("/#")) return false;
@@ -70,10 +65,8 @@ export function SiteHeader({ overlay = false, crumb, actions }: { overlay?: bool
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("");
   const path = usePathname() ?? "/";
-  // 저장된 역할(localStorage). 서버 렌더에서는 null.
-  const savedRole = useSyncExternalStore(subscribeStorage, readRole, () => null);
-  // 로그인했으면 계정 유형이 우선이고, 비로그인 방문자만 /start 에서 고른 역할을 따른다.
-  const storedRole = accountType ? (accountType === "company" ? "hunter" : "talent") : savedRole;
+  // 공용 화면(/talent 등)의 메뉴는 계정 유형을 따른다. 비로그인은 랜딩 메뉴.
+  const storedRole = accountType === "company" ? "hunter" : accountType === "seeker" ? "talent" : null;
   const zone: Zone = zoneOf(path) ?? (storedRole === "hunter" ? "desk" : storedRole === "talent" ? "studio" : "landing");
   const LINKS = zone === "studio" ? STUDIO_LINKS : zone === "desk" ? DESK_LINKS : LANDING_LINKS;
   // 데스크는 본문 위 DeskTabs(대기 건수 배지 포함)가 같은 메뉴라, 데스크톱 바에서는 겹치지 않게 비운다.

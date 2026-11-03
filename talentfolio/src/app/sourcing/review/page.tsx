@@ -12,6 +12,7 @@ import type { SourcingActionRecord, SourcingActionStatus } from "@/types/sourcin
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { DeskTabs } from "@/components/desk/DeskTabs";
 import { SkeletonList, StateView } from "@/components/state/StateView";
+import { authFetch } from "@/lib/lifeApi";
 
 const POLL_MS = 4000;
 
@@ -49,7 +50,7 @@ export default function SourcingReviewPage() {
       if (filterRef.current === "pending") params.set("status", "pending");
       if (filterRef.current === "all" && user?.id) params.set("userId", user.id);
       const qs = params.toString();
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/actions${qs ? `?${qs}` : ""}`);
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/actions${qs ? `?${qs}` : ""}`);
       const data = await res.json();
       let list = (data.actions ?? []) as SourcingActionRecord[];
       if (filterRef.current === "all" && user?.id) {
@@ -74,7 +75,7 @@ export default function SourcingReviewPage() {
   async function review(id: string, action: "approve" | "reject") {
     setBusyId(id);
     try {
-      await fetch(`${JD_ANALYZER_URL}/api/sourcing/actions/${id}/review`, {
+      await authFetch(`${JD_ANALYZER_URL}/api/sourcing/actions/${id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, decidedBy: profile?.name ?? user?.email ?? "talentfolio-web" }),

@@ -113,7 +113,7 @@ export function StudioApp() {
             note="공개하기 전엔 아무도 못 봐요"
             body="오늘 한 일을 한 줄씩 적으면 AI가 근거 카드로 정리해요. 무엇을 기업에 보여줄지는 내가 정해요."
             action={{ href: "/login", label: "로그인" }}
-            secondary={{ href: "/start", label: "처음이에요" }}
+            secondary={{ href: "/", label: "메인으로" }}
           />
         </main>
       </div>

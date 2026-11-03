@@ -4,19 +4,21 @@ import { accountTypeOf, homeOf, zoneOwner } from "@/lib/accountType";
 
 /**
  * 서버 접근 제어. 세션은 쿠키(@supabase/ssr)에 있다.
- * - 비로그인: 메인(/)과 로그인·회원가입만 열린다. 나머지 페이지는 /login 으로, API 는 401.
+ * - 비로그인: 메인(/)과 로그인·회원가입, Slack unfurl 용 /brief/* 만 열린다. 나머지 페이지는 /login 으로, API 는 401.
  * - 로그인: 구직자는 /studio 계열, 기업은 /desk 계열만 (lib/accountType.ts zoneOwner).
  * 이 함수가 만료된 토큰 갱신(쿠키 재발급)도 맡는다.
  */
 const PUBLIC_PAGES = ["/", "/login", "/signup"];
 const PUBLIC_API = ["/api/auth/signup"];
+// Slack 봇은 쿠키가 없다. Brief 는 공개용 요약만 보여 주는 화면이라 연다 (23 문서 G5).
+const PUBLIC_PREFIXES = ["/brief/"];
 
 export async function proxy(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   const path = req.nextUrl.pathname;
   const isApi = path.startsWith("/api/");
-  const isPublic = isApi ? PUBLIC_API.includes(path) : PUBLIC_PAGES.includes(path);
+  const isPublic = isApi ? PUBLIC_API.includes(path) : PUBLIC_PAGES.includes(path) || PUBLIC_PREFIXES.some((p) => path.startsWith(p));
 
   let res = NextResponse.next({ request: req });
   if (!url || !key) return isPublic ? res : deny(req, isApi, "/");

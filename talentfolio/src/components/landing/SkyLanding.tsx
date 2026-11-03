@@ -91,7 +91,7 @@ export function SkyLanding() {
               </div>
               <div className="links">
                 <Link className="btn fill" href="/studio">스튜디오 열기</Link>
-                <Link className="btn" href="/start">둘러보기</Link>
+                <Link className="btn" href="/signup">구직자로 가입</Link>
               </div>
             </article>
             <article className="role b" id="roleB">
@@ -102,7 +102,7 @@ export function SkyLanding() {
               </div>
               <div className="links">
                 <Link className="btn fill" href="/desk">데스크 열기</Link>
-                <Link className="btn" href="/start">둘러보기</Link>
+                <Link className="btn" href="/signup?type=company">기업으로 가입</Link>
               </div>
             </article>
           </div>
@@ -241,8 +241,8 @@ export function SkyLanding() {
           <h2>내일 아침엔 제안이 와요<br /><em>인재 리포트도 함께요</em></h2>
           <p className="hand">작업물은 올려 두고, JD는 넣어 두세요</p>
           <div className="row">
-            <Link className="btn fill" href="/start">포트폴리오 입력하기</Link>
-            <Link className="btn" href="/desk/candidates">JD 입력하기</Link>
+            <Link className="btn fill" href="/signup">포트폴리오 입력하기</Link>
+            <Link className="btn" href="/signup?type=company">JD 입력하기</Link>
           </div>
         </div>
         <footer className="cta-foot">

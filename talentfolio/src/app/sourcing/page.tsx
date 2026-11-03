@@ -10,6 +10,7 @@ import ServiceUnavailable from "@/components/ServiceUnavailable";
 import type { CandidateSourcingSummary } from "@/types/sourcing";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { DeskTabs } from "@/components/desk/DeskTabs";
+import { authFetch } from "@/lib/lifeApi";
 
 const inputBase: React.CSSProperties = {
   background: "var(--surface)",
@@ -47,7 +48,7 @@ export default function SourcingPage() {
       const params = new URLSearchParams();
       if (query.trim()) params.set("query", query.trim());
       if (role) params.set("role", role);
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/candidates?${params.toString()}`);
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/candidates?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) {
         setCandidates([]);
@@ -72,13 +73,14 @@ export default function SourcingPage() {
 
   async function submitAction(e: React.FormEvent) {
     e.preventDefault();
-    if (!sourcingAvailable || !channel.trim() || !text.trim() || submitting) return;
+    // 소싱 기록은 로그인한 기업 계정에만 쌓는다 (23 문서 G7, 가짜 demo-user 폴백 제거)
+    if (!sourcingAvailable || !user || !channel.trim() || !text.trim() || submitting) return;
     setSubmitting(true);
     setResult(null);
 
-    const userId = user?.id ?? "demo-user";
+    const userId = user.id;
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/actions`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -312,7 +314,7 @@ export default function SourcingPage() {
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                작성자: {profile?.name ?? user?.email ?? "demo-user"}
+                작성자: {profile?.name ?? user?.email ?? ""}
               </span>
               <motion.button
                 type="submit"

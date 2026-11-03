@@ -1,4 +1,5 @@
 import { getJdAnalyzerUrl } from "@/lib/features";
+import { authFetch } from "@/lib/lifeApi";
 
 const BASE = () => getJdAnalyzerUrl();
 
@@ -14,7 +15,7 @@ export interface SlackChannelConfig {
 }
 
 export async function fetchSlackChannelConfigs(userId: string): Promise<SlackChannelConfig[]> {
-  const res = await fetch(`${BASE()}/api/slack/channel-configs?userId=${encodeURIComponent(userId)}`);
+  const res = await authFetch(`${BASE()}/api/slack/channel-configs?userId=${encodeURIComponent(userId)}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "채널 설정 로드 실패");
   return data.configs ?? [];
@@ -27,7 +28,7 @@ export async function saveSlackChannelConfig(input: {
   enabled?: boolean;
   maxAnalyze?: number;
 }): Promise<SlackChannelConfig> {
-  const res = await fetch(`${BASE()}/api/slack/channel-configs/${encodeURIComponent(input.channelId)}`, {
+  const res = await authFetch(`${BASE()}/api/slack/channel-configs/${encodeURIComponent(input.channelId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -38,7 +39,7 @@ export async function saveSlackChannelConfig(input: {
 }
 
 export async function deleteSlackChannelConfig(channelId: string, userId: string): Promise<void> {
-  const res = await fetch(
+  const res = await authFetch(
     `${BASE()}/api/slack/channel-configs/${encodeURIComponent(channelId)}?userId=${encodeURIComponent(userId)}`,
     { method: "DELETE" }
   );

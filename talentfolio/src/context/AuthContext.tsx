@@ -29,6 +29,8 @@ interface AuthContextValue {
   signUp: (input: SignUpInput) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  /** profiles 행을 다시 읽는다 (사진·공개 설정 변경 후) */
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -144,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, accountType, loading, onlineUserIds, authAvailable, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, accountType, refreshProfile: async () => { if (user) await fetchProfile(user.id); }, loading, onlineUserIds, authAvailable, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

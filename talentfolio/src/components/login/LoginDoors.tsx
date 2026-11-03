@@ -121,9 +121,6 @@ function DoorForm({ door }: { door: Door }) {
         <p className="err" id={id("pw-err")} aria-live="polite">{pwErr}</p>
         <span className="sr-only" id={id("pw-hint")}>6자 이상</span>
       </div>
-      <div className="row">
-        <label className="check"><input type="checkbox" name="remember" defaultChecked /> 로그인 상태 유지</label>
-      </div>
       <button className="btn" type="submit" disabled={busy}>
         {busy ? "로그인 중..." : <>{cfg.submit} <i aria-hidden="true">→</i></>}
       </button>
@@ -133,6 +130,8 @@ function DoorForm({ door }: { door: Door }) {
 
 export function LoginDoors() {
   const { authAvailable } = useAuth();
+  // proxy 가 계정 유형 없는 계정을 여기로 보낸다 (23 문서 G10)
+  const unclassified = useSearchParams().get("unclassified") === "1";
   const [open, setOpen] = useState<Door>("seeker");
   const companyHead = useRef<HTMLButtonElement>(null);
 
@@ -156,6 +155,11 @@ export function LoginDoors() {
           <h1>어느 문으로<br /><span className="acc">들어오시나요?</span></h1>
           <p>입장에 맞는 화면으로 바로 안내해 드려요. 로그인 뒤에도 메뉴에서 입장을 바꿀 수 있어요.</p>
         </div>
+        {unclassified && (
+          <div className="alert" role="alert" style={{ marginBottom: 20 }}>
+            <span aria-hidden="true">!</span><span>이 계정은 구직자·기업 유형이 정해지지 않아 화면을 열 수 없어요. 관리자에게 유형 지정을 요청해 주세요.</span>
+          </div>
+        )}
         {!authAvailable && (
           <div className="alert" role="status" style={{ marginBottom: 20 }}>
             <span aria-hidden="true">!</span><span>지금은 로그인 서버에 연결되어 있지 않아요. 잠시 후 다시 시도해 주세요.</span>
