@@ -143,7 +143,7 @@ export function initSkyLanding(root: HTMLElement, heroFontFamily: string): () =>
   let mx = 0, my = 0;
   function sizeMask() {
     const h = maskCv.clientHeight;
-    mctx.font = `900 ${h}px ${heroFontFamily}`;
+    mctx.font = `400 ${h}px ${heroFontFamily}`;
     const w = Math.ceil(mctx.measureText("연결").width + h * 0.08);
     maskCv.style.width = w + "px";
     maskCv.width = w * devicePixelRatio;
@@ -158,7 +158,7 @@ export function initSkyLanding(root: HTMLElement, heroFontFamily: string): () =>
     const g = mctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#4AA3F2");
     g.addColorStop(1, "#1F4FD6");
-    mctx.font = `900 ${H}px ${heroFontFamily}`;
+    mctx.font = `400 ${H}px ${heroFontFamily}`;
     mctx.textBaseline = "alphabetic";
     mctx.fillStyle = g;
     mctx.fillText("연결", H * 0.02, H * 0.86);
@@ -301,6 +301,7 @@ export function initSkyLanding(root: HTMLElement, heroFontFamily: string): () =>
   function demoStage(s: number) {
     if (s === stage) return;
     stage = s;
+    board?.dispatchEvent(new CustomEvent("sky-demo", { detail: s }));
     lis.forEach((l, i) => l.classList.toggle("on", i <= s));
     if (RM) return;
     if (s >= 0) keep(animate(jd, { scale: [0.94, 1], opacity: [0.4, 1], duration: 500, ease: "outBack" }));

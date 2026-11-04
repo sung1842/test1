@@ -1,18 +1,18 @@
 /* Main landing "맑은 아침 하늘" — ported from docs/design/talentfolio-main/drafts/D_sky. Scoped to .sky-landing. */
 .sky-landing{--white:#FFFFFF; --paper:#F5F9FF; --mist:#DCEBFF; --sky:#BFDDFF; --cerulean:#4AA3F2;
   --cobalt:#1F4FD6; --ink:#0B1C45; --ink-2:#44527A; --sun:#FFE7A3; --line:#D3E3F7;
-  --f-kdisp:'Wanted Sans Variable','Pretendard Variable',Pretendard,sans-serif; --f-hero:'Wanted Sans Variable','Pretendard Variable',Pretendard,sans-serif; --f-accent:'MaruBuriSemiBold','MaruBuri',serif; --f-edisp:var(--font-sky-lora),serif; --f-geo:'Pretendard Variable',Pretendard,system-ui,sans-serif;
-  --f-body:'Pretendard Variable',Pretendard,system-ui,sans-serif; --f-hand:var(--font-sky-hand),cursive;}
+  --f-kdisp:'Wanted Sans Variable','Pretendard Variable',Pretendard,sans-serif; --f-hero:'Wanted Sans Variable','Pretendard Variable',Pretendard,sans-serif; --f-accent:'OksuniSNostalgicHandwriting',sans-serif; --f-edisp:'OksuniSNostalgicHandwriting',sans-serif; --f-geo:'Pretendard Variable',Pretendard,system-ui,sans-serif;
+  --f-body:'Pretendard Variable',Pretendard,system-ui,sans-serif; --f-hand:'OksuniSNostalgicHandwriting',sans-serif;}
 /* globals.css sets overflow-x:hidden on html/body, which turns body into a scroll container and breaks the sticky pins */
 html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible}
 .sky-landing,.sky-landing *{box-sizing:border-box;margin:0;padding:0}
 .sky-landing{background:var(--white);color:var(--ink);font-family:var(--f-body);overflow-x:clip;min-height:100vh;-webkit-font-smoothing:antialiased}
 .sky-landing a{color:inherit;text-decoration:none}
 .sky-landing .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
-.sky-landing .label{font-family:var(--f-geo);font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cobalt)}
+.sky-landing .label{font-family:var(--f-geo);font-weight:600;font-size:10.8px;letter-spacing:.18em;text-transform:uppercase;color:var(--cobalt)}
 .sky-landing .hand{font-family:var(--f-hand);color:var(--cobalt)}
-.sky-landing .ex{font-family:var(--f-geo);font-size:11px;letter-spacing:.1em;color:var(--ink-2);border:1px solid var(--line);border-radius:99px;padding:2px 8px;vertical-align:middle}
-.sky-landing .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-geo);font-weight:600;font-size:14px;padding:12px 20px;border-radius:99px;border:1.5px solid var(--ink);transition:transform .2s,background .2s,color .2s}
+.sky-landing .ex{font-family:var(--f-geo);font-size:9.9px;letter-spacing:.1em;color:var(--ink-2);border:1px solid var(--line);border-radius:99px;padding:2px 8px;vertical-align:middle}
+.sky-landing .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-geo);font-weight:600;font-size:12.6px;padding:12px 20px;border-radius:99px;border:1.5px solid var(--ink);transition:transform .2s,background .2s,color .2s}
 .sky-landing .btn:hover{transform:translateY(-2px)}
 .sky-landing .btn.fill{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
 .sky-landing .btn.fill:hover{background:var(--ink);border-color:var(--ink)}
@@ -20,91 +20,92 @@ html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible
 .sky-landing .hero-pin{position:sticky;top:0;height:100vh;overflow:hidden;background:linear-gradient(180deg,var(--mist) 0%,var(--white) 62%)}
 .sky-landing .sun{position:absolute;left:50%;top:58%;width:52vmin;height:52vmin;border-radius:50%;transform:translate(-50%,-10%);
   background:radial-gradient(circle,var(--sun) 0%,rgba(255,231,163,.5) 40%,rgba(255,231,163,0) 70%);z-index:0}
-.sky-landing .back-word{position:absolute;left:0;right:0;top:15vh;text-align:center;font-family:var(--f-edisp);font-style:italic;
-  font-size:clamp(90px,24vw,360px);line-height:.8;color:transparent;-webkit-text-stroke:1.5px var(--sky);z-index:1;white-space:nowrap;will-change:transform}
+.sky-landing .back-word{position:absolute;left:0;right:0;top:15vh;text-align:center;font-family:var(--font-story),cursive;font-style:normal;
+  font-size:clamp(81px,21.6vw,324px);line-height:.8;color:transparent;-webkit-text-stroke:1.5px var(--sky);z-index:1;white-space:nowrap;will-change:transform}
 .sky-landing #crowd{position:absolute;left:0;right:0;bottom:0;width:100%;height:50vh;z-index:2;pointer-events:none;opacity:.6}
 .sky-landing .ground{position:absolute;left:0;right:0;bottom:0;height:12vh;z-index:1;background:linear-gradient(0deg,rgba(74,163,242,.22),rgba(74,163,242,0))}
 .sky-landing .copy-plate{display:inline-block;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-radius:18px;padding:12px 18px}
 .sky-landing .mask-wrap{position:relative;display:inline-block}
-.sky-landing .mask-fallback{position:absolute;inset:0;font-family:var(--f-accent);font-weight:400;color:var(--cobalt);line-height:1;font-size:clamp(48px,8.8vw,136px);white-space:nowrap;transition:opacity .3s}
-.sky-landing .skip{position:absolute;left:24px;bottom:4vh;z-index:6;font-family:var(--f-geo);font-size:12px;letter-spacing:.14em;color:var(--ink-2);background:rgba(255,255,255,.85);padding:6px 10px;border-radius:99px}
+.sky-landing .mask-fallback{position:absolute;inset:0;font-family:var(--f-accent);font-weight:400;color:var(--cobalt);line-height:1;font-size:clamp(43.2px,7.92vw,122.4px);white-space:nowrap;transition:opacity .3s}
+.sky-landing .skip{position:absolute;left:24px;bottom:4vh;z-index:6;font-family:var(--f-geo);font-size:10.8px;letter-spacing:.14em;color:var(--ink-2);background:rgba(255,255,255,.85);padding:6px 10px;border-radius:99px}
 .sky-landing :focus-visible{outline:3px solid var(--cerulean);outline-offset:3px;border-radius:8px}
 .sky-landing .hero-copy{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-start;padding:12vh 24px 0;max-width:1200px;margin:0 auto;pointer-events:none}
-.sky-landing .hero-copy .label{margin-bottom:18px;font-size:10px}
-.sky-landing .h-title{font-family:var(--f-hero);font-weight:800;font-size:clamp(35px,6.7vw,106px);line-height:1.02;letter-spacing:-.05em;color:var(--ink)}
+.sky-landing .hero-copy .label{margin-bottom:18px;font-size:9px}
+.sky-landing .h-title{font-family:var(--f-hero);font-weight:800;font-size:clamp(28.35px,5.43vw,85.86px);line-height:1.02;letter-spacing:-.05em;color:var(--ink)}
 .sky-landing .h-title .line{display:block;overflow:hidden;padding-bottom:.06em}
 .sky-landing .h-title .ch{display:inline-block;will-change:transform}
 .sky-landing .h-title em{font-family:var(--f-accent);font-weight:400;font-style:normal;color:var(--cobalt);letter-spacing:-.01em}
 .sky-landing .mask-row{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
 .sky-landing #maskWord{display:block;height:clamp(48px,8.8vw,136px);width:auto;max-width:100%;position:relative}
-.sky-landing .hand-note{font-size:clamp(18px,2.1vw,26px);transform:rotate(-4deg);margin-bottom:.6em;white-space:nowrap}
-.sky-landing .hero-sub{margin-top:22px;max-width:520px;font-size:clamp(13px,1.05vw,14.5px);line-height:1.65;color:var(--ink-2)}
+.sky-landing .hand-note{font-size:clamp(16.2px,1.89vw,23.4px);transform:rotate(-4deg);margin-bottom:.6em;white-space:nowrap}
+.sky-landing .hero-sub{margin-top:22px;max-width:520px;font-size:clamp(11.7px,0.94vw,13.05px);line-height:1.65;color:var(--ink-2)}
 .sky-landing .hero-cta{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;pointer-events:auto}
 .sky-landing .front-strip{position:absolute;left:0;right:0;bottom:0;height:9vh;z-index:5;background:linear-gradient(0deg,var(--white),rgba(255,255,255,0));pointer-events:none}
-.sky-landing .scroll-hint{position:absolute;right:24px;bottom:4vh;z-index:6;font-family:var(--f-geo);font-size:11px;letter-spacing:.2em;writing-mode:vertical-rl;color:var(--ink-2)}
+.sky-landing .scroll-hint{position:absolute;right:24px;bottom:4vh;z-index:6;font-family:var(--f-geo);font-size:9.9px;letter-spacing:.2em;writing-mode:vertical-rl;color:var(--ink-2)}
 .sky-landing .scroll-hint::after{content:"";display:block;width:1px;height:48px;margin:10px auto 0;background:var(--cobalt);animation:sky-drip 1.8s infinite}
 @keyframes sky-drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 .sky-landing section{position:relative}
 .sky-landing .sec-pad{padding:120px 0}
-.sky-landing .sec-head{font-family:var(--f-kdisp);font-weight:700;font-size:clamp(32px,5vw,64px);line-height:1.15;letter-spacing:-.045em}
+.sky-landing .sec-head{font-family:var(--f-kdisp);font-weight:700;font-size:clamp(25.92px,4.05vw,51.84px);line-height:1.15;letter-spacing:-.045em}
 .sky-landing .sec-head em{font-family:var(--f-accent);font-style:normal;font-weight:400;letter-spacing:-.03em;color:var(--cobalt)}
 .sky-landing .roles{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:48px}
 .sky-landing .role{position:relative;border-radius:28px;padding:40px 36px 36px;min-height:380px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
 .sky-landing .role.a{background:var(--paper);border:1.5px solid var(--line)}
 .sky-landing .role.b{background:var(--cobalt);color:#fff}
-.sky-landing .role .big{font-family:var(--f-kdisp);font-weight:800;letter-spacing:-.04em;font-size:clamp(40px,5vw,72px);line-height:1}
-.sky-landing .role .big small{display:block;font-family:var(--f-geo);font-weight:600;font-size:13px;letter-spacing:.24em;text-transform:uppercase;margin-top:14px;opacity:.7}
-.sky-landing .role p{font-size:16px;line-height:1.6;max-width:360px;margin-top:16px}
+.sky-landing .role .big{font-family:var(--f-kdisp);font-weight:800;letter-spacing:-.04em;font-size:clamp(32.4px,4.05vw,58.32px);line-height:1}
+.sky-landing .role .big small{display:block;font-family:var(--f-geo);font-weight:600;font-size:11.7px;letter-spacing:.24em;text-transform:uppercase;margin-top:14px;opacity:.7}
+.sky-landing .role p{font-size:14.4px;line-height:1.6;max-width:360px;margin-top:16px}
 .sky-landing .role .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:28px}
 .sky-landing .role.b .btn{border-color:#fff;color:#fff}
 .sky-landing .role.b .btn.fill{background:#fff;color:var(--cobalt)}
-.sky-landing .role .doodle{position:absolute;right:24px;top:22px;font-size:28px;transform:rotate(6deg)}
+.sky-landing .role .doodle{position:absolute;right:24px;top:22px;font-size:25.2px;transform:rotate(6deg)}
 .sky-landing .role.b .doodle{color:var(--sun)}
 .sky-landing #demo{height:300vh;background:var(--paper)}
 .sky-landing .demo-pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
 .sky-landing .demo-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center;width:100%}
-.sky-landing .steps-txt li{list-style:none;font-family:var(--f-kdisp);font-weight:700;font-size:clamp(20px,2.4vw,30px);padding:14px 0;border-bottom:1px solid var(--line);color:#A8B8D6;transition:color .3s;display:flex;gap:14px;align-items:baseline}
-.sky-landing .steps-txt li span{font-family:var(--f-geo);font-size:13px;font-weight:600}
+.sky-landing .steps-txt li{list-style:none;font-family:var(--f-kdisp);font-weight:700;font-size:clamp(18px,2.16vw,27px);padding:14px 0;border-bottom:1px solid var(--line);color:#A8B8D6;transition:color .3s;display:flex;gap:14px;align-items:baseline}
+.sky-landing .steps-txt li span{font-family:var(--f-geo);font-size:11.7px;font-weight:600}
 .sky-landing .steps-txt li.on{color:var(--ink)}
 .sky-landing .steps-txt li.on span{color:var(--cobalt)}
 .sky-landing .board{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:24px;padding:24px;min-height:430px;box-shadow:0 30px 60px -30px rgba(31,79,214,.25)}
-.sky-landing .jd{font-family:var(--f-geo);font-size:13px;background:var(--mist);border-radius:14px;padding:14px 16px;line-height:1.6}
-.sky-landing .jd b{font-family:var(--f-body);font-size:15px;display:block;color:var(--ink)}
+.sky-landing .jd{font-family:var(--f-geo);font-size:11.7px;background:var(--mist);border-radius:14px;padding:14px 16px;line-height:1.6}
+.sky-landing .jd b{font-family:var(--f-body);font-size:13.5px;display:block;color:var(--ink)}
 .sky-landing .cand{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px dashed var(--line);opacity:0;transform:translateX(40px)}
-.sky-landing .cand .av{width:38px;height:38px;border-radius:50%;background:var(--sky);display:grid;place-items:center;font-family:var(--f-hand);font-size:22px;color:var(--cobalt)}
-.sky-landing .cand .nm{flex:1;font-size:14px}
-.sky-landing .cand .nm small{display:block;color:var(--ink-2);font-size:12px}
-.sky-landing .score{font-family:var(--f-geo);font-weight:800;font-size:28px;color:var(--cobalt);font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+.sky-landing .cand .av{width:38px;height:38px;border-radius:50%;background:var(--sky);display:grid;place-items:center;font-family:var(--f-hand);font-size:19.8px;color:var(--cobalt)}
+.sky-landing .cand .nm{flex:1;font-size:12.6px}
+.sky-landing .cand .nm small{display:block;color:var(--ink-2);font-size:10.8px}
+.sky-landing .score{font-family:var(--f-geo);font-weight:800;font-size:25.2px;color:var(--cobalt);font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
 .sky-landing .score::after{content:"%";font-size:.55em;margin-left:1px}
 .sky-landing .bar{height:4px;background:var(--mist);border-radius:4px;margin-top:6px;overflow:hidden}
 .sky-landing .bar i{display:block;height:100%;width:0;background:var(--cerulean)}
-.sky-landing .stamp{position:absolute;right:22px;bottom:22px;font-family:var(--f-hand);font-size:34px;color:var(--cobalt);border:3px solid var(--cobalt);border-radius:12px;padding:2px 14px;transform:rotate(-14deg) scale(2.4);opacity:0}
+.sky-landing .cand.cand-chart{display:block;padding:0;border-bottom:0}
+.sky-landing .stamp{position:absolute;right:22px;bottom:22px;font-family:var(--f-hand);font-size:30.6px;color:var(--cobalt);border:3px solid var(--cobalt);border-radius:12px;padding:2px 14px;transform:rotate(-14deg) scale(2.4);opacity:0}
 .sky-landing .loop-wrap{position:relative;margin-top:56px}
 .sky-landing .loop-svg{width:100%;height:auto;display:block}
 .sky-landing .loop-items{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:-10px}
 .sky-landing .loop-item{text-align:center;padding:0 6px}
-.sky-landing .loop-item .no{font-family:var(--f-edisp);font-style:italic;font-size:56px;color:var(--cobalt);line-height:1}
-.sky-landing .loop-item h3{font-family:var(--f-kdisp);font-weight:700;font-size:22px;margin-top:6px}
-.sky-landing .loop-item p{font-size:14px;color:var(--ink-2);margin-top:6px;line-height:1.55}
-.sky-landing .loop-item.hil h3::after{content:"사람";font-family:var(--f-hand);font-size:20px;color:#fff;background:var(--cobalt);border-radius:8px;padding:0 8px;margin-left:6px;vertical-align:middle}
+.sky-landing .loop-item .no{font-family:var(--f-edisp);font-style:normal;font-size:50.4px;color:var(--cobalt);line-height:1}
+.sky-landing .loop-item h3{font-family:var(--f-kdisp);font-weight:700;font-size:19.8px;margin-top:6px}
+.sky-landing .loop-item p{font-size:12.6px;color:var(--ink-2);margin-top:6px;line-height:1.55}
+.sky-landing .loop-item.hil h3::after{content:"사람";font-family:var(--f-hand);font-size:18px;color:#fff;background:var(--cobalt);border-radius:8px;padding:0 8px;margin-left:6px;vertical-align:middle}
 /* STATEMENT: pinned, centered; floating proof objects drift in from different directions */
 .sky-landing #statement{height:220vh;background:radial-gradient(ellipse 70% 50% at 50% 50%,var(--paper),var(--white) 70%)}
 .sky-landing .stmt-pin{position:sticky;top:0;height:100vh;overflow:hidden;display:grid;place-items:center}
 .sky-landing .stmt-core{position:relative;z-index:3;text-align:center;max-width:980px;padding:0 24px}
-.sky-landing .stmt-kicker{font-family:var(--f-hand);font-size:clamp(24px,2.6vw,34px);color:var(--cobalt);display:inline-block;transform:rotate(-3deg)}
-.sky-landing .stmt{font-family:var(--f-geo);font-weight:800;font-size:clamp(38px,6.6vw,104px);line-height:1.08;letter-spacing:-.045em;margin-top:10px}
+.sky-landing .stmt-kicker{font-family:var(--f-hand);font-size:clamp(21.6px,2.34vw,30.6px);color:var(--cobalt);display:inline-block;transform:rotate(-3deg)}
+.sky-landing .stmt{font-family:var(--f-geo);font-weight:800;font-size:clamp(30.78px,5.35vw,84.24px);line-height:1.08;letter-spacing:-.045em;margin-top:10px}
 .sky-landing .stmt .w{display:inline-block;color:#D5E2F5;transition:color .3s,transform .5s cubic-bezier(.34,1.56,.64,1);transform:translateY(.12em)}
 .sky-landing .stmt .w.lit{color:var(--ink);transform:none}
 .sky-landing .stmt .w.blue{font-family:var(--f-accent);font-style:normal;font-weight:400;letter-spacing:-.02em}
 .sky-landing .stmt .w.blue.lit{color:var(--cobalt)}
 .sky-landing .stmt .br{flex-basis:100%;height:0;display:block}
-.sky-landing .stmt-sub{margin:26px auto 0;max-width:620px;font-size:clamp(15px,1.3vw,18px);line-height:1.7;color:var(--ink-2)}
+.sky-landing .stmt-sub{margin:26px auto 0;max-width:620px;font-size:clamp(13.5px,1.17vw,16.2px);line-height:1.7;color:var(--ink-2)}
 .sky-landing .stmt-sub b{color:var(--ink)}
 .sky-landing .reverse-arrow{position:absolute;left:50%;top:50%;width:min(1100px,92vw);transform:translate(-50%,-50%);z-index:1;pointer-events:none;overflow:visible}
 .sky-landing .float{position:absolute;z-index:2;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;
-  box-shadow:0 24px 50px -28px rgba(11,28,69,.35);font-size:13px;line-height:1.45;will-change:transform}
-.sky-landing .float small{display:block;font-family:var(--f-geo);font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px}
-.sky-landing .float b{font-size:15px}
+  box-shadow:0 24px 50px -28px rgba(11,28,69,.35);font-size:11.7px;line-height:1.45;will-change:transform}
+.sky-landing .float small{display:block;font-family:var(--f-geo);font-size:9.45px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px}
+.sky-landing .float b{font-size:13.5px}
 .sky-landing .f-folio{left:6%;top:16%;width:220px;transform:rotate(-6deg)}
 .sky-landing .f-folio .thumb{height:78px;border-radius:10px;margin-bottom:10px;background:
   linear-gradient(135deg,transparent 48%,rgba(255,255,255,.5) 49% 51%,transparent 52%),linear-gradient(135deg,var(--sky),var(--cerulean))}
@@ -116,7 +117,7 @@ html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible
 @keyframes sky-spin{to{transform:rotate(360deg)}}
 .sky-landing .f-jobs{right:8%;bottom:13%;width:210px;background:var(--paper)}
 .sky-landing .f-jobs ul{list-style:none;margin-top:6px;display:grid;gap:5px}
-.sky-landing .f-jobs li{display:flex;justify-content:space-between;font-size:12.5px}
+.sky-landing .f-jobs li{display:flex;justify-content:space-between;font-size:11.25px}
 .sky-landing .f-jobs li em{font-style:normal;color:var(--cobalt);font-weight:600}
 .sky-landing .f-sun{position:absolute;z-index:1;left:50%;top:8%;width:120px;height:120px;border-radius:50%;margin-left:-60px;
   background:radial-gradient(circle,var(--sun) 0%,rgba(255,231,163,.4) 45%,rgba(255,231,163,0) 70%)}
@@ -124,56 +125,56 @@ html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible
 .sky-landing #works{height:320vh;background:linear-gradient(180deg,var(--white),var(--mist))}
 .sky-landing .works-pin{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:40px}
 .sky-landing .works-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
-.sky-landing .works-count{font-family:var(--f-edisp);font-style:italic;font-size:clamp(40px,5vw,72px);color:var(--cobalt);line-height:1;font-variant-numeric:tabular-nums}
+.sky-landing .works-count{font-family:var(--f-edisp);font-style:normal;font-size:clamp(36px,4.5vw,64.8px);color:var(--cobalt);line-height:1;font-variant-numeric:tabular-nums}
 .sky-landing .works-count span{font-size:.45em;color:var(--ink-2)}
 .sky-landing .works-track{display:flex;gap:24px;padding:0 max(24px,calc((100vw - 1200px)/2 + 24px));width:max-content;will-change:transform}
 .sky-landing .works-progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
 .sky-landing .works-progress i{display:block;height:100%;width:0;background:var(--cobalt)}
 .sky-landing .card{width:clamp(260px,30vw,380px);aspect-ratio:4/3;border-radius:24px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;border:1.5px solid var(--line);background:#fff;will-change:transform}
-.sky-landing .card .t{font-family:var(--f-geo);font-weight:600;font-size:12px;letter-spacing:.12em;color:var(--ink-2)}
-.sky-landing .card h4{font-family:var(--f-kdisp);font-weight:700;font-size:clamp(20px,2vw,28px);line-height:1.2}
-.sky-landing .card .tags{font-family:var(--f-geo);font-size:12px;color:var(--cobalt)}
+.sky-landing .card .t{font-family:var(--f-geo);font-weight:600;font-size:10.8px;letter-spacing:.12em;color:var(--ink-2)}
+.sky-landing .card h4{font-family:var(--f-kdisp);font-weight:700;font-size:clamp(18px,1.8vw,25.2px);line-height:1.2}
+.sky-landing .card .tags{font-family:var(--f-geo);font-size:10.8px;color:var(--cobalt)}
 .sky-landing .card.c1{background:var(--cobalt);color:#fff;border-color:var(--cobalt)}
 .sky-landing .card.c1 .t,.sky-landing .card.c1 .tags{color:var(--sky)}
 .sky-landing .card.c2{background:var(--sky)}
 .sky-landing .card.c3{background:var(--paper)}
 .sky-landing .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
 .sky-landing .num{border-top:2px solid var(--ink);padding-top:18px}
-.sky-landing .odo{display:flex;font-family:var(--f-geo);font-weight:800;font-size:clamp(56px,8vw,112px);line-height:1;color:var(--ink);height:1em;overflow:hidden}
+.sky-landing .odo{display:flex;font-family:var(--f-geo);font-weight:800;font-size:clamp(50.4px,7.2vw,100.8px);line-height:1;color:var(--ink);height:1em;overflow:hidden}
 .sky-landing .odo .col{display:flex;flex-direction:column}
 .sky-landing .odo .col span{height:1em}
 .sky-landing .odo .suf{color:var(--cobalt)}
-.sky-landing .num p{margin-top:12px;font-size:15px;color:var(--ink-2)}
+.sky-landing .num p{margin-top:12px;font-size:13.5px;color:var(--ink-2)}
 .sky-landing #cta{position:relative;height:100vh;min-height:620px;overflow:hidden;background:var(--cobalt);color:#fff;clip-path:circle(8% at 50% 50%)}
 .sky-landing #cta::before{content:"";position:absolute;left:0;right:0;top:0;height:22vh;z-index:3;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0))}
-.sky-landing #crowd2{position:absolute;left:0;right:0;bottom:0;width:100%;height:50vh;opacity:.9;filter:invert(1) brightness(2);mix-blend-mode:screen}
+.sky-landing .site-ftr #crowd2{position:absolute;left:0;right:0;bottom:0;width:100%;height:50vh;z-index:0;opacity:.22;pointer-events:none}
 .sky-landing .cta-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9vh 2vw 9vh}
-.sky-landing .cta-in h2{font-family:var(--f-kdisp);font-weight:800;font-size:min(7.2vw,13vh);line-height:.95;letter-spacing:-.05em;white-space:nowrap}
+.sky-landing .cta-in h2{font-family:var(--f-kdisp);font-weight:800;font-size:min(5.83vw,10.53vh);line-height:.95;letter-spacing:-.05em;white-space:nowrap}
 .sky-landing .cta-foot{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:22px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
-  font-family:var(--f-geo);font-size:12px;letter-spacing:.04em;color:rgba(255,255,255,.85);
+  font-family:var(--f-geo);font-size:10.8px;letter-spacing:.04em;color:rgba(255,255,255,.85);
   background:linear-gradient(0deg,rgba(10,30,110,.82),rgba(10,30,110,.45) 60%,rgba(10,30,110,0));backdrop-filter:blur(2px)}
 .sky-landing .cta-in h2 em{font-family:var(--f-accent);font-style:normal;font-weight:400;color:var(--sun)}
-.sky-landing .cta-in .hand{color:var(--sun);font-size:30px;margin-top:16px}
+.sky-landing .cta-in .cta-note{font-family:var(--f-body);color:var(--sun);font-size:18px;font-weight:500;margin-top:16px}
 .sky-landing .cta-in .row{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 .sky-landing .cta-in .btn{border-color:#fff;color:#fff}
 .sky-landing .cta-in .btn.fill{background:#fff;color:var(--cobalt);border-color:#fff}
 @media (max-width:860px){
 .sky-landing .roles,.sky-landing .demo-grid{grid-template-columns:1fr}
 .sky-landing .demo-grid{gap:20px}
-.sky-landing .steps-txt li{padding:8px 0;font-size:17px}
+.sky-landing .steps-txt li{padding:8px 0;font-size:15.3px}
 .sky-landing .board{min-height:360px;padding:16px}
 .sky-landing .loop-items{grid-template-columns:1fr 1fr;row-gap:28px}
 .sky-landing .nums{grid-template-columns:1fr}
 .sky-landing{overflow-x:clip;max-width:100%}
 .sky-landing .hero-copy,.sky-landing .hero-pin,.sky-landing #works,.sky-landing #cta{max-width:100vw}
-.sky-landing .back-word{font-size:30vw}
-.sky-landing .h-title{font-size:clamp(29px,8.8vw,45px);line-height:1.12}
+.sky-landing .back-word{font-size:27vw}
+.sky-landing .h-title{font-size:clamp(23.49px,7.13vw,36.45px);line-height:1.12}
 .sky-landing .h-title .line{padding-bottom:.1em}
 .sky-landing .mask-row{gap:6px 10px;align-items:center}
 .sky-landing #maskWord{height:clamp(42px,12vw,64px)}
-.sky-landing .mask-fallback{font-size:clamp(42px,12vw,64px)}
-.sky-landing .hand-note{font-size:16px;margin-bottom:0}
-.sky-landing .hero-sub{font-size:12.5px}
+.sky-landing .mask-fallback{font-size:clamp(37.8px,10.8vw,57.6px)}
+.sky-landing .hand-note{font-size:14.4px;margin-bottom:0}
+.sky-landing .hero-sub{font-size:11.25px}
 .sky-landing .skip,.sky-landing .scroll-hint{display:none}
 .sky-landing #crowd{height:38vh}
 .sky-landing #demo{height:auto}
@@ -183,7 +184,7 @@ html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible
 .sky-landing .role{min-height:320px;padding:30px 24px}
 .sky-landing #statement{height:auto}
 .sky-landing .stmt-pin{position:relative;height:auto;padding:120px 0 300px}
-.sky-landing .float{transform:none;font-size:12px}
+.sky-landing .float{transform:none;font-size:10.8px}
 .sky-landing .f-folio{left:4%;top:auto;bottom:150px;width:150px}
 .sky-landing .f-folio .thumb{height:48px}
 .sky-landing .f-contact{right:4%;top:auto;bottom:40px;width:190px}
@@ -195,7 +196,7 @@ html:has(.sky-landing),body:has(.sky-landing){overflow-x:clip;overflow-y:visible
 .sky-landing .works-scroller{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .sky-landing .works-track{padding:0 24px}
 .sky-landing .card{scroll-snap-align:center;width:78vw}
-.sky-landing .cta-in h2{font-size:7.6vw}}
+.sky-landing .cta-in h2{font-size:6.16vw}}
 @media (prefers-reduced-motion:reduce){.sky-landing,.sky-landing *{animation:none!important;transition:none!important}
 .sky-landing #cta{clip-path:none!important}
 .sky-landing .cand,.sky-landing .stamp{opacity:1!important;transform:none!important}

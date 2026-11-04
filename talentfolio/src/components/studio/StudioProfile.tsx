@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteAccount } from "@/components/site/DeleteAccount";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { DefaultPhoto, ResumePrint } from "./ResumePrint";
@@ -250,6 +251,7 @@ export function StudioProfile({ userId, name, preview, onChange }: { userId: str
       ))}
 
       <div className="edit-only"><Consents /></div>
+      {!preview && <div className="edit-only"><DeleteAccount accountLabel="구직자" /></div>}
 
       <ResumePrint
         name={name}

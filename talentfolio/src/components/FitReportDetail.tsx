@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Minus, Quote, ChevronDown, Sparkles } from "lucide-react";
 import { displaySummary, type AgentResult, type FitReport } from "@/types/fitReport";
+import { ScoreBars, ScoreGauge } from "@/components/charts/ScoreCharts";
 
 const VERDICT = {
   strong_fit:   { label: "● 잘 맞음",   ko: "잘 맞음",   color: "var(--ok)",   bg: "var(--ok-bg)",   border: "transparent" },
@@ -43,13 +44,6 @@ function AgentSection({ result }: { result: AgentResult }) {
           style={{ color: "var(--text-secondary)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
         />
       </button>
-
-      {/* score bar */}
-      <div className="px-3.5">
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
-          <div className="h-full rounded-full" style={{ width: `${result.score}%`, background: color, transition: "width 0.4s ease" }} />
-        </div>
-      </div>
 
       {open && (
         <div className="px-3.5 py-3 space-y-3">
@@ -130,11 +124,8 @@ export default function FitReportDetail({ report }: { report: FitReport }) {
         style={{ background: v.bg, border: `1px solid ${v.border}` }}
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold tabular-nums leading-none" style={{ color: v.color, fontFamily: "Pretendard Variable, sans-serif" }}>
-              {report.overallScore}
-            </span>
-            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>/ 100</span>
+          <div className="w-[170px] -my-2">
+            <ScoreGauge value={report.overallScore} label="/ 100" height={150} />
           </div>
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
@@ -147,6 +138,13 @@ export default function FitReportDetail({ report }: { report: FitReport }) {
           {displaySummary(report.ceoSummary)}
         </p>
       </div>
+
+      {/* 항목별 점수 비교 (75점 = 잘 맞음 기준선) */}
+      {agents.length > 0 && (
+        <div className="rounded-xl px-2 pt-1 mb-3" style={{ background: "var(--surface)" }}>
+          <ScoreBars items={agents.map((a) => ({ label: AGENT_LABEL[a.agent], score: a.score }))} />
+        </div>
+      )}
 
       {/* Per-agent breakdown */}
       <div className="space-y-2.5">

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SkeletonList, StateView } from "@/components/state/StateView";
 import { useCallback, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ScoreGauge } from "@/components/charts/ScoreCharts";
 import { useAuth } from "@/context/AuthContext";
 import { lifeApi, trustLabel, type LifeActivity, type LifeCard, type LifeMatchReport } from "@/lib/lifeApi";
 import { CardPiece, StudioCards } from "./StudioCards";
@@ -151,8 +152,7 @@ export function StudioApp() {
           <div className="me">
             <strong>{name}</strong><span>{sub}</span>
             <div className="meter">
-              <div className="meter-row"><span>프로필 완성도</span><b>{st.completeness}%</b></div>
-              <div className="bar"><i style={{ width: `${st.completeness}%`, transition: "width .6s" }} /></div>
+              <ScoreGauge value={st.completeness} label="프로필 완성도" suffix="%" height={150} />
             </div>
           </div>
           <nav className="nav" aria-label="스튜디오 메뉴">{NAV.map(navBtn)}</nav>

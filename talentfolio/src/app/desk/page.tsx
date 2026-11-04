@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ProductShell } from "@/components/product/ProductShell";
 import { DeskTabs } from "@/components/desk/DeskTabs";
+import { CaseBar, FunnelChart, ReasonsChart, SupplyDemandChart } from "@/components/desk/DeskCharts";
 import { deskApi, ratioText, relTime, type DeskFeedItem, type DeskFeedKind, type DeskOffer, type DeskSummary } from "@/lib/deskApi";
 import { LoadError, SkeletonList } from "@/components/state/StateView";
 
@@ -97,7 +98,6 @@ function Home({
     { label: "응답", n: f.replied, prev: f.offered, wip: f.replied === null },
     { label: "면접", n: f.interviewed, prev: f.replied, wip: f.interviewed === null },
   ];
-  const maxN = Math.max(1, f.matched);
   const pct = (n: number | null, d: number | null) => (n === null || !d ? null : Math.round((n / d) * 100));
   const leakIdx = (() => {
     let worst = -1;
@@ -112,9 +112,7 @@ function Home({
     return worst;
   })();
   const sd = s.supplyDemand;
-  const sdMax = Math.max(1, sd.supply.developer, sd.supply.designer, sd.demand.developer, sd.demand.designer);
   const level = (sup: number, dem: number) => (dem === 0 ? "—" : sup / dem < 0.5 ? "어려움" : sup / dem < 1 ? "보통" : "수월");
-  const reasonMax = Math.max(1, ...s.rejectReasons.map((r) => r.count));
   const shownFeed = feed.filter((it) => filter === "all" || it.kind === filter);
   const respText = s.responses ? ratioText(s.responses) : null;
 
@@ -174,19 +172,7 @@ function Home({
         <div className="dk-col">
           <section className="dk-panel" aria-labelledby="h-funnel">
             <div className="dk-ph"><h2 id="h-funnel">파이프라인 · 최근 {range}일 · 전체 건</h2><Link href="/review">단계별 후보 보기</Link></div>
-            <div className="dk-funnel">
-              {stages.map((st, i) => {
-                const p = pct(st.n, st.prev);
-                return (
-                  <div key={st.label} className={`dk-st${st.wip ? " wip" : ""}${i === leakIdx ? " leak" : ""}`}>
-                    <span className="dk-bar" style={{ height: st.wip ? 8 : Math.max(8, Math.round(((st.n ?? 0) / maxN) * 120)) }} />
-                    <span className="n">{st.wip ? "—" : st.n}</span>
-                    <span className="l">{st.label}</span>
-                    <span className="r">{st.wip ? "준비 중" : i === 0 ? "—" : p === null ? "—" : `${p}%`}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <FunnelChart stages={stages.map((st) => ({ label: st.label, n: st.n, pct: pct(st.n, st.prev), wip: st.wip }))} leakIdx={leakIdx} />
             <p className="dk-cap">% = 전 단계 대비. 승인 % = 승인 {f.approved} ÷ 결정 {f.decided} (대기 {s.pending.count} 별도).</p>
             {leakIdx > 0 && (
               <p className="dk-note"><b>가장 많이 빠지는 단계: {stages[leakIdx - 1].label} → {stages[leakIdx].label}</b>{s.pending.count > 0 && ` · 지금 승인 대기 ${s.pending.count}건이 남아 있습니다.`}</p>
@@ -200,7 +186,6 @@ function Home({
             ) : (
               <div className="dk-cases">
                 {s.cases.map((c) => {
-                  const w = (n: number) => `${Math.round((n / Math.max(1, c.matched)) * 100)}%`;
                   return (
                     <Link key={c.jdHash} className="dk-case" href={`/review?jd=${encodeURIComponent(c.jdHash)}`}>
                       <div>
@@ -211,7 +196,7 @@ function Home({
                         <div className="m">{c.client || c.owner ? [c.client, c.owner && `담당 ${c.owner}`].filter(Boolean).join(" · ") : "고객사·담당·마감 정보 없음"}</div>
                       </div>
                       <div>
-                        <div className="dk-mini" aria-hidden="true"><i style={{ width: w(c.matched - c.analyzed) }} /><i style={{ width: w(c.analyzed - c.approved) }} /><i style={{ width: w(c.approved) }} /></div>
+                        <CaseBar matched={c.matched} analyzed={c.analyzed} approved={c.approved} />
                         <div className="dk-mini-l">매칭 {c.matched} · 분석 {c.analyzed} · 승인 {c.approved}{c.replied !== null && ` · 응답 ${c.replied}`}</div>
                       </div>
                       {c.pending > 0 ? <span className="dk-pill wait">승인 대기 {c.pending}</span> : c.analyzed + (c.failed ?? 0) < c.matched ? <span className="dk-pill ok">분석 진행 중</span> : c.failed ? <span className="dk-pill wait">분석 실패 {c.failed}</span> : <span className="dk-pill ok">검토 완료</span>}
@@ -237,10 +222,8 @@ function Home({
               </div>
             </div>
             {s.rejectReasons.length > 0 && (
-              <div className="dk-reasons" aria-label="거절 사유 분포">
-                {s.rejectReasons.map((r) => (
-                  <div key={r.label}><span>{r.label}</span><b style={{ width: Math.round((r.count / reasonMax) * 90) }} /><span>{r.count}</span></div>
-                ))}
+              <div className="dk-reasons">
+                <ReasonsChart reasons={s.rejectReasons} />
               </div>
             )}
             {s.quality.approvedWithoutEvidence ? (
@@ -277,19 +260,8 @@ function Home({
 
           <section className="dk-panel" aria-labelledby="h-sd">
             <div className="dk-ph"><h2 id="h-sd">인재풀 공급·수요</h2><Link href="/desk/candidates">후보 관리</Link></div>
-            <div className="dk-legend"><span className="s">플랫폼 후보</span><span className="q">시장 공고</span></div>
-            <div className="dk-sd">
-              {(["developer", "designer"] as const).map((k) => (
-                <div key={k} className="dk-sd-row">
-                  <span>{k === "developer" ? "개발" : "디자인"}</span>
-                  <span className="dk-sd-bars" aria-label={`후보 ${sd.supply[k]}명, 공고 ${sd.demand[k]}건`}>
-                    <i className="s" style={{ width: `${(sd.supply[k] / sdMax) * 100}%` }} />
-                    <i className="q" style={{ width: `${(sd.demand[k] / sdMax) * 100}%` }} />
-                  </span>
-                  <span className="dk-lvl">{level(sd.supply[k], sd.demand[k])}</span>
-                </div>
-              ))}
-            </div>
+            <SupplyDemandChart supply={sd.supply} demand={sd.demand} />
+            <p className="dk-cap">채용 난이도: 개발 <b>{level(sd.supply.developer, sd.demand.developer)}</b> · 디자인 <b>{level(sd.supply.designer, sd.demand.designer)}</b></p>
             <p className="dk-cap">후보 {sd.supply.developer + sd.supply.designer}명 · 공고 {sd.demand.developer + sd.demand.designer}건. 백엔드·데이터 등 세분화는 스킬→직무 규칙이 생긴 뒤입니다.</p>
             {sd.skillGap.length > 0 && (
               <>

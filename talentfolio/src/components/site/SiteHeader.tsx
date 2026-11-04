@@ -139,7 +139,7 @@ export function SiteHeader({ overlay = false, crumb, actions }: { overlay?: bool
       <link rel="stylesheet" href={PRETENDARD} precedence="default" />
       <link rel="stylesheet" href={WANTED_SANS} precedence="default" />
       <nav className="bar-wrap" aria-label="주요 메뉴">
-        <Link className="logo" href="/" aria-label="talentfolio 홈"><BrandLogo size={24} /></Link>
+        <Link className="logo" href="/" aria-label="talentfolio 홈"><BrandLogo size={24.2} /></Link>
         <ul className="links">
           {BAR_LINKS.map((l) => (
             <li key={l.href}>

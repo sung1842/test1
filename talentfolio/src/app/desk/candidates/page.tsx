@@ -13,6 +13,7 @@ import { DeskTabs } from "@/components/desk/DeskTabs";
 import { CandidateTile } from "@/components/desk/CandidateTile";
 import JdMatchModal, { type JdFormState, EMPTY_JD_FORM } from "@/components/JdMatchModal";
 import FitScoreBadge from "@/components/FitScoreBadge";
+import { ScoreColumns } from "@/components/charts/ScoreCharts";
 import { loadJson, saveJson, skillHit } from "@/lib/productData";
 import { lifeFetch } from "@/lib/lifeApi";
 
@@ -689,6 +690,17 @@ function CasesPanel({
               「JD 매칭 · 후보 찾기」는 이 건 공고로 후보 풀을 걸러 상위 후보를 분석합니다. 찾기 탭에서 직접 고른 후보도 「건에 담기」로 여기 들어옵니다.
               {note ? ` · ${note}` : ""}
             </p>
+            {(() => {
+              const ranked = members
+                .filter((r) => r.report)
+                .map((r) => ({ id: r.candidateId, label: people.find((x) => x.id === r.candidateId)?.name ?? r.candidateName ?? "후보", score: r.report!.overallScore }))
+                .sort((a, b) => b.score - a.score);
+              return ranked.length > 1 ? (
+                <div style={{ marginBottom: 10 }}>
+                  <ScoreColumns items={ranked} onSelect={(i) => { window.location.href = `/talent/${ranked[i].id}`; }} />
+                </div>
+              ) : null;
+            })()}
             <div style={{ display: "grid", gap: 8 }}>
               {members.length === 0 ? (
                 <EmptyState title="아직 담긴 후보가 없습니다">「JD 매칭 · 후보 찾기」를 누르거나, 찾기 탭에서 「건에 담기」를 쓰세요.</EmptyState>

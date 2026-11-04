@@ -8,7 +8,7 @@ import { accountTypeOf, homeOf, zoneOwner } from "@/lib/accountType";
  * - 로그인: 구직자는 /studio 계열, 기업은 /desk 계열만 (lib/accountType.ts zoneOwner).
  * 이 함수가 만료된 토큰 갱신(쿠키 재발급)도 맡는다.
  */
-const PUBLIC_PAGES = ["/", "/login", "/signup"];
+const PUBLIC_PAGES = ["/", "/login", "/signup", "/terms", "/privacy", "/location-terms", "/youth-policy", "/support", "/account-deletion"];
 const PUBLIC_API = ["/api/auth/signup"];
 // Slack 봇은 쿠키가 없다. Brief 는 공개용 요약만 보여 주는 화면이라 연다 (23 문서 G5).
 const PUBLIC_PREFIXES = ["/brief/"];

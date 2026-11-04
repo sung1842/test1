@@ -1,0 +1,40 @@
+/* 시안 푸터의 반전: 흰 바탕 + 코발트 글씨 (보조 글씨 #3A5BC7, 흰 바탕 대비 AA) */
+.site-ftr{--ftr-ink:#1F4FD6;--ftr-soft:#3A5BC7;--m:clamp(16px,2.6vw,40px);
+  position:relative;z-index:5;background:#FFFFFF;color:var(--ftr-ink);width:100vw;height:100vh;min-height:fit-content;overflow:hidden;display:grid;grid-template-rows:auto 1fr;grid-auto-rows:auto;
+  padding:40px var(--m) 24px;font-family:"Pretendard Variable",Pretendard,system-ui,sans-serif;word-break:keep-all}
+.site-ftr a{color:inherit}
+.site-ftr .top{display:flex;gap:48px;font-size:13.5px;line-height:1.6;flex-wrap:wrap}
+.site-ftr .top div{max-width:240px;color:var(--ftr-soft)}
+.site-ftr .top b{color:var(--ftr-ink)}
+.site-ftr>:not(canvas){position:relative;z-index:1}
+.site-ftr .mail{align-self:end;font:700 clamp(36px,7.56vw,135px)/1 "Wanted Sans Variable","Pretendard Variable",sans-serif;letter-spacing:-.05em;text-decoration:none;transition:color .2s}
+.site-ftr .mail:hover{color:#0B1C45}
+.site-ftr .cols{display:flex;gap:40px;margin:48px 0 32px;font-size:14.4px;flex-wrap:wrap}
+.site-ftr .cols a{text-decoration:none;color:var(--ftr-soft)}
+.site-ftr .cols a:hover{color:var(--ftr-ink)}
+.site-ftr .meta{display:flex;justify-content:space-between;font-size:12.6px;color:var(--ftr-soft);gap:16px;flex-wrap:wrap}
+.site-ftr :focus-visible{outline:3px solid var(--ftr-ink);outline-offset:3px}
+.site-ftr.compact{height:auto;grid-template-rows:none;border-top:1px solid #E3E9F5}
+.site-ftr.compact .cols{margin:28px 0 20px}
+.site-ftr .mid{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.site-ftr .apps{display:flex;gap:10px}
+.site-ftr .store{display:inline-flex;flex-direction:column;justify-content:center;min-width:132px;height:44px;padding:0 14px;border-radius:10px;background:#0B1C45;color:#fff;text-decoration:none;font-weight:700;font-size:15px;line-height:1.1;position:relative}
+.site-ftr .store small{font-size:9.5px;font-weight:500;letter-spacing:.04em;opacity:.8}
+.site-ftr .store.soon{background:#C9D3E8;color:#0B1C45;cursor:default}
+.site-ftr .store em{position:absolute;top:-8px;right:-6px;font-style:normal;font-size:10px;font-weight:600;background:#fff;color:var(--ftr-ink);border:1px solid var(--ftr-ink);border-radius:99px;padding:0 6px}
+.site-ftr .legal-links{display:flex;flex-wrap:wrap;gap:8px 20px;padding:18px 0 12px;border-top:1px solid #E3E9F5;font-size:13px}
+.site-ftr .legal-links a{text-decoration:none;color:var(--ftr-soft)}
+.site-ftr .legal-links a:hover{color:var(--ftr-ink);text-decoration:underline}
+.site-ftr .legal-links a.strong{font-weight:800;color:var(--ftr-ink)}
+.site-ftr .biz{font-style:normal;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;line-height:1.7;color:#5B6B8C;margin-bottom:16px}
+.site-ftr .biz span+span::before{content:"|";margin-right:14px;color:#C9D3E8}
+.site-ftr .social{display:flex;gap:14px}
+.site-ftr:not(.compact) .ftr-bottom{background:rgba(255,255,255,.92);margin:0 calc(var(--m) * -1) -24px;padding:0 var(--m) 24px}
+.site-ftr .tbd-note{margin-top:10px;font-size:11px;color:#8A97B3}
+@media (max-width:760px){
+  .site-ftr .biz{flex-direction:column;gap:2px}
+  .site-ftr .biz span+span::before{content:none}
+  .site-ftr .mail{font-size:9.9vw}
+  .site-ftr .cols{gap:16px 28px}
+  .site-ftr .meta{flex-direction:column;gap:6px}
+}

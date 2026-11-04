@@ -2,22 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Lora, Nanum_Pen_Script } from "next/font/google";
 import { initSkyLanding } from "./skyLandingMotion";
 import "./sky-landing.css";
 import { SiteHeader } from "@/components/site/SiteHeader";
-
-// English italic details (wordmark, numerals, background word).
-const lora = Lora({ weight: ["400", "500", "600", "700"], style: ["normal", "italic"], subsets: ["latin"], display: "swap", variable: "--font-sky-lora" });
-// Handwritten notes.
-const pen = Nanum_Pen_Script({ weight: "400", subsets: ["latin"], preload: false, display: "swap", variable: "--font-sky-hand" });
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { LandingDemoChart } from "./LandingDemoChart";
 
 const PRETENDARD = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 // Titles: neo-grotesque (Neue Montreal / Aeonik lineage).
 const WANTED_SANS = "https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css";
-// Accent words: editorial serif (Editorial New / Instrument Serif lineage).
-const MARU_BURI = "https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css";
-const ACCENT_FONT = "'MaruBuriSemiBold', 'MaruBuri', serif";
+// Accent words: 그리운 옥수니 손글씨 (@font-face in globals.css).
+const ACCENT_FONT = "'OksuniSNostalgicHandwriting', sans-serif";
 
 const CANDIDATES = [
   { av: "하", name: "하*린", note: "디자인 시스템 12건 · TS", score: 92 },
@@ -34,10 +29,9 @@ export function SkyLanding() {
   }, []);
 
   return (
-    <div ref={rootRef} className={`sky-landing ${lora.variable} ${pen.variable}`}>
+    <div ref={rootRef} className={`sky-landing`}>
       <link rel="stylesheet" href={PRETENDARD} precedence="default" />
       <link rel="stylesheet" href={WANTED_SANS} precedence="default" />
-      <link rel="stylesheet" href={MARU_BURI} precedence="default" />
 
       <SiteHeader overlay />
 
@@ -125,14 +119,8 @@ export function SkyLanding() {
             </div>
             <div className="board" id="board">
               <div className="jd" id="jd"><b>프론트엔드 엔지니어 (React · TypeScript)</b>디자인 시스템 운영 경험 · 성능 최적화 · 3년 이상</div>
-              <div id="cands" style={{ marginTop: 12 }}>
-                {CANDIDATES.map((c) => (
-                  <div className="cand" key={c.name}>
-                    <div className="av">{c.av}</div>
-                    <div className="nm">{c.name}<small>{c.note}</small><div className="bar"><i data-w={c.score} /></div></div>
-                    <div className="score" data-v={c.score}>0</div>
-                  </div>
-                ))}
+              <div id="cands" className="cand cand-chart" style={{ marginTop: 12 }}>
+                <LandingDemoChart cands={CANDIDATES} />
               </div>
               <div className="stamp" id="stamp">리포트 ✓</div>
               <p className="ex" style={{ position: "absolute", left: 22, bottom: 26 }}>예시 데이터</p>
@@ -236,20 +224,16 @@ export function SkyLanding() {
 
       {/* 8. CTA */}
       <section id="cta">
-        <canvas id="crowd2" aria-hidden="true" />
         <div className="cta-in">
           <h2>내일 아침엔 제안이 와요<br /><em>인재 리포트도 함께요</em></h2>
-          <p className="hand">작업물은 올려 두고, JD는 넣어 두세요</p>
+          <p className="cta-note">작업물은 올려 두고, JD는 넣어 두세요</p>
           <div className="row">
             <Link className="btn fill" href="/signup">포트폴리오 입력하기</Link>
             <Link className="btn" href="/signup?type=company">JD 입력하기</Link>
           </div>
         </div>
-        <footer className="cta-foot">
-          <span>© Talentfolio</span>
-          <span>Illustrations by openpeeps.com</span>
-        </footer>
       </section>
+      <SiteFooter crowd />
     </div>
   );
 }
