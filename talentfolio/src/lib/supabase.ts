@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { isSupabaseConfigured } from "@/lib/features";
 
 export { isSupabaseConfigured };
@@ -6,9 +7,12 @@ export { isSupabaseConfigured };
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
 
-/** Supabase 미설정 시 null — 호출 전 isSupabaseConfigured() 확인 */
+/**
+ * Supabase 미설정 시 null — 호출 전 isSupabaseConfigured() 확인.
+ * 세션은 쿠키에 저장한다(@supabase/ssr). 그래야 src/proxy.ts 가 서버에서 로그인·계정 유형을 판정할 수 있다.
+ */
 export const supabase: SupabaseClient | null = isSupabaseConfigured()
-  ? createClient(supabaseUrl, supabaseKey)
+  ? createBrowserClient(supabaseUrl, supabaseKey)
   : null;
 
 // ─── Types ────────────────────────────────────────────────────────────────────

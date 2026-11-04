@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SkeletonList, StateView } from "@/components/state/StateView";
 import { useCallback, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ScoreGauge } from "@/components/charts/ScoreCharts";
 import { useAuth } from "@/context/AuthContext";
 import { lifeApi, trustLabel, type LifeActivity, type LifeCard, type LifeMatchReport } from "@/lib/lifeApi";
 import { CardPiece, StudioCards } from "./StudioCards";
@@ -44,7 +45,7 @@ const EMPTY: StudioState = { cards: [], activities: [], reports: [], basics: nul
  * 계정별 데이터: 근거 카드(SQL 015·017) · 이력서·자기소개서·공고 핀(016). "기업에게 보이는 화면" 은 공개 항목만 남긴 미리보기.
  */
 export function StudioApp() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   // 탭을 주소(?tab=)에 남겨 새로고침·공유·뒤로가기가 되게 한다.
   const [view, setViewState] = useState<StudioView>(() => {
     if (typeof window === "undefined") return "overview";
@@ -113,7 +114,7 @@ export function StudioApp() {
             note="공개하기 전엔 아무도 못 봐요"
             body="오늘 한 일을 한 줄씩 적으면 AI가 근거 카드로 정리해요. 무엇을 기업에 보여줄지는 내가 정해요."
             action={{ href: "/login", label: "로그인" }}
-            secondary={{ href: "/start", label: "처음이에요" }}
+            secondary={{ href: "/", label: "메인으로" }}
           />
         </main>
       </div>
@@ -142,6 +143,7 @@ export function StudioApp() {
             <span className="sw" /><span className="lb">기업에게 보이는 화면</span>
           </button>
           <span className="nm">{name}</span><span className="av">{name.slice(0, 1)}</span>
+          <button className="btn logout" onClick={() => void signOut()}>로그아웃</button>
         </div>
       </header>
       <nav className="mtabs" aria-label="스튜디오 메뉴">{NAV.map(navBtn)}</nav>
@@ -150,8 +152,7 @@ export function StudioApp() {
           <div className="me">
             <strong>{name}</strong><span>{sub}</span>
             <div className="meter">
-              <div className="meter-row"><span>프로필 완성도</span><b>{st.completeness}%</b></div>
-              <div className="bar"><i style={{ width: `${st.completeness}%`, transition: "width .6s" }} /></div>
+              <ScoreGauge value={st.completeness} label="프로필 완성도" suffix="%" height={150} />
             </div>
           </div>
           <nav className="nav" aria-label="스튜디오 메뉴">{NAV.map(navBtn)}</nav>

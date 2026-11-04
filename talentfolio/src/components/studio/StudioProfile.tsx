@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { DeleteAccount } from "@/components/site/DeleteAccount";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { DefaultPhoto, ResumePrint } from "./ResumePrint";
 import { getConsents, getExcludedAll, grantConsents, lifeApi, type ConsentPurpose } from "@/lib/lifeApi";
 import {
   DEGREE_LABEL, EDU_STATUS_LABEL, EMPLOYMENT_OPTIONS, MISC_LABEL, REGIONS, SEARCH_STATUS_LABEL,
-  deleteItem, fmtYm, loadCategories, loadResume, saveBasics, saveItem,
-  type ResumeBasics, type ResumeTable, type Visibility,
+  PHOTO_ACCEPT, deleteItem, fmtYm, loadCategories, loadResume, removeProfilePhoto, saveBasics, saveItem, uploadProfilePhoto,
+  type Certification, type Education, type Experience, type MiscItem, type ResumeBasics, type ResumeTable, type Visibility,
 } from "./studioData";
 
 type FieldType = "text" | "textarea" | "date" | "select" | "checkbox";
@@ -104,6 +107,25 @@ export function StudioProfile({ userId, name, preview, onChange }: { userId: str
   const [rows, setRows] = useState<Record<string, Row[]>>({});
   const [cats, setCats] = useState<{ code: string; name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const { profile, refreshProfile } = useAuth();
+  const photoUrl = profile?.avatar_url ?? null;
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onPhoto(file: File | undefined) {
+    if (!file) return;
+    setPhotoBusy(true);
+    try {
+      await uploadProfilePhoto(file);
+      await refreshProfile();
+      setMsg("사진을 바꿨어요.");
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPhotoBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   const load = useCallback(async () => {
     const r = await loadResume(userId);
@@ -180,6 +202,17 @@ export function StudioProfile({ userId, name, preview, onChange }: { userId: str
 
       <p className="sec-t" style={{ marginTop: 0 }}>기본 정보</p>
       <div className="card form-card">
+        {!preview && row("사진", (
+          <span className="photo-row">
+            <span className="photo-box">{photoUrl ? <img src={photoUrl} alt="프로필 사진" /> : <DefaultPhoto />}</span>
+            <span style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+              <input ref={fileRef} type="file" accept={PHOTO_ACCEPT} hidden onChange={(e) => void onPhoto(e.target.files?.[0])} />
+              <button className="btn" disabled={photoBusy} onClick={() => fileRef.current?.click()}>{photoBusy ? "올리는 중..." : photoUrl ? "사진 바꾸기" : "사진 올리기"}</button>
+              {photoUrl && <button className="link" disabled={photoBusy} onClick={async () => { await removeProfilePhoto(); await refreshProfile(); setMsg("사진을 지웠어요. 기본 사진이 쓰여요."); }}>사진 지우기</button>}
+              <small style={{ color: "var(--mute)" }}>이력서 PDF와 기업 화면에 보여요 · 3:4 비율 증명사진 권장 · 5MB까지</small>
+            </span>
+          </span>
+        ), undefined, "공개")}
         {row("이름", <input className="field" value={name} disabled />, undefined, "공개 · 계정 이름")}
         {row("한 줄 소개", <input className="field" maxLength={120} disabled={preview} value={b.headline ?? ""} onChange={(e) => set("headline", e.target.value)} />, "headline", undefined, !b.headline)}
         {row("이메일", <input className="field" type="email" value={b.email ?? ""} onChange={(e) => set("email", e.target.value)} />, undefined, "연락 수락 후 공개")}
@@ -218,6 +251,18 @@ export function StudioProfile({ userId, name, preview, onChange }: { userId: str
       ))}
 
       <div className="edit-only"><Consents /></div>
+      {!preview && <div className="edit-only"><DeleteAccount accountLabel="구직자" /></div>}
+
+      <ResumePrint
+        name={name}
+        photoUrl={photoUrl}
+        basics={b}
+        experiences={(rows.resume_experiences ?? []) as unknown as Experience[]}
+        educations={(rows.resume_educations ?? []) as unknown as Education[]}
+        certifications={(rows.resume_certifications ?? []) as unknown as Certification[]}
+        misc={(rows.resume_misc ?? []) as unknown as MiscItem[]}
+        categoryName={(code) => cats.find((c) => c.code === code)?.name ?? code}
+      />
     </section>
   );
 }

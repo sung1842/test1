@@ -13,6 +13,8 @@ export interface DeskCase {
   daysLeft: number | null;
   matched: number;
   analyzed: number;
+  /** 재시도 소진 후 분석 실패 (SQL 032). 구버전 서버면 없음 */
+  failed?: number;
   approved: number;
   pending: number;
   replied: number | null;

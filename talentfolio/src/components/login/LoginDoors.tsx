@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { Lora } from "next/font/google";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { accountTypeOf, homeOf, zoneOwner, ACCOUNT_LABEL } from "@/lib/accountType";
 import "./login-doors.css";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
@@ -44,7 +46,7 @@ function toKoreanError(err: string) {
 
 function DoorForm({ door }: { door: Door }) {
   const { signIn } = useAuth();
-  const router = useRouter();
+  const next = useSearchParams().get("next");
   const cfg = DOORS[door];
   const id = (s: string) => `${door}-${s}`;
   const emailRef = useRef<HTMLInputElement>(null);
@@ -77,7 +79,19 @@ function DoorForm({ door }: { door: Door }) {
       requestAnimationFrame(() => alertRef.current?.focus());
       return;
     }
-    router.push(cfg.next);
+    // 문(door)이 아니라 계정 유형이 갈 곳을 정한다. 다른 문으로 들어왔으면 알리고 내 홈으로 보낸다.
+    const { data } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
+    const type = accountTypeOf(data.user);
+    if (!type) {
+      setAlert("계정 유형이 지정되지 않은 계정입니다. 관리자에게 문의해 주세요.");
+      requestAnimationFrame(() => alertRef.current?.focus());
+      return;
+    }
+    if (type !== door) window.alert(`${ACCOUNT_LABEL[type]} 계정이라 ${ACCOUNT_LABEL[type]} 화면으로 이동합니다.`);
+    // proxy 가 막았던 화면(?next=)이 내 유형의 화면이면 그리로, 아니면 내 홈으로.
+    const back = next?.startsWith("/") && !next.startsWith("//") && zoneOwner(next.split("?")[0]) !== (type === "seeker" ? "company" : "seeker") ? next : null;
+    // 쿠키가 바뀌었으니 서버(proxy)가 새 세션으로 판정하도록 전체 이동한다.
+    window.location.assign(back ?? homeOf(type));
   };
 
   return (
@@ -107,9 +121,6 @@ function DoorForm({ door }: { door: Door }) {
         <p className="err" id={id("pw-err")} aria-live="polite">{pwErr}</p>
         <span className="sr-only" id={id("pw-hint")}>6자 이상</span>
       </div>
-      <div className="row">
-        <label className="check"><input type="checkbox" name="remember" defaultChecked /> 로그인 상태 유지</label>
-      </div>
       <button className="btn" type="submit" disabled={busy}>
         {busy ? "로그인 중..." : <>{cfg.submit} <i aria-hidden="true">→</i></>}
       </button>
@@ -119,6 +130,8 @@ function DoorForm({ door }: { door: Door }) {
 
 export function LoginDoors() {
   const { authAvailable } = useAuth();
+  // proxy 가 계정 유형 없는 계정을 여기로 보낸다 (23 문서 G10)
+  const unclassified = useSearchParams().get("unclassified") === "1";
   const [open, setOpen] = useState<Door>("seeker");
   const companyHead = useRef<HTMLButtonElement>(null);
 
@@ -142,6 +155,11 @@ export function LoginDoors() {
           <h1>어느 문으로<br /><span className="acc">들어오시나요?</span></h1>
           <p>입장에 맞는 화면으로 바로 안내해 드려요. 로그인 뒤에도 메뉴에서 입장을 바꿀 수 있어요.</p>
         </div>
+        {unclassified && (
+          <div className="alert" role="alert" style={{ marginBottom: 20 }}>
+            <span aria-hidden="true">!</span><span>이 계정은 구직자·기업 유형이 정해지지 않아 화면을 열 수 없어요. 관리자에게 유형 지정을 요청해 주세요.</span>
+          </div>
+        )}
         {!authAvailable && (
           <div className="alert" role="status" style={{ marginBottom: 20 }}>
             <span aria-hidden="true">!</span><span>지금은 로그인 서버에 연결되어 있지 않아요. 잠시 후 다시 시도해 주세요.</span>
@@ -178,7 +196,7 @@ export function LoginDoors() {
             );
           })}
         </div>
-        <p className="foot2">계정이 없나요? <Link href="/start">구직자로 시작하기</Link> · <Link href="/desk">기업 데스크 둘러보기</Link></p>
+        <p className="foot2">계정이 없나요? <Link href="/signup">구직자로 가입</Link> · <Link href="/signup?type=company">기업으로 가입</Link></p>
       </main>
     </div>
   );

@@ -92,9 +92,7 @@
 .dk-qi .k { font-size: 12px; color: var(--ink2); }
 .dk-qi .val { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .dk-qi .d { font-size: 12px; color: var(--mute); }
-.dk-reasons { margin-top: 12px; display: grid; gap: 6px; font-size: 12.5px; }
-.dk-reasons div { display: grid; grid-template-columns: minmax(0, 1fr) 90px 24px; gap: 8px; align-items: center; }
-.dk-reasons b { display: block; height: 6px; border-radius: 3px; background: var(--ink2); }
+.dk-reasons { margin-top: 12px; }
 .dk-warn { font-size: 12px; color: var(--red); background: var(--red-s); border-radius: 8px; padding: 8px 10px; margin-top: 12px; }
 .dk-offers { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .dk-offers li { border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }

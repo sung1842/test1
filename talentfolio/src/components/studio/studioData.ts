@@ -403,6 +403,23 @@ export async function removeEvidenceFile(url: string) {
   await supabase.storage.from("evidence").remove([url.slice("storage://evidence/".length)]);
 }
 
+// ---------- 프로필 사진 (공개 버킷 avatars → profiles.avatar_url, 23 문서 G8) ----------
+export const PHOTO_ACCEPT = "image/png,image/jpeg,image/webp";
+
+export async function uploadProfilePhoto(file: File): Promise<string> {
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch("/api/profile/photo", { method: "POST", body });
+  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  if (!res.ok || !data.url) throw new Error(data.error ?? "사진을 올리지 못했어요");
+  return data.url;
+}
+
+export async function removeProfilePhoto(): Promise<void> {
+  const res = await fetch("/api/profile/photo", { method: "DELETE" });
+  if (!res.ok) throw new Error("사진을 지우지 못했어요");
+}
+
 // ---------- 공고 상세 (목록은 요약 컬럼만, 상세는 열 때 1건씩) ----------
 export interface PostingDetail extends Posting {
   description: string | null;

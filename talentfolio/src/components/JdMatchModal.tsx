@@ -7,6 +7,8 @@ import type { FitReport } from "@/types/fitReport";
 import { JD_ANALYZER_URL, STAGE_LABELS, isJdAnalyzerConfigured } from "@/types/fitReport";
 import { BACKEND_UNAVAILABLE_MSG } from "@/lib/features";
 import FitScoreBadge from "./FitScoreBadge";
+import { authFetch, withAccessToken } from "@/lib/lifeApi";
+import { composePostingText, toItems } from "@/lib/postingFormat";
 
 export interface JdFormState {
   role: "developer" | "designer";
@@ -69,20 +71,22 @@ function StatusDot({ status }: { status: CandidateStatus }) {
   return <span className="w-2 h-2 rounded-full bg-gray-600 shrink-0" />;
 }
 
-// 구조화 폼 입력값을 분석용 JD 텍스트로 조합
+// 구조화 폼 입력값 → 표준 공고 양식(크롤 공고·스카우트 건과 같은 [주요업무]/[자격요건]/[우대사항]) 텍스트
 function buildJdText(form: JdFormState): string {
   const roleLabel = form.role === "developer" ? "개발자" : "디자이너";
-  const lines = [
-    "[채용공고]",
-    `모집 직군: ${roleLabel}`,
-    `모집 인원: ${form.headcount}명`,
-    "",
-  ];
-  if (form.requiredSkills.trim()) lines.push("[필수 기술]", form.requiredSkills.trim(), "");
-  if (form.preferred.trim())      lines.push("[우대 사항]", form.preferred.trim(), "");
-  lines.push("[담당 업무]", form.responsibilities.trim(), "");
-  lines.push("[조직 문화]", form.culture.trim());
-  return lines.join("\n");
+  // 첫 줄은 데스크·승인함의 건 제목(jdHeadline)으로 쓰인다 — 직군과 핵심 기술로
+  const skills = parseKeywords(form.requiredSkills);
+  const top = skills.slice(0, 3);
+  const headline = top.length ? `${roleLabel} 채용 · ${top.join(", ")}` : `${roleLabel} 채용`;
+  const summary = [`${headline} (${form.headcount}명)`, form.culture.trim() && `조직문화: ${form.culture.trim().replace(/\s+/g, " ")}`]
+    .filter(Boolean)
+    .join("\n");
+  return composePostingText({
+    summary,
+    key_duties: toItems(form.responsibilities),
+    must_have: skills,
+    nice_to_have: toItems(form.preferred),
+  });
 }
 
 // 필수 기술 텍스트를 키워드 배열로 파싱 (쉼표/줄바꿈/중점/슬래시 등 자유 입력 허용)
@@ -177,7 +181,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
     setSlackSending(true);
     setSlackNotice(null);
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/auto-from-jd`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jd: jdText, userId, reports, manualSelection: true }),
@@ -217,7 +221,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
     const keywords = parseKeywords(requiredSkills);
 
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/jd/plan`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/jd/plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jd, role, keywords }),
@@ -261,7 +265,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
         const cid = candidate.candidateId;
         updateStatus(cid, { state: "queued" });
         try {
-          const res = await fetch(`${JD_ANALYZER_URL}/api/analyze`, {
+          const res = await authFetch(`${JD_ANALYZER_URL}/api/analyze`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ jd, candidateId: cid, userId: uid, tier: "free" }),
@@ -279,12 +283,14 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
 
           updateStatus(cid, { state: "analyzing", stage: STAGE_LABELS.queued });
 
-          const es = new EventSource(`${JD_ANALYZER_URL}/api/jobs/${data.jobId}/stream?tier=free`);
+          const es = new EventSource(await withAccessToken(`${JD_ANALYZER_URL}/api/jobs/${data.jobId}/stream?tier=free`));
           esRefs.current.push(es);
 
           es.addEventListener("progress", (e) => {
-            const { stage } = JSON.parse(e.data) as { stage: string };
-            updateStatus(cid, { state: "analyzing", stage: STAGE_LABELS[stage] ?? stage });
+            const { stage, attempt, maxAttempts } = JSON.parse(e.data) as { stage: string; attempt?: number; maxAttempts?: number };
+            // 일시 오류(한도 초과 등) 재시도는 몇 번째인지 보여 준다 — 끝없이 "분석 중"으로 보이지 않게
+            const label = stage === "retrying" && attempt ? `일시 오류로 재시도 중 (${attempt}/${maxAttempts ?? 3})` : STAGE_LABELS[stage] ?? stage;
+            updateStatus(cid, { state: "analyzing", stage: label });
           });
           es.addEventListener("completed", (e) => {
             const report = JSON.parse(e.data) as FitReport;
@@ -440,7 +446,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                 {/* 3. 필수 기술 (선택) */}
                 <div>
                   <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                    필수 기술 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
+                    자격요건 · 필수 기술 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
                   </label>
                   <textarea
                     value={requiredSkills}
@@ -462,7 +468,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                 {/* 4. 우대 사항 (선택) */}
                 <div>
                   <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                    우대 사항 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
+                    우대사항 <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(선택)</span>
                   </label>
                   <textarea
                     value={preferred}
@@ -479,7 +485,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                 {/* 5. 담당 업무 */}
                 <div>
                   <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                    담당 업무 <span style={{ color: "var(--accent)" }}>*</span>
+                    주요업무 <span style={{ color: "var(--accent)" }}>*</span>
                   </label>
                   <textarea
                     value={responsibilities}
@@ -496,7 +502,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                 {/* 6. 조직 문화 */}
                 <div>
                   <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                    조직 문화 <span style={{ color: "var(--accent)" }}>*</span>
+                    조직문화 <span style={{ color: "var(--accent)" }}>*</span>
                   </label>
                   <textarea
                     value={culture}

@@ -10,6 +10,8 @@ import ServiceUnavailable from "@/components/ServiceUnavailable";
 import type { CandidateSourcingSummary } from "@/types/sourcing";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { DeskTabs } from "@/components/desk/DeskTabs";
+import { authFetch } from "@/lib/lifeApi";
+import { ScoutCaseForm } from "@/components/desk/ScoutCaseForm";
 
 const inputBase: React.CSSProperties = {
   background: "var(--surface)",
@@ -47,7 +49,7 @@ export default function SourcingPage() {
       const params = new URLSearchParams();
       if (query.trim()) params.set("query", query.trim());
       if (role) params.set("role", role);
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/candidates?${params.toString()}`);
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/candidates?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) {
         setCandidates([]);
@@ -72,13 +74,14 @@ export default function SourcingPage() {
 
   async function submitAction(e: React.FormEvent) {
     e.preventDefault();
-    if (!sourcingAvailable || !channel.trim() || !text.trim() || submitting) return;
+    // 소싱 기록은 로그인한 기업 계정에만 쌓는다 (23 문서 G7, 가짜 demo-user 폴백 제거)
+    if (!sourcingAvailable || !user || !channel.trim() || !text.trim() || submitting) return;
     setSubmitting(true);
     setResult(null);
 
-    const userId = user?.id ?? "demo-user";
+    const userId = user.id;
     try {
-      const res = await fetch(`${JD_ANALYZER_URL}/api/sourcing/actions`, {
+      const res = await authFetch(`${JD_ANALYZER_URL}/api/sourcing/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -155,12 +158,12 @@ export default function SourcingPage() {
             스카우트 건 <em>만들기</em>
           </h1>
           <p className="tf-lead">
-            후보를 찾아 고르고, 팀에 연락 승인을 요청하세요. <b>승인 전에는 후보에게 아무것도 나가지 않아요.</b>
+            공고 조건과 본문을 넣으면 AI가 키워드를 정리하고 후보를 찾아 승인함에 올려요. <b>승인 전에는 후보에게 아무것도 나가지 않아요.</b>
           </p>
         </div>
 
-        {/* ── 1. Search ── */}
-        <section className="mb-8">
+        {/* ── 1. 스카우트 건 (사람인 공고 항목) ── */}
+        <section className="mb-10">
           <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
             <span
               className="w-5 h-5 rounded-md flex items-center justify-center text-xs"
@@ -168,7 +171,21 @@ export default function SourcingPage() {
             >
               1
             </span>
-            인재 DB 검색
+            공고 조건 · 본문
+          </h2>
+          <ScoutCaseForm />
+        </section>
+
+        {/* ── 2. Search ── */}
+        <section className="mb-8">
+          <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
+            <span
+              className="w-5 h-5 rounded-md flex items-center justify-center text-xs"
+              style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)", color: "var(--accent)" }}
+            >
+              2
+            </span>
+            인재 DB 직접 검색
           </h2>
           <div className="flex gap-2 mb-4">
             <input
@@ -263,14 +280,14 @@ export default function SourcingPage() {
           )}
         </section>
 
-        {/* ── 2. Compose ── */}
+        {/* ── 3. Compose ── */}
         <section>
           <h2 className="flex items-center gap-2 text-sm font-bold mb-3" style={{ color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}>
             <span
               className="w-5 h-5 rounded-md flex items-center justify-center text-xs"
               style={{ background: "rgba(var(--accent-rgb), 0.15)", border: "1px solid rgba(var(--accent-rgb), 0.35)", color: "var(--accent)" }}
             >
-              2
+              3
             </span>
             Slack 승인 요청 작성
           </h2>
@@ -312,7 +329,7 @@ export default function SourcingPage() {
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                작성자: {profile?.name ?? user?.email ?? "demo-user"}
+                작성자: {profile?.name ?? user?.email ?? ""}
               </span>
               <motion.button
                 type="submit"

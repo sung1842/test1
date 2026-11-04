@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isJdAnalyzerConfigured } from "@/lib/features";
 import ServiceUnavailable from "@/components/ServiceUnavailable";
 import AuthModal from "@/components/AuthModal";
+import { DeleteAccount } from "@/components/site/DeleteAccount";
 import {
   disconnectNotion,
   fetchNotionDatabases,
@@ -107,7 +108,7 @@ function IntegrationsContent() {
       setShowAuth(true);
       return;
     }
-    window.location.href = notionOAuthStartUrl(user.id);
+    void notionOAuthStartUrl(user.id).then((url) => { window.location.href = url; });
   };
 
   const handleSaveDb = async () => {
@@ -428,6 +429,7 @@ export default function IntegrationsSettingsPage() {
           <IntegrationsContent />
         </Suspense>
         )}
+        <DeleteAccount accountLabel="기업" />
       </main>
     </div>
   );

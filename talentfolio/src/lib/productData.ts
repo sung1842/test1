@@ -63,21 +63,6 @@ export function saveJson(key: string, value: unknown) {
   } catch {}
 }
 
-export type ProductRole = "talent" | "hunter";
-
-const ROLE_KEY = "tf-role";
-
-export function readRole(): ProductRole | null {
-  if (typeof window === "undefined") return null;
-  const v = localStorage.getItem(ROLE_KEY);
-  return v === "talent" || v === "hunter" ? v : null;
-}
-
-export function writeRole(role: ProductRole) {
-  try {
-    localStorage.setItem(ROLE_KEY, role);
-  } catch {}
-}
 
 export const KIND_LABEL: Record<WorkItem["kind"], string> = {
   case: "케이스",
@@ -92,9 +77,12 @@ export const LANE_LABEL: Record<JobLane, string> = {
 };
 
 export function skillHit(skill: string, needles: string[]) {
-  const s = skill.toLowerCase();
+  const s = skill.trim().toLowerCase();
+  // 빈 직함·소개("")는 모든 조건의 부분 문자열이라 전부 충족으로 잡혔다 → 빈 값·한 글자는 매칭하지 않는다
+  if (s.length < 2) return false;
   return needles.some((n) => {
-    const q = n.toLowerCase();
+    const q = n.trim().toLowerCase();
+    if (q.length < 2) return false;
     return s.includes(q) || q.includes(s);
   });
 }

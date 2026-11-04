@@ -1,5 +1,5 @@
-.tf-logo{position:relative;display:inline-block;font-family:var(--font-tf-logo),serif;font-style:italic;font-weight:500;letter-spacing:-.03em;line-height:1;color:#0B1C45;white-space:nowrap}
-.tf-logo b{font-weight:700;background:linear-gradient(100deg,#1F4FD6 0%,#4AA3F2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+.tf-logo{position:relative;display:inline-block;font-family:var(--font-story),cursive;font-style:normal;font-weight:400;letter-spacing:-.01em;line-height:1;color:#0B1C45;white-space:nowrap}
+.tf-logo b{font-weight:400;background:linear-gradient(100deg,#1F4FD6 0%,#4AA3F2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
 .tf-logo--dark{color:#F5F9FF}
 .tf-logo--dark b{background-image:linear-gradient(100deg,#7FB6FF 0%,#BFDDFF 100%)}
 .tf-logo-swash{position:absolute;right:-2px;bottom:-.27em;width:58%;height:.35em;overflow:visible}

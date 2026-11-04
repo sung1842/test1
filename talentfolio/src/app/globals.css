@@ -1,7 +1,7 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css");
-@import url("https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap");
 @import "tailwindcss";
+@font-face{font-family:'OksuniSNostalgicHandwriting';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2607161334@griun-oksooni-rg/griun-oksooni-rg/Griun_Oksooni-Rg.woff2') format('woff2');font-weight:400;font-display:swap}
 
 /* ── 전역 토큰: 메인 "맑은 아침 하늘"(components/landing/sky-landing.css)과 동일 계열 ── */
 /*   바탕 paper #F5F9FF | 브랜드 cobalt #1F4FD6 | 글자 ink #0B1C45 | 선 #D3E3F7 | 포인트 sun #FFE7A3 */
@@ -59,8 +59,8 @@
   /* 폰트 */
   --f-body: "Pretendard Variable", Pretendard, system-ui, sans-serif;
   --f-display: "Wanted Sans Variable", "Pretendard Variable", Pretendard, sans-serif;
-  --f-accent: "MaruBuriSemiBold", "MaruBuri", serif;
-  --f-hand: "Nanum Pen Script", cursive;
+  --f-accent: "OksuniSNostalgicHandwriting", "Pretendard Variable", sans-serif;
+  --f-hand: "OksuniSNostalgicHandwriting", "Pretendard Variable", sans-serif;
   --font-product: var(--f-body);
 
   /* 모서리 */

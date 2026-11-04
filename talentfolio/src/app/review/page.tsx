@@ -10,7 +10,8 @@ import { deskApi } from "@/lib/deskApi";
 import { getPublicEvidenceCards, type PublicEvidenceCard } from "@/lib/getCandidate";
 import { evidenceCardHref } from "@/lib/briefReport";
 import { lifeFetch, sourceLabel, trustLabel } from "@/lib/lifeApi";
-import type { AgentResult, FitReport, FitReportRecord } from "@/types/fitReport";
+import { postingHeadline } from "@/lib/postingFormat";
+import { displaySummary, type AgentResult, type FitReport, type FitReportRecord } from "@/types/fitReport";
 import { LoadError, SkeletonList, StateView } from "@/components/state/StateView";
 
 const TRUST_RANK: Record<string, number> = { confirmed: 3, attached: 2, self: 1 };
@@ -47,10 +48,8 @@ const unique = (xs: string[]) => [...new Set(xs.map((x) => x.trim()).filter(Bool
 const matchedOf = (r: FitReport | null) => unique(agentsOf(r).flatMap((a) => a.matched_items));
 const missingOf = (r: FitReport | null) => unique(agentsOf(r).flatMap((a) => a.missing_items));
 
-function jdHeadline(jd: string): string {
-  const line = jd.split("\n").map((l) => l.trim()).find(Boolean) ?? "제목 없는 공고";
-  return line.length > 48 ? `${line.slice(0, 48)}…` : line;
-}
+// 표준 공고 양식은 첫 줄이 섹션 제목일 수 있다 — 섹션 제목·불릿을 건너뛴다
+const jdHeadline = (jd: string): string => postingHeadline(jd);
 
 // 근거 없는 요건 → 유도하지 않는 열린 질문(6칸: 상황·역할·행동·결과)
 function followUpQuestion(item: string): string {
@@ -60,6 +59,7 @@ function followUpQuestion(item: string): string {
 
 export default function CandidateReviewPage() {
   const [records, setRecords] = useState<FitReportRecord[]>([]);
+  const [caseInfo, setCaseInfo] = useState<Record<string, { title: string | null; clientName: string | null; closed: boolean }>>({});
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   // 데스크 홈 건 카드에서 ?jd= 로 들어오면 그 건을 연다
@@ -75,8 +75,10 @@ export default function CandidateReviewPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await lifeFetch<{ reports: FitReportRecord[] }>("/api/fit-reports");
-      setRecords(res.reports.filter((r) => r.report));
+      const res = await lifeFetch<{ reports: FitReportRecord[]; cases?: Record<string, { title: string | null; clientName: string | null; closed: boolean }> }>("/api/fit-reports");
+      // 분석 결과가 없는 행(진행 중·실패)도 둔다 — ?jd= 로 들어온 건이 목록에서 사라져 다른 건이 열리지 않게
+      setRecords(res.reports);
+      setCaseInfo(res.cases ?? {});
       setState("ready");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -90,20 +92,26 @@ export default function CandidateReviewPage() {
   }, [load]);
 
   const jds = useMemo(() => {
-    const map = new Map<string, { hash: string; title: string; pending: number; total: number }>();
+    const map = new Map<string, { hash: string; title: string; pending: number; total: number; running: number; failed: number }>();
     for (const r of records) {
-      const e = map.get(r.jdHash) ?? { hash: r.jdHash, title: jdHeadline(r.jd), pending: 0, total: 0 };
+      const info = caseInfo[r.jdHash];
+      // 스카우트 건 제목·고객사 우선, 없으면 본문에서 추정
+      const title = info?.title ? `${info.clientName ? `${info.clientName} · ` : ""}${info.title}${info.closed ? " (종료)" : ""}` : jdHeadline(r.jd);
+      const e = map.get(r.jdHash) ?? { hash: r.jdHash, title, pending: 0, total: 0, running: 0, failed: 0 };
       e.total += 1;
-      if (REVIEWABLE.has(r.status)) e.pending += 1;
+      if (REVIEWABLE.has(r.status) && r.report) e.pending += 1;
+      if (!r.report && r.status === "failed") e.failed += 1;
+      else if (!r.report) e.running += 1;
       map.set(r.jdHash, e);
     }
     return [...map.values()];
-  }, [records]);
+  }, [records, caseInfo]);
 
   const activeJd = (jdHash && jds.some((j) => j.hash === jdHash) ? jdHash : null) ?? jds[0]?.hash ?? null;
+  const activeCase = jds.find((j) => j.hash === activeJd) ?? null;
 
   const list = useMemo(() => {
-    const rows = records.filter((r) => r.jdHash === activeJd && (showDone || REVIEWABLE.has(r.status)));
+    const rows = records.filter((r) => r.report && r.jdHash === activeJd && (showDone || REVIEWABLE.has(r.status)));
     const score = (r: FitReportRecord) => r.report?.overallScore ?? 0;
     return rows.sort((a, b) =>
       sort === "score"
@@ -140,7 +148,7 @@ export default function CandidateReviewPage() {
   return (
     <ProductShell crumble="데스크 · 후보 검토">
       <div className="product-page" style={{ maxWidth: 1180 }}>
-        <div className="dk" style={{ padding: 0 }}><DeskTabs pending={records.filter((r) => REVIEWABLE.has(r.status)).length} /></div>
+        <div className="dk" style={{ padding: 0 }}><DeskTabs pending={records.filter((r) => r.report && REVIEWABLE.has(r.status)).length} /></div>
         <p className="product-eyebrow">후보 검토</p>
         <h1 className="product-title" style={{ fontSize: 28 }}>근거를 보고 판단하세요</h1>
         <p className="product-muted" style={{ marginTop: 6 }}>
@@ -193,7 +201,15 @@ export default function CandidateReviewPage() {
 
             <div className="review-grid">
               <ul className="review-list" aria-label="후보 목록">
-                {list.length === 0 && <li className="product-muted" style={{ padding: 12 }}>검토 대기 후보가 없습니다.</li>}
+                {list.length === 0 && (
+                  <li className="product-muted" style={{ padding: 12 }}>
+                    {activeCase && activeCase.failed > 0
+                      ? `분석에 실패한 후보 ${activeCase.failed}명${activeCase.running ? ` · 분석 중 ${activeCase.running}명` : ""}. 같은 JD 로 다시 분석하면 이어서 처리합니다.`
+                      : activeCase && activeCase.running > 0
+                        ? `후보 ${activeCase.running}명 분석 중입니다. 끝나면 여기에 나타납니다.`
+                        : "검토 대기 후보가 없습니다."}
+                  </li>
+                )}
                 {list.map((r) => {
                   const cited = citedIds(r.report).size;
                   const trust = bestTrust(r.report);
@@ -336,7 +352,7 @@ function Brief({
         </div>
       </div>
 
-      <p style={{ fontSize: 14, lineHeight: 1.6, margin: "12px 0" }}>{report.ceoSummary}</p>
+      <p style={{ fontSize: 14, lineHeight: 1.6, margin: "12px 0" }}>{displaySummary(report.ceoSummary)}</p>
 
       <h3 className="studio-label" style={{ fontSize: 13, margin: "16px 0 4px" }}>근거가 확인된 요건</h3>
       {agentsOf(report).every((a) => a.matched_items.length === 0) && <p className="product-muted" style={{ fontSize: 13 }}>없음</p>}

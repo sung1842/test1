@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { storyScript } from "./fonts";
 
 // ── Brand fonts (logo only) ──────────────────────────────────────────────────
 const serreriaSobria = localFont({
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${serreriaSobria.variable} ${alanisHand.variable}`}>
+    <html lang="ko" className={`${serreriaSobria.variable} ${alanisHand.variable} ${storyScript.variable}`}>
       <body>
         <a className="tf-skip" href="#main">본문으로 건너뛰기</a>
         <AuthProvider>

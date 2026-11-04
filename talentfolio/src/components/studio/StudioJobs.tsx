@@ -8,6 +8,7 @@ import {
   type Lane, type Posting, type PostingDetail, type PostingFilter,
 } from "./studioData";
 
+const REC_PREVIEW = 4; // 공고 화면에는 추천 4개까지, 나머지는 더보기(?recs=all)
 const MOVE_LABEL: Record<Lane, string> = { watch: "관심으로", apply: "지원할 곳으로", hold: "보류로" };
 const CAREER_OPTIONS: [NonNullable<PostingFilter["career"]>, string][] = [
   ["", "경력 전체"], ["newcomer", "신입 가능"], ["1-3", "1~3년"], ["3-5", "3~5년"], ["5-10", "5~10년"], ["10+", "10년 이상"],
@@ -29,6 +30,13 @@ export function StudioJobs({ userId, onChange }: { userId: string; onChange: () 
   const [recs, setRecs] = useState<LifeRecommendationsResponse>({ recommendations: [], computedAt: null, candidates: 0 });
   const [toast, setToast] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null); // 공고 상세 서랍 (열 때 1건만 불러온다)
+  const [allRecs, setAllRecs] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("recs") === "all");
+
+  useEffect(() => {
+    const onPop = () => setAllRecs(new URLSearchParams(window.location.search).get("recs") === "all");
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const loadPinned = useCallback(async () => {
     const ps = await loadPins();
@@ -76,6 +84,74 @@ export function StudioJobs({ userId, onChange }: { userId: string; onChange: () 
   const pages = Math.max(1, Math.ceil(list.total / PAGE_SIZE));
   const meta = (p: Posting) => [p.location?.split(",")[0], p.expires_at ? `~${p.expires_at.slice(5, 10).replace("-", ".")}` : ddayLabel(null, p.deadline_type)].filter(Boolean).join(" · ");
 
+  async function excludeAll() {
+    await lifeApi.addExclusion(null);
+    lifeApi.refreshRecommendations().catch(() => undefined);
+    setHidden((h) => [...h, ...visibleRecs.map((x) => x.posting!.id)]);
+    say("추천을 모두 끄도록 저장했어요");
+  }
+
+  // 추천 공고 전체 목록은 ?recs=all 로 연다 (뒤로 가기로 돌아온다)
+  function showAllRecs(on: boolean) {
+    const url = new URL(window.location.href);
+    if (on) url.searchParams.set("recs", "all"); else url.searchParams.delete("recs");
+    window.history.pushState(null, "", url);
+    setAllRecs(on);
+    window.scrollTo({ top: 0 });
+  }
+
+  const computedLabel = recs.computedAt ? ` · ${recs.computedAt.slice(5, 16).replace("-", ".").replace("T", " ")} 기준` : "";
+  const recCard = (r: (typeof visibleRecs)[number]) => {
+    const p = r.posting!;
+    return (
+      <div className="card rec-job" key={p.id}>
+        <h4>
+          <button className="job-open" onClick={() => setOpenId(p.id)}>{p.company} · {p.title}</button>{" "}
+          <small style={{ fontWeight: 400, color: "var(--mute)" }}>· 맞춤 {r.score}점</small>
+        </h4>
+        <div className="why">{r.reasons.map((s) => <span key={s}>· {s}</span>)}</div>
+        <div className="card-acts">
+          <button className="mini" onClick={() => void excludeRec(p.id)}>이 공고 추천 제외</button>
+        </div>
+      </div>
+    );
+  };
+  const recEmpty = (
+    <div className="card rec-job"><p className="note" style={{ margin: 0 }}>
+      {recs.computedAt ? "조건에 맞는 공고가 아직 없어요. 이력서의 기술·희망 조건을 채우면 더 잘 맞춰 드려요." : "추천을 준비하고 있어요. 잠시 뒤 다시 열어 주세요."}
+    </p></div>
+  );
+  const drawer = openId && <PostingDrawer id={openId} lane={pins[openId] ?? null} onPin={async (lane) => {
+    await pin({ id: openId }, lane); // 추천 공고는 목록·칸에 없을 수 있어 id 로 넣는다
+  }} onClose={() => setOpenId(null)} />;
+  const toastEl = toast && <div className="toast" style={{ opacity: 1, transform: "translate(-50%,0)" }}>{toast}</div>;
+
+  if (allRecs) {
+    return (
+      <section className="view on">
+        <div className="head">
+          <div>
+            <p className="eyebrow">공고 · 추천</p>
+            <h1>추천 공고 전체</h1>
+            <p className="lede">내 기술·경력·희망 조건과 공고 조건을 맞춰 본 결과예요{computedLabel}.</p>
+          </div>
+          <button className="btn" onClick={() => showAllRecs(false)}>공고로 돌아가기</button>
+        </div>
+        <div>
+          {visibleRecs.map(recCard)}
+          {visibleRecs.length === 0 && recEmpty}
+        </div>
+        {visibleRecs.length > 0 && (
+          <div className="card-acts" style={{ justifyContent: "flex-end", marginTop: 8 }}>
+            <button className="mini" onClick={() => void excludeAll()}>추천 전체 받지 않기</button>
+          </div>
+        )}
+        {drawer}
+        {toastEl}
+      </section>
+    );
+  }
+
   return (
     <section className="view on">
       <div className="head">
@@ -111,30 +187,17 @@ export function StudioJobs({ userId, onChange }: { userId: string; onChange: () 
         })}
       </div>
 
-      <p className="sec-t">추천 공고 <span>내 기술·경력·희망 조건과 공고 조건을 맞춰 본 결과예요{recs.computedAt ? ` · ${recs.computedAt.slice(5, 16).replace("-", ".").replace("T", " ")} 기준` : ""}</span></p>
+      <p className="sec-t">추천 공고 <span>내 기술·경력·희망 조건과 공고 조건을 맞춰 본 결과예요{computedLabel}</span></p>
       <div>
-        {visibleRecs.map((r) => {
-          const p = r.posting!;
-          return (
-            <div className="card rec-job" key={p.id}>
-              <h4>
-                <button className="job-open" onClick={() => setOpenId(p.id)}>{p.company} · {p.title}</button>{" "}
-                <small style={{ fontWeight: 400, color: "var(--mute)" }}>· 맞춤 {r.score}점</small>
-              </h4>
-              <div className="why">{r.reasons.map((s) => <span key={s}>· {s}</span>)}</div>
-              <div className="card-acts">
-                <button className="mini" onClick={() => void excludeRec(p.id)}>이 공고 추천 제외</button>
-                <button className="mini" onClick={async () => { await lifeApi.addExclusion(null); lifeApi.refreshRecommendations().catch(() => undefined); setHidden((h) => [...h, ...visibleRecs.map((x) => x.posting!.id)]); say("추천을 모두 끄도록 저장했어요"); }}>추천 전체 받지 않기</button>
-              </div>
-            </div>
-          );
-        })}
-        {visibleRecs.length === 0 && (
-          <div className="card rec-job"><p className="note" style={{ margin: 0 }}>
-            {recs.computedAt ? "조건에 맞는 공고가 아직 없어요. 이력서의 기술·희망 조건을 채우면 더 잘 맞춰 드려요." : "추천을 준비하고 있어요. 잠시 뒤 다시 열어 주세요."}
-          </p></div>
-        )}
+        {visibleRecs.slice(0, REC_PREVIEW).map(recCard)}
+        {visibleRecs.length === 0 && recEmpty}
       </div>
+      {visibleRecs.length > 0 && (
+        <div className="card-acts" style={{ justifyContent: "flex-end", marginTop: 8 }}>
+          <button className="mini" onClick={() => void excludeAll()}>추천 전체 받지 않기</button>
+          {visibleRecs.length > REC_PREVIEW && <button className="mini" onClick={() => showAllRecs(true)}>더보기 ({visibleRecs.length})</button>}
+        </div>
+      )}
 
       <p className="sec-t">전체 공고 <span>{list.total}건 · 직군·경력·학력·고용형태·지역으로 걸러 봐요</span></p>
       <div className="card" style={{ padding: "16px 20px" }}>
@@ -202,10 +265,8 @@ export function StudioJobs({ userId, onChange }: { userId: string; onChange: () 
           <button className="btn" disabled={(filter.page ?? 0) + 1 >= pages} onClick={() => set({ page: (filter.page ?? 0) + 1 })}>다음</button>
         </div>
       )}
-      {openId && <PostingDrawer id={openId} lane={pins[openId] ?? null} onPin={async (lane) => {
-        await pin({ id: openId }, lane); // 추천 공고는 목록·칸에 없을 수 있어 id 로 넣는다
-      }} onClose={() => setOpenId(null)} />}
-      {toast && <div className="toast" style={{ opacity: 1, transform: "translate(-50%,0)" }}>{toast}</div>}
+      {drawer}
+      {toastEl}
     </section>
   );
 }
