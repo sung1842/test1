@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import type { Candidate } from "@/types/candidate";
@@ -16,6 +16,8 @@ import FitScoreBadge from "@/components/FitScoreBadge";
 import { ScoreColumns } from "@/components/charts/ScoreCharts";
 import { loadJson, saveJson, skillHit } from "@/lib/productData";
 import { lifeFetch } from "@/lib/lifeApi";
+import { useCached } from "@/lib/useCached";
+import { KEY, refreshDesk, useFitReports } from "@/lib/deskData";
 
 const COMPARE_CAP = 3;
 
@@ -103,59 +105,64 @@ export default function DeskPage() {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<"all" | "developer" | "designer">("all");
   const [compare, setCompare] = useState<string[]>([]);
-  const [cases, setCases] = useState<ScoutCase[]>([]);
-  const [caseReports, setCaseReports] = useState<FitReportRecord[]>([]);
   const [activeBrief, setActiveBrief] = useState("");
   const [fitOnly, setFitOnly] = useState(false);
   const [caseNote, setCaseNote] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
-  const [livePeople, setLivePeople] = useState<Candidate[]>([]);
   const [showJdModal, setShowJdModal] = useState(false);
   const [jdForm, setJdForm] = useState<JdFormState>(EMPTY_JD_FORM);
   const [fitResults, setFitResults] = useState<Map<string, FitReport>>(new Map());
   const [sortByFit, setSortByFit] = useState(false);
   const jdReady = isJdAnalyzerConfigured();
 
-  // 데모 JSON 후보는 섞지 않는다 (서버 후보 풀과 같은 수)
-  const people = livePeople;
-
-  const loadLive = useCallback(async () => {
-    if (!isSupabaseConfigured() || !supabase) return;
-    const { data } = await supabase
+  // 데모 JSON 후보는 섞지 않는다 (서버 후보 풀과 같은 수).
+  // 후보 풀·건·분석 목록은 캐시를 먼저 그리고 뒤에서 갱신한다 (탭을 오갈 때 다시 기다리지 않게)
+  const pool = useCached<Candidate[]>("pool:profiles", async () => {
+    if (!isSupabaseConfigured() || !supabase) return [];
+    const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, name, role, title, avatar_url, short_bio, long_bio, skills, github_url, portfolio_url, behance_url, linkedin_url")
       .eq("is_public", true)
       // 기업 계정 제외 (SQL 030)
       .or("account_type.is.null,account_type.neq.company");
-    if (data && data.length > 0) setLivePeople(data.map(profileToCandidate));
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => void loadLive(), 0);
-    return () => clearTimeout(t);
-  }, [loadLive]);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(profileToCandidate);
+  }, { staleMs: 60_000 });
+  const people = useMemo(() => pool.data ?? [], [pool.data]);
 
   // 회사 건 = 서버 스카우트 건. 담긴 후보 = 그 건 JD 의 fit_reports (브라우저 저장 아님)
-  const loadCases = useCallback(async () => {
-    const [c, r] = await Promise.all([
-      lifeFetch<{ cases: ScoutCase[] }>("/api/scout-cases").catch(() => ({ cases: [] as ScoutCase[] })),
-      lifeFetch<{ reports: FitReportRecord[] }>("/api/fit-reports").catch(() => ({ reports: [] as FitReportRecord[] })),
-    ]);
-    const open = c.cases.filter((x) => x.status !== "closed");
-    setCases(open);
-    setCaseReports(r.reports);
-    setActiveBrief((cur) => {
-      if (open.some((x) => x.id === cur)) return cur;
-      const remembered = loadJson<string>("tf-desk-case", "");
-      return open.some((x) => x.id === remembered) ? remembered : (open[0]?.id ?? "");
-    });
-  }, []);
+  const casesQ = useCached<{ cases: ScoutCase[] }>(user ? KEY.cases : null, () => lifeFetch<{ cases: ScoutCase[] }>("/api/scout-cases"), { refreshMs: 30_000 });
+  const reportsQ = useFitReports();
+  const cases = useMemo(() => (casesQ.data?.cases ?? []).filter((x) => x.status !== "closed"), [casesQ.data]);
+  const caseReports = useMemo(() => reportsQ.data?.reports ?? [], [reportsQ.data]);
 
+  // 승인함에서 ?jd=<해시> 로 넘어오면 그 건을 "회사 건" 탭에서 바로 연다
+  const [jdParam, setJdParam] = useState<string | null>(null);
   useEffect(() => {
-    if (!user) return;
-    const t = setTimeout(() => void loadCases(), 0);
+    const t = setTimeout(() => {
+      const q = new URLSearchParams(window.location.search);
+      const jd = q.get("jd");
+      if (jd) {
+        setJdParam(jd);
+        setTab("briefs");
+      }
+    }, 0);
     return () => clearTimeout(t);
-  }, [user, loadCases]);
+  }, []);
+  useEffect(() => {
+    if (!cases.length) return;
+    const t = setTimeout(() => {
+      setActiveBrief((cur) => {
+        const fromJd = jdParam ? cases.find((x) => x.jdHash === jdParam)?.id : undefined;
+        if (fromJd) return fromJd;
+        if (cases.some((x) => x.id === cur)) return cur;
+        const remembered = loadJson<string>("tf-desk-case", "");
+        return cases.some((x) => x.id === remembered) ? remembered : (cases[0]?.id ?? "");
+      });
+      if (jdParam) setJdParam(null);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [cases, jdParam]);
   useEffect(() => {
     if (activeBrief) saveJson("tf-desk-case", activeBrief);
   }, [activeBrief]);
@@ -190,7 +197,7 @@ export default function DeskPage() {
       }
     }
     setCaseNote(errors.length ? errors[0] : `${cases.filter((c) => caseIds.includes(c.id)).map(caseLabel).join(", ")} 건에 담았습니다. 분석이 끝나면 승인함에서 제안까지 이어집니다.`);
-    if (queued > 0) void loadCases();
+    if (queued > 0) refreshDesk();
   };
 
   const startCase = async (c: ScoutCase) => {
@@ -202,7 +209,7 @@ export default function DeskPage() {
         body: JSON.stringify({}),
       });
       setCaseNote(r.queued > 0 ? `조건에 맞는 ${r.matched}명 중 ${r.queued}명 분석을 시작했습니다.` : "새로 분석할 후보가 없습니다.");
-      void loadCases();
+      refreshDesk();
     } catch (err) {
       setCaseNote(err instanceof Error ? err.message : "후보 찾기 실패");
     } finally {

@@ -3,10 +3,11 @@
 // 데스크 홈 (21 문서 D1~D4, 시안 S_desk). 숫자 → 행동: 모든 타일은 그 숫자를 만든 목록으로 간다.
 // 데이터가 없는 지표(null)는 숫자 대신 "준비 중". 평균 점수·후보 순위표·학력/나이 통계는 두지 않는다.
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ProductShell } from "@/components/product/ProductShell";
 import { DeskTabs } from "@/components/desk/DeskTabs";
 import { CaseBar, FunnelChart, ReasonsChart, SupplyDemandChart } from "@/components/desk/DeskCharts";
+import { useDeskOffers, useDeskSummary } from "@/lib/deskData";
 import { deskApi, ratioText, relTime, type DeskFeedItem, type DeskFeedKind, type DeskOffer, type DeskSummary } from "@/lib/deskApi";
 import { LoadError, SkeletonList } from "@/components/state/StateView";
 
@@ -30,28 +31,15 @@ function Wip({ need }: { need: string }) {
 
 export default function DeskHomePage() {
   const [range, setRange] = useState<7 | 30>(7);
-  const [summary, setSummary] = useState<DeskSummary | null>(null);
-  const [feed, setFeed] = useState<DeskFeedItem[] | null>(null);
-  const [offers, setOffers] = useState<DeskOffer[] | null | undefined>(undefined);
   const [filter, setFilter] = useState<"all" | DeskFeedKind>("all");
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (r: 7 | 30) => {
-    try {
-      const [s, o] = await Promise.all([deskApi.summary(r), deskApi.offers()]);
-      setSummary(s);
-      setFeed(s.feed);
-      setOffers(o.offers);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => void load(range), 0);
-    return () => clearTimeout(t);
-  }, [load, range]);
+  // 캐시를 먼저 그리고 뒤에서 갱신 (처음 한 번만 로딩 화면)
+  const sum = useDeskSummary(range);
+  const off = useDeskOffers();
+  const summary = sum.data ?? null;
+  const error = sum.error;
+  const reload = useCallback(async () => {
+    await Promise.all([sum.reload(), off.reload()]);
+  }, [sum, off]);
 
   return (
     <ProductShell crumble="데스크 · 홈">
@@ -62,7 +50,7 @@ export default function DeskHomePage() {
         ) : !summary ? (
           <SkeletonList rows={4} label="데스크를 불러오는 중" />
         ) : (
-          <Home summary={summary} range={range} setRange={setRange} feed={feed ?? []} filter={filter} setFilter={setFilter} offers={offers} reload={() => load(range)} />
+          <Home summary={summary} range={range} setRange={setRange} feed={summary.feed ?? []} filter={filter} setFilter={setFilter} offers={off.data ? off.data.offers : undefined} reload={reload} />
         )}
       </div>
     </ProductShell>

@@ -106,6 +106,9 @@ const inputBase: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
+// Slack 관련 UI 는 웹에서 노출하지 않는다 (2026-11-10)
+const SHOW_SLACK = false;
+
 export default function JdMatchModal({ userId, form, onFormChange, onClose, onResults, onViewResults }: JdMatchModalProps) {
   const jdAvailable = isJdAnalyzerConfigured() && Boolean(JD_ANALYZER_URL);
   // ── 폼 상태는 부모(page.tsx) 메모리에서 관리 — 모달을 닫아도 유지됨 ──
@@ -552,7 +555,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   </motion.div>
                 )}
 
-                {slackNotice && (
+                {SHOW_SLACK && slackNotice && (
                   <p className="text-xs px-1" style={{ color: slackNotice.includes("실패") || slackNotice.includes("선택") ? "var(--dev-color)" : "var(--ok)" }}>
                     {slackNotice}
                   </p>
@@ -617,7 +620,7 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                     </div>
                     {doneCount > 0 && selectedIds.size > 0 && (
                       <p className="text-xs px-4 py-2" style={{ borderTop: "1px solid var(--border-color)", color: "var(--text-secondary)" }}>
-                        {selectedIds.size}명 선택됨 — 결과를 검토한 뒤 Slack 승인 요청을 보내세요.
+                        {selectedIds.size}명 선택됨 — 결과를 검토한 뒤 승인함에서 처리하세요.
                       </p>
                     )}
                   </div>
@@ -687,7 +690,8 @@ export default function JdMatchModal({ userId, form, onFormChange, onClose, onRe
                   )}
                 </button>
               )}
-              {doneCount > 0 && userId && (
+              {/* Slack 승인 요청은 웹에서 숨김 (Slack 연동은 서버에서만 유지) */}
+              {SHOW_SLACK && doneCount > 0 && userId && (
                 <button
                   onClick={() => void sendManualSlackApproval()}
                   disabled={slackSending || selectedIds.size === 0}

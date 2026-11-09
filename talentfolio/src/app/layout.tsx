@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { DeskFrame } from "@/components/desk/DeskFrame";
 import { storyScript } from "./fonts";
 
 // ── Brand fonts (logo only) ──────────────────────────────────────────────────
@@ -32,7 +33,7 @@ export default function RootLayout({
       <body>
         <a className="tf-skip" href="#main">본문으로 건너뛰기</a>
         <AuthProvider>
-          {children}
+          <DeskFrame>{children}</DeskFrame>
         </AuthProvider>
       </body>
     </html>

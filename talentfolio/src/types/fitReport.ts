@@ -24,6 +24,8 @@ export interface FitReport {
   ceoSummary: string;
   generatedAt: string;
   review?: FitReview;
+  /** 보류 — 상태는 검토 대기 그대로, "미처리" 목록에서만 빠진다 */
+  hold?: { at: string; by: string | null };
 }
 
 export interface FitReview {
