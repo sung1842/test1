@@ -1,8 +1,6 @@
 "use client";
 
 import { SkeletonList } from "@/components/state/StateView";
-import { SiteHeader } from "@/components/site/SiteHeader";
-import { DeskTabs } from "@/components/desk/DeskTabs";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Database, ExternalLink, Hash, Loader2, Unlink } from "lucide-react";
@@ -118,7 +116,7 @@ function IntegrationsContent() {
     try {
       const updated = await saveNotionDatabase(user.id, selectedDb);
       setIntegration(updated);
-      setNotice("Notion 후보 DB가 저장되었습니다. Slack 승인 시 자동 sync됩니다.");
+      setNotice("Notion 후보 DB가 저장되었습니다. 후보를 승인하면 자동으로 기록됩니다.");
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "저장 실패");
     } finally {
@@ -201,7 +199,7 @@ function IntegrationsContent() {
               Notion
             </h2>
             <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-              Slack에서 승인한 후보를 내 Notion 후보 표에 자동으로 옮겨 적어요.
+              승인한 후보를 내 Notion 후보 표에 자동으로 옮겨 적어요.
             </p>
           </div>
         </div>
@@ -313,6 +311,8 @@ function IntegrationsContent() {
         )}
       </section>
 
+      {/* Slack 채널 자동 소싱 — 웹에서 숨김 (2026-11-10) */}
+      {SHOW_SLACK && (
       <section
         className="rounded-2xl p-6 mt-6"
         style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
@@ -406,31 +406,30 @@ function IntegrationsContent() {
           </div>
         )}
       </section>
+      )}
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </>
   );
 }
 
-export default function IntegrationsSettingsPage() {
-  return (
-    <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      <SiteHeader crumb="연동" />
+const SHOW_SLACK = false;
 
-      <main id="main" className="max-w-xl mx-auto px-4 pb-16" style={{ paddingTop: 88 }}>
-        <div className="dk" style={{ padding: 0, maxWidth: "none" }}><DeskTabs /></div>
-        <span className="tf-label">데스크 · 설정</span>
-        <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>연동</h1>
-        <p className="tf-lead" style={{ marginBottom: 24 }}>승인한 후보를 Slack으로 알리고 Notion에 기록하도록 연결해요.</p>
-        {!isJdAnalyzerConfigured() ? (
-          <ServiceUnavailable title="연동 설정" description="jd-fit-analyzer가 배포되면 Notion·Slack 연동을 설정할 수 있습니다." />
-        ) : (
+export default function IntegrationsSettingsPage() {
+  // 헤더·탭은 DeskFrame 이 그린다
+  return (
+    <div className="max-w-xl mx-auto px-4 pb-16" style={{ paddingTop: 28 }}>
+      <span className="tf-label">데스크 · 설정</span>
+      <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>연동</h1>
+      <p className="tf-lead" style={{ marginBottom: 24 }}>승인한 후보를 Notion에 기록하도록 연결해요.</p>
+      {!isJdAnalyzerConfigured() ? (
+        <ServiceUnavailable title="연동 설정" description="jd-fit-analyzer가 배포되면 Notion 연동을 설정할 수 있습니다." />
+      ) : (
         <Suspense fallback={<SkeletonList rows={2} />}>
           <IntegrationsContent />
         </Suspense>
-        )}
-        <DeleteAccount accountLabel="기업" />
-      </main>
+      )}
+      <DeleteAccount accountLabel="기업" />
     </div>
   );
 }

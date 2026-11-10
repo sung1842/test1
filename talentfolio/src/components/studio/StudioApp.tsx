@@ -12,15 +12,17 @@ import { CardPiece, StudioCards } from "./StudioCards";
 import { StudioJobs } from "./StudioJobs";
 import { StudioLetters } from "./StudioLetters";
 import { StudioProfile } from "./StudioProfile";
+import { StudioWorks } from "./StudioWorks";
 import { loadLetters, loadPins, loadResume, sortCards, type ResumeBasics } from "./studioData";
 import "./studio.css";
 
 const PRETENDARD = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 
-export type StudioView = "overview" | "profile" | "pieces" | "letters" | "jobs";
+export type StudioView = "overview" | "profile" | "works" | "pieces" | "letters" | "jobs";
 const NAV: { v: StudioView; label: string }[] = [
   { v: "overview", label: "개요" },
   { v: "profile", label: "프로필" },
+  { v: "works", label: "작업물" },
   { v: "pieces", label: "나를 보여주기" },
   { v: "letters", label: "자기소개서" },
   { v: "jobs", label: "공고" },
@@ -169,6 +171,7 @@ export function StudioApp() {
 
           {view === "overview" && <Overview name={name} st={st} go={setView} />}
           {view === "profile" && <StudioProfile userId={user.id} name={name} preview={preview} onChange={refresh} />}
+          {view === "works" && <StudioWorks userId={user.id} preview={preview} />}
           {view === "pieces" && <StudioCards userId={user.id} preview={preview} onChange={refresh} />}
           {view === "letters" && <StudioLetters userId={user.id} cards={st.cards} activities={st.activities} preview={preview} onChange={refresh} />}
           {view === "jobs" && <StudioJobs userId={user.id} onChange={refresh} />}

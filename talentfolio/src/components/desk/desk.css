@@ -4,11 +4,27 @@
 .dk a { color: inherit; }
 .dk :focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 6px; }
 .dk .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.dk-tabs { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.dk-tabs { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 8px; scrollbar-width: none; }
+.dk-tabs::-webkit-scrollbar { display: none; }
 .dk-tabs a, .dk-tabs span { padding: 10px 16px; min-height: 40px; display: inline-flex; align-items: center; border-radius: 999px; text-decoration: none; color: var(--ink2); font-size: 13.5px; white-space: nowrap; }
+.dk-tabs a { transition: background .2s, color .2s; }
+.dk-tabs a:hover:not([aria-current="page"]) { background: rgba(31,79,214,.06); color: var(--ink); }
 .dk-tabs a[aria-current="page"] { background: var(--blue-s); color: var(--blue); font-weight: 700; }
 .dk-tabs span { color: var(--mute); }
-.dk-badge { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 9px; background: var(--red); color: #fff; font-size: 12px; line-height: 18px; text-align: center; font-weight: 700; }
+/* 알림 배지: 꽉 찬 빨간 원 대신 작은 점 + 숫자 (옅은 붉은 바탕) */
+.dk-tabs .dk-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 0 7px 0 6px; height: 18px; border-radius: 999px;
+  background: #FDEDEC; color: #B4372F; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1; }
+.dk-tabs .dk-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #E5484D; box-shadow: 0 0 0 2px rgba(229,72,77,.18); }
+.dk-tabs a[aria-current="page"] .dk-badge { background: #fff; }
+/* DeskFrame 고정 탭 줄 — 사이트 헤더(64px) 바로 아래에 붙는다 */
+.dk-tabbar { --ink:#0B1C45; --ink2:#44527A; --mute:#5C6A8E; --line:#D3E3F7; --blue:#1F4FD6; --blue-s:#EAF0FD;
+  position: sticky; top: 64px; z-index: 40; background: rgba(245,249,255,.88); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); border-bottom: 1px solid var(--line); }
+.dk-tabwrap { max-width: 1180px; margin: 0 auto; padding: 8px 24px; }
+.dk-tabbar .dk-tabs { margin: 0; padding: 0; border: 0; }
+.dk-tabbar .dk-tabs a { min-height: 36px; padding: 8px 14px; }
+@media (max-width: 820px) { .dk-tabwrap { padding: 6px 12px; } }
+/* 라우트 로딩 (loading.tsx) */
+.dk-route-loading { max-width: 1180px; margin: 0 auto; padding: 28px 24px; }
 .dk-hello { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .dk-eyebrow { font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: .04em; }
 .dk h1 { font-family: var(--f-display); font-size: clamp(26px, 3.2vw, 36px); letter-spacing: -.04em; margin: 4px 0 0; font-weight: 800; }
@@ -123,3 +139,8 @@
 .dk-tile-link:hover { text-decoration: underline; }
 
 
+/* 스카우트 건 하위 메뉴 */
+.dk-subnav { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 18px; border: 1.5px solid #D3E3F7; border-radius: 999px; background: #fff; }
+.dk-subnav a { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: #44527A; text-decoration: none; }
+.dk-subnav a:hover:not([aria-current="page"]) { background: #F5F9FF; }
+.dk-subnav a[aria-current="page"] { background: #0B1C45; color: #fff; font-weight: 600; }

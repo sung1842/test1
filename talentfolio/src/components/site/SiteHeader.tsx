@@ -25,10 +25,12 @@ const STUDIO_LINKS: NavLink[] = [
   { href: "/studio/log", label: "기록하기" },
   { href: "/studio/cards", label: "내 카드" },
   { href: "/studio/matches", label: "받은 추천" },
+  { href: "/studio/offers", label: "받은 제안" },
 ];
 const DESK_LINKS: NavLink[] = [
   { href: "/desk", label: "데스크" },
   { href: "/review", label: "승인함" },
+  { href: "/desk/offers", label: "제안" },
   { href: "/desk/candidates", label: "인재풀" },
   { href: "/sourcing", label: "스카우트 건" },
   { href: "/settings/integrations", label: "연동" },

@@ -4,10 +4,12 @@
 // 본문은 크롤 공고와 같은 정규화(orchestrator getJobRequirements)를 거쳐 키워드(확인할 역량)를 뽑는다.
 // 흐름: 조건·본문 입력 → AI 키워드 정리(draft) → 키워드 손보기 → 공고만 등록 또는 등록하고 후보 찾기 → 승인함(/review?jd=)
 // 공고만 등록해 둔 건은 아래 "등록한 스카우트 건" 목록에서 나중에 후보 찾기(JD 매칭)를 돌린다.
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Sparkles, X, ArrowRight } from "lucide-react";
 import { lifeFetch } from "@/lib/lifeApi";
+import { useCached } from "@/lib/useCached";
+import { KEY, refreshDesk } from "@/lib/deskData";
 import { composePostingText, splitPostingText, toItems } from "@/lib/postingFormat";
 
 const inputBase: React.CSSProperties = {
@@ -113,6 +115,8 @@ export function ScoutCaseForm() {
   const [must, setMust] = useState("");
   const [nice, setNice] = useState("");
   const [paste, setPaste] = useState("");
+  // 붙여넣은 원문 — 구직자 공고 화면엔 이걸 그대로 보여 준다. 세 칸을 직접 고치면 고친 내용(표준 양식)이 본문이 된다
+  const [original, setOriginal] = useState<string | null>(null);
   const body = composePostingText({ summary: null, key_duties: toItems(duties), must_have: toItems(must), nice_to_have: toItems(nice) });
 
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -120,7 +124,6 @@ export function ScoutCaseForm() {
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState<{ jdHash: string; queued: number; matched: number } | null>(null);
   const [saved, setSaved] = useState(false);
-  const [listKey, setListKey] = useState(0); // 등록 후 목록 새로고침
   const [newKeyword, setNewKeyword] = useState("");
 
   const posting = {
@@ -139,6 +142,7 @@ export function ScoutCaseForm() {
     setDuties([...(s.summary ? [s.summary] : []), ...s.key_duties].join("\n"));
     setMust(s.must_have.join("\n"));
     setNice(s.nice_to_have.join("\n"));
+    setOriginal(paste.trim());
     setPaste("");
     setDraft(null);
     setStarted(null);
@@ -192,14 +196,15 @@ export function ScoutCaseForm() {
           clientName: client.trim() || null,
           deadline: deadlineDate,
           requirements: draft.requirements,
+          originalText: original,
         }),
       });
       setSaved(true);
-      setListKey((k) => k + 1);
       if (start) {
         const s = await startScout(c.id);
         setStarted({ jdHash: c.jdHash, queued: s.queued, matched: s.matched });
       }
+      refreshDesk();
     } catch (err) {
       setError(err instanceof Error ? err.message : "스카우트 건을 만들지 못했습니다.");
     } finally {
@@ -320,7 +325,7 @@ export function ScoutCaseForm() {
       </div>
 
       <div>
-        <Label>사람인 공고 붙여넣기 (선택)</Label>
+        <Label>JD 자동 분할 입력하기 (선택)</Label>
         <div className="flex gap-2">
           <textarea
             value={paste}
@@ -343,7 +348,7 @@ export function ScoutCaseForm() {
       ] as const).map(([label, value, set, ph]) => (
         <div key={label}>
           <Label>{label} (한 줄에 하나)</Label>
-          <textarea value={value} onChange={(e) => edit(set)(e.target.value)} rows={3} placeholder={ph} className="w-full text-sm resize-y" style={inputBase} />
+          <textarea value={value} onChange={(e) => { setOriginal(null); edit(set)(e.target.value); }} rows={3} placeholder={ph} className="w-full text-sm resize-y" style={inputBase} />
         </div>
       ))}
 
@@ -449,24 +454,31 @@ export function ScoutCaseForm() {
         </div>
       )}
       {saved && !started && (
-        <p className="text-sm" style={{ color: "var(--ok)" }}>공고를 등록했어요. 구직자 공고 목록에도 올라가고, 아래 목록에서 언제든 후보 찾기를 돌릴 수 있어요.</p>
+        <p className="text-sm" style={{ color: "var(--ok)" }}>공고를 등록했어요. 구직자 공고 목록에도 올라가고, <Link href="/sourcing/cases" className="font-semibold underline">건 현황</Link>에서 언제든 후보 찾기를 돌릴 수 있어요.</p>
       )}
       {error && (
         <p className="text-sm" style={{ color: "var(--danger)" }}>
           {error}
         </p>
       )}
-      <ScoutCaseList key={listKey} />
     </div>
   );
 }
 
+interface StartResult { queued: number; matched: number; ahead?: number; retried?: number }
+
 function startScout(id: string) {
-  return lifeFetch<{ queued: number; matched: number }>(`/api/scout-cases/${encodeURIComponent(id)}/start`, {
+  return lifeFetch<StartResult>(`/api/scout-cases/${encodeURIComponent(id)}/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),
   });
+}
+
+function startNote(s: StartResult): string {
+  if (s.queued === 0) return "새로 분석할 후보 없음";
+  const retry = s.retried ? ` (실패 재시도 ${s.retried}명 포함)` : "";
+  return s.ahead ? `앞선 분석 ${s.ahead}명이 끝나면 이어서 ${s.queued}명 분석${retry}` : `${s.queued}명 분석 시작${retry}`;
 }
 
 interface CaseSummary {
@@ -476,31 +488,28 @@ interface CaseSummary {
   status: string;
   deadline: string | null;
   clientName: string | null;
-  counts: { matched: number; analyzed: number; pending: number; approved: number };
+  counts: { matched: number; analyzed: number; pending: number; approved: number; running?: number; failed?: number };
 }
 
-/** 등록한 스카우트 건 — 공고만 올려 둔 건(draft)도 여기서 나중에 후보 찾기를 돌린다 */
-function ScoutCaseList() {
-  const [cases, setCases] = useState<CaseSummary[] | null>(null);
+/** 등록한 스카우트 건 — 공고만 올려 둔 건(draft)도 여기서 나중에 후보 찾기를 돌린다. 인재풀과 같은 캐시를 쓴다 */
+export function ScoutCaseList() {
+  const q = useCached<{ cases: CaseSummary[] }>(KEY.cases, () => lifeFetch<{ cases: CaseSummary[] }>("/api/scout-cases"), {
+    refreshMs: 15_000,
+  });
+  const cases = q.data?.cases ?? null;
   const [busyId, setBusyId] = useState<string | null>(null);
   const [note, setNote] = useState<Record<string, string>>({});
 
-  const load = useCallback(() => {
-    lifeFetch<{ cases: CaseSummary[] }>("/api/scout-cases")
-      .then((r) => setCases(r.cases))
-      .catch(() => setCases([]));
-  }, []);
-  useEffect(() => {
-    const t = setTimeout(load, 0);
-    return () => clearTimeout(t);
-  }, [load]);
-
   async function run(c: CaseSummary) {
+    const running = c.counts.running ?? 0;
+    // 매칭이 도는 중이면 새 후보는 그 뒤에 이어 붙는다 — 모르고 누르지 않게 한 번 확인한다
+    if (running > 0 && !window.confirm(`「${c.title}」 건은 지금 ${running}명을 분석하는 중이에요.
+더 찾은 후보는 지금 분석이 끝난 뒤 이어서 분석돼요. 추가할까요?`)) return;
     setBusyId(c.id);
     try {
       const s = await startScout(c.id);
-      setNote((n) => ({ ...n, [c.id]: s.queued > 0 ? `${s.queued}명 분석 시작` : "새로 분석할 후보 없음" }));
-      load();
+      setNote((n) => ({ ...n, [c.id]: startNote(s) }));
+      refreshDesk();
     } catch (err) {
       setNote((n) => ({ ...n, [c.id]: err instanceof Error ? err.message : "시작 실패" }));
     } finally {
@@ -519,7 +528,7 @@ function ScoutCaseList() {
         body: JSON.stringify({ reopen }),
       });
       setNote((n) => ({ ...n, [c.id]: reopen ? "다시 열었어요" : "종료했어요" }));
-      load();
+      refreshDesk();
     } catch (err) {
       setNote((n) => ({ ...n, [c.id]: err instanceof Error ? err.message : "상태 변경 실패" }));
     } finally {
@@ -527,52 +536,75 @@ function ScoutCaseList() {
     }
   }
 
+  if (q.loading) {
+    return (
+      <div className="rounded-xl px-4 py-4 flex items-center gap-2 text-xs" style={{ border: "1px solid var(--border-color)", color: "var(--text-secondary)" }}>
+        <Loader2 size={14} className="animate-spin" /> 등록한 스카우트 건을 불러오는 중
+      </div>
+    );
+  }
   if (!cases || cases.length === 0) return null;
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-color)" }}>
       <div className="px-4 py-2.5 text-xs font-semibold" style={{ background: "var(--surface)", color: "var(--text-secondary)" }}>
         등록한 스카우트 건 {cases.length}
       </div>
-      {cases.map((c) => (
-        <div key={c.id} className="flex items-center gap-3 px-4 py-3" style={{ borderTop: "1px solid var(--border-color)", background: "var(--surface)" }}>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
-              {c.title}
-              {c.clientName && <span style={{ color: "var(--text-secondary)" }}> · {c.clientName}</span>}
+      {cases.map((c) => {
+        const running = c.counts.running ?? 0;
+        const failed = c.counts.failed ?? 0;
+        return (
+          <div key={c.id} className="flex items-center gap-3 px-4 py-3" style={{ borderTop: "1px solid var(--border-color)", background: "var(--surface)" }}>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                {c.title}
+                {c.clientName && <span style={{ color: "var(--text-secondary)" }}> · {c.clientName}</span>}
+              </div>
+              <div className="text-xs flex items-center gap-1.5 flex-wrap" style={{ color: "var(--text-secondary)" }}>
+                {running > 0 && c.status !== "closed" && (
+                  <span className="inline-flex items-center gap-1 font-semibold" style={{ color: "var(--accent)" }}>
+                    <Loader2 size={11} className="animate-spin" /> 매칭 중 {running}명
+                  </span>
+                )}
+                <span>
+                  {c.status === "draft"
+                    ? "공고만 등록됨"
+                    : c.status === "closed"
+                      ? "종료"
+                      : `분석 ${c.counts.analyzed}/${c.counts.matched} · 대기 ${c.counts.pending} · 승인 ${c.counts.approved}${failed ? ` · 실패 ${failed}` : ""}`}
+                  {c.deadline && ` · ~${c.deadline.slice(5).replace("-", ".")}`}
+                  {note[c.id] && ` · ${note[c.id]}`}
+                </span>
+              </div>
             </div>
-            <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              {c.status === "draft" ? "공고만 등록됨" : c.status === "closed" ? "종료" : `분석 ${c.counts.analyzed}/${c.counts.matched} · 대기 ${c.counts.pending} · 승인 ${c.counts.approved}`}
-              {c.deadline && ` · ~${c.deadline.slice(5).replace("-", ".")}`}
-              {note[c.id] && ` · ${note[c.id]}`}
-            </div>
-          </div>
-          {c.status !== "closed" && (
+            {c.status !== "closed" && (
+              <button
+                type="button"
+                onClick={() => void run(c)}
+                disabled={busyId !== null}
+                title={running > 0 ? "지금 분석이 끝난 뒤 이어서 분석해요" : failed > 0 ? "실패한 후보부터 다시 분석해요" : undefined}
+                className="text-xs px-3 py-2 rounded-xl font-semibold disabled:opacity-40 shrink-0"
+                style={{ border: "1px solid rgba(var(--accent-rgb), 0.45)", color: "var(--accent)" }}
+              >
+                {busyId === c.id ? "시작 중…" : c.status === "draft" ? "후보 찾기" : running > 0 ? "대기열에 더 추가" : failed > 0 ? "다시 분석·더 찾기" : "더 찾기"}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => void run(c)}
+              onClick={() => void toggleClose(c)}
               disabled={busyId !== null}
-              className="text-xs px-3 py-2 rounded-xl font-semibold disabled:opacity-40 shrink-0"
-              style={{ border: "1px solid rgba(var(--accent-rgb), 0.45)", color: "var(--accent)" }}
+              className="text-xs font-semibold shrink-0 disabled:opacity-40"
+              style={{ color: "var(--text-secondary)" }}
             >
-              {busyId === c.id ? "시작 중…" : c.status === "draft" ? "후보 찾기" : "더 찾기"}
+              {c.status === "closed" ? "다시 열기" : "종료"}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => void toggleClose(c)}
-            disabled={busyId !== null}
-            className="text-xs font-semibold shrink-0 disabled:opacity-40"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            {c.status === "closed" ? "다시 열기" : "종료"}
-          </button>
-          {c.counts.matched > 0 && (
-            <Link href={`/review?jd=${encodeURIComponent(c.jdHash)}`} className="text-xs font-semibold shrink-0" style={{ color: "var(--text-secondary)" }}>
-              승인함 →
-            </Link>
-          )}
-        </div>
-      ))}
+            {c.counts.matched > 0 && (
+              <Link href={`/review?jd=${encodeURIComponent(c.jdHash)}`} className="text-xs font-semibold shrink-0" style={{ color: "var(--text-secondary)" }}>
+                승인함 →
+              </Link>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
