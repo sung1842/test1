@@ -188,7 +188,7 @@ export default function ScoutCasesPage() {
                   </div>
                 )}
                 {failed > 0 && !closed && (
-                  <p className="sc-warn">분석 실패 {failed}명 — 대개 AI 호출 한도 초과 같은 일시 오류예요. “다시 분석·더 찾기”를 누르면 실패한 후보부터 다시 분석해요.</p>
+                  <p className="sc-warn">후보 {failed}명을 분석하는 중 오류가 발생했습니다. 다시 시도해 주세요.</p>
                 )}
                 {note[c.id] && <p className="sc-ok">{note[c.id]}</p>}
 

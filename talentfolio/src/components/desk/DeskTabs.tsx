@@ -11,6 +11,7 @@ import "./desk.css";
 const TABS = [
   { href: "/desk", label: "홈", match: ["/desk"] },
   { href: "/review", label: "승인함", match: ["/review", "/sourcing/review", "/brief"] },
+  { href: "/desk/offers", label: "제안", match: ["/desk/offers"] },
   { href: "/sourcing", label: "스카우트 건", match: ["/sourcing"] },
   { href: "/desk/candidates", label: "인재풀", match: ["/desk/candidates", "/discover"] },
   { href: "/settings/integrations", label: "연동", match: ["/settings"] },

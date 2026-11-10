@@ -20,6 +20,7 @@ import "./desk.css";
 const CRUMB: [string, string][] = [
   ["/desk/candidates", "데스크 · 인재풀"],
   ["/desk/profile", "데스크 · 기업 프로필"],
+  ["/desk/offers", "데스크 · 제안"],
   ["/desk", "데스크 · 홈"],
   ["/review", "데스크 · 승인함"],
   ["/sourcing", "데스크 · 스카우트 건"],

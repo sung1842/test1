@@ -115,6 +115,8 @@ export function ScoutCaseForm() {
   const [must, setMust] = useState("");
   const [nice, setNice] = useState("");
   const [paste, setPaste] = useState("");
+  // 붙여넣은 원문 — 구직자 공고 화면엔 이걸 그대로 보여 준다. 세 칸을 직접 고치면 고친 내용(표준 양식)이 본문이 된다
+  const [original, setOriginal] = useState<string | null>(null);
   const body = composePostingText({ summary: null, key_duties: toItems(duties), must_have: toItems(must), nice_to_have: toItems(nice) });
 
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -140,6 +142,7 @@ export function ScoutCaseForm() {
     setDuties([...(s.summary ? [s.summary] : []), ...s.key_duties].join("\n"));
     setMust(s.must_have.join("\n"));
     setNice(s.nice_to_have.join("\n"));
+    setOriginal(paste.trim());
     setPaste("");
     setDraft(null);
     setStarted(null);
@@ -193,6 +196,7 @@ export function ScoutCaseForm() {
           clientName: client.trim() || null,
           deadline: deadlineDate,
           requirements: draft.requirements,
+          originalText: original,
         }),
       });
       setSaved(true);
@@ -344,7 +348,7 @@ export function ScoutCaseForm() {
       ] as const).map(([label, value, set, ph]) => (
         <div key={label}>
           <Label>{label} (한 줄에 하나)</Label>
-          <textarea value={value} onChange={(e) => edit(set)(e.target.value)} rows={3} placeholder={ph} className="w-full text-sm resize-y" style={inputBase} />
+          <textarea value={value} onChange={(e) => { setOriginal(null); edit(set)(e.target.value); }} rows={3} placeholder={ph} className="w-full text-sm resize-y" style={inputBase} />
         </div>
       ))}
 

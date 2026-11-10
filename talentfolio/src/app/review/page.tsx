@@ -222,7 +222,7 @@ export default function CandidateReviewPage() {
             {activeCase && (activeCase.running > 0 || activeCase.failed > 0) && (
               <p className="rv-note">
                 {activeCase.running > 0 && <>분석 중 {activeCase.running}명 — 끝나는 대로 이 목록에 자동으로 나타납니다. </>}
-                {activeCase.failed > 0 && <>분석 실패 {activeCase.failed}명 — <Link href="/sourcing/cases">건 현황</Link>에서 “다시 분석”을 누르면 실패한 후보부터 다시 분석합니다.</>}
+                {activeCase.failed > 0 && <>후보 {activeCase.failed}명을 분석하는 중 오류가 발생했습니다. <Link href="/sourcing/cases">건 현황</Link>에서 다시 시도해 주세요.</>}
               </p>
             )}
 
@@ -493,7 +493,7 @@ function OfferMaker({ fitReportId, jdHash }: { fitReportId: string; jdHash: stri
   if (state === "done") {
     return (
       <p className="rv-flash approved" style={{ marginTop: 16 }}>
-        제안 초안을 만들었어요. <Link href="/desk#offers">데스크 홈</Link>에서 발송을 승인하세요.
+        제안 초안을 만들었어요. <Link href="/desk/offers">제안 서신함</Link>에서 내용을 확인하고 발송을 승인하세요.
       </p>
     );
   }

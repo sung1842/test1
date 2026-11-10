@@ -283,22 +283,22 @@ function Offers({ offers, reload }: { offers: DeskOffer[] | null | undefined; re
   const open = (offers ?? []).filter((o) => o.status === "pending" || (o.status === "executed" && !o.response));
   return (
     <section className="dk-panel" id="offers" aria-labelledby="h-offers">
-      <div className="dk-ph"><h2 id="h-offers">제안</h2><Link href="/review">승인한 후보에서 제안 만들기</Link></div>
+      <div className="dk-ph"><h2 id="h-offers">제안</h2><Link href="/desk/offers">서신함 전체 보기</Link></div>
       {offers === undefined ? (
         <SkeletonList rows={2} />
       ) : offers === null ? (
-        <Wip need="후보 제안 기록(SQL 017) 적용 후 사용" />
+        <p className="dk-empty">아직 보낸 제안이 없습니다.</p>
       ) : open.length === 0 ? (
         <p className="dk-empty">처리할 제안이 없습니다.</p>
       ) : (
         <ul className="dk-offers">
           {open.map((o) => (
             <li key={o.id}>
-              <span><b>{o.payload?.candidateName ?? "후보"}</b> · {o.status === "pending" ? "발송 승인 대기" : `발송 ${relTime(o.sent_at)} · 응답 기다림`}</span>
+              <span><Link href={`/desk/offers?id=${o.id}`}><b>{o.payload?.candidateName ?? "후보"}</b></Link> · {o.status === "pending" ? "발송 승인 대기" : `발송 ${relTime(o.sent_at)} · 응답 기다림`}</span>
               {o.status === "pending" && (
                 // 발송 승인 전에 후보에게 갈 본문을 보고 판단한다 (HIL: 실제로 읽고 승인)
                 <blockquote className="dk-offer-msg" style={{ margin: "6px 0", padding: "8px 10px", borderLeft: "3px solid var(--border-color, #ddd)", whiteSpace: "pre-wrap", fontSize: 13 }}>
-                  {o.payload?.message?.trim() || "(본문 없음 — 근거 카드만 공유됩니다)"}
+                  {o.payload?.message?.trim() || "본문 없이 근거 카드만 보냅니다."}
                 </blockquote>
               )}
               <div className="row">
