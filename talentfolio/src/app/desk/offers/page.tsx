@@ -169,8 +169,10 @@ function Letter({ offerId, onBack, onChanged }: { offerId: string; onBack: () =>
     }
   }, [offerId]);
   useEffect(() => {
-    const t = setTimeout(() => void load(), 0);
+    // 열면 회신이 읽음으로 바뀌므로 목록의 새 회신 표시도 같이 새로 고친다
+    const t = setTimeout(() => void load().then(() => onChanged()), 0);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   const act = async (fn: () => Promise<unknown>, done: string) => {

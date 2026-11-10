@@ -391,6 +391,11 @@ function Brief({
       </div>
 
       <p className="rv-summary">{displaySummary(report.ceoSummary)}</p>
+      {report.calibration && report.calibration.reasons.length > 0 && (
+        <p className="rv-calib">
+          <b>점수 보정</b> {report.calibration.rawScore}점 → {report.overallScore}점 · {report.calibration.reasons.join(" · ")}
+        </p>
+      )}
 
       <h3 className="rv-h3">근거가 확인된 요건</h3>
       {matchedAgents.length === 0 && <p className="rv-muted">없음</p>}
