@@ -53,10 +53,12 @@ async function ensureBucket(a: Admin) {
 }
 
 async function readWorks(a: Admin, uid: string): Promise<PortfolioWork[]> {
-  const { data } = await a.storage.from(BUCKET).download(`${uid}/works.json`);
-  if (!data) return [];
+  // 방금 쓴 목록을 바로 읽어야 해서 캐시를 피한다 (download 는 짧게 캐시된 이전 본을 줄 때가 있다)
+  const base = a.storage.from(BUCKET).getPublicUrl(`${uid}/works.json`).data.publicUrl;
+  const res = await fetch(`${base}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+  if (!res?.ok) return [];
   try {
-    const list = JSON.parse(await data.text());
+    const list = JSON.parse(await res.text());
     return Array.isArray(list) ? (list as PortfolioWork[]) : [];
   } catch {
     return [];
