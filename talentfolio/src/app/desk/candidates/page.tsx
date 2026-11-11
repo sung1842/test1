@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import type { Candidate } from "@/types/candidate";
@@ -8,16 +8,13 @@ import type { FitReport, FitReportRecord } from "@/types/fitReport";
 import { isJdAnalyzerConfigured } from "@/lib/features";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { ProductShell } from "@/components/product/ProductShell";
-import { DeskTabs } from "@/components/desk/DeskTabs";
-import { CandidateTile } from "@/components/desk/CandidateTile";
 import JdMatchModal, { type JdFormState, EMPTY_JD_FORM } from "@/components/JdMatchModal";
-import FitScoreBadge from "@/components/FitScoreBadge";
-import { ScoreColumns } from "@/components/charts/ScoreCharts";
+import { Search, X } from "lucide-react";
 import { loadJson, saveJson, skillHit } from "@/lib/productData";
 import { lifeFetch } from "@/lib/lifeApi";
 import { useCached } from "@/lib/useCached";
 import { KEY, refreshDesk, useFitReports } from "@/lib/deskData";
+import { DLoadError, DSkeleton, DState, VerdictPill } from "@/components/desk/console/ui";
 
 const COMPARE_CAP = 3;
 
@@ -43,6 +40,8 @@ function reportState(r: FitReportRecord): { text: string; tone: "ok" | "wait" | 
   if (r.status === "rejected") return { text: "반려", tone: "bad" };
   return { text: "승인 대기", tone: "wait" };
 }
+
+const POOL_PAGE = 30;
 
 function profileToCandidate(p: {
   id: string; name: string; role: string; title: string | null;
@@ -115,20 +114,45 @@ export default function DeskPage() {
   const [sortByFit, setSortByFit] = useState(false);
   const jdReady = isJdAnalyzerConfigured();
 
-  // 데모 JSON 후보는 섞지 않는다 (서버 후보 풀과 같은 수).
-  // 후보 풀·건·분석 목록은 캐시를 먼저 그리고 뒤에서 갱신한다 (탭을 오갈 때 다시 기다리지 않게)
-  const pool = useCached<Candidate[]>("pool:profiles", async () => {
-    if (!isSupabaseConfigured() || !supabase) return [];
-    const { data, error } = await supabase
+  // 인재풀은 서버에서 나눠 받는다 (전체를 한 번에 받지 않음). 검색어·직무는 서버 조건으로 걸고,
+  // 「더 보기」로 다음 묶음을 이어 받는다. 후보가 수천 명이어도 첫 화면은 한 묶음만 기다린다.
+  const [serverQ, setServerQ] = useState("");
+  const [pageCount, setPageCount] = useState(1);
+  useEffect(() => {
+    const t = setTimeout(() => { setServerQ(query.trim()); setPageCount(1); }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
+  const poolKey = `pool:profiles:${role}:${serverQ}:${pageCount}`;
+  const pool = useCached<{ rows: Candidate[]; total: number }>(poolKey, async () => {
+    if (!isSupabaseConfigured() || !supabase) return { rows: [], total: 0 };
+    let q = supabase
       .from("profiles")
-      .select("id, name, role, title, avatar_url, short_bio, long_bio, skills, github_url, portfolio_url, behance_url, linkedin_url")
+      .select("id, name, role, title, avatar_url, short_bio, long_bio, skills, github_url, portfolio_url, behance_url, linkedin_url", { count: "estimated" })
       .eq("is_public", true)
       // 기업 계정 제외 (SQL 030)
-      .or("account_type.is.null,account_type.neq.company");
+      .or("account_type.is.null,account_type.neq.company")
+      .order("id")
+      .range(0, pageCount * POOL_PAGE - 1);
+    if (role !== "all") q = q.eq("role", role);
+    if (serverQ) {
+      const term = serverQ.replace(/[%,(){}"]/g, " ").trim();
+      if (term) q = q.or(`name.ilike.%${term}%,title.ilike.%${term}%,skills.cs.{"${term}"}`);
+    }
+    const { data, error, count } = await q;
     if (error) throw new Error(error.message);
-    return (data ?? []).map(profileToCandidate);
+    return { rows: (data ?? []).map(profileToCandidate), total: count ?? data?.length ?? 0 };
   }, { staleMs: 60_000 });
-  const people = useMemo(() => pool.data ?? [], [pool.data]);
+  // 이전 묶음을 보여 주면서 다음 묶음을 받는다 (더 보기 때 목록이 비지 않게)
+  const [kept, setKept] = useState<{ rows: Candidate[]; total: number } | null>(null);
+  // 비교함에 담은 후보는 검색을 바꿔도 남도록 따로 기억한다
+  const [seen, setSeen] = useState<Map<string, Candidate>>(() => new Map());
+  if (pool.data && pool.data !== kept) {
+    setKept(pool.data);
+    setSeen((m) => { const n = new Map(m); for (const c of pool.data!.rows) n.set(c.id, c); return n; });
+  }
+  const poolData = pool.data ?? kept;
+  const people = useMemo(() => poolData?.rows ?? [], [poolData]);
+  const poolTotal = poolData?.total ?? 0;
 
   // 회사 건 = 서버 스카우트 건. 담긴 후보 = 그 건 JD 의 fit_reports (브라우저 저장 아님)
   const casesQ = useCached<{ cases: ScoutCase[] }>(user ? KEY.cases : null, () => lifeFetch<{ cases: ScoutCase[] }>("/api/scout-cases"), { refreshMs: 30_000 });
@@ -242,7 +266,7 @@ export default function DeskPage() {
   }, [query, role, fitOnly, briefMust, people, sortByFit, fitResults]);
 
   const compared = compare
-    .map((id) => people.find((c) => c.id === id))
+    .map((id) => seen.get(id))
     .filter((c): c is Candidate => Boolean(c));
   const overlap = sharedSkills(compared);
   const compareFull = compare.length >= COMPARE_CAP;
@@ -255,227 +279,169 @@ export default function DeskPage() {
     });
   };
 
+  const TABS: [Tab, string][] = [["find", "찾기"], ["compare", `비교 ${compare.length}/${COMPARE_CAP}`], ["briefs", "회사 건"]];
+
   return (
-    <ProductShell crumble="데스크 · 인재풀">
-      <div className="product-page">
-        <div className="dk" style={{ padding: 0, maxWidth: "none" }}><DeskTabs /></div>
-        <div className="product-head">
-          <div>
-            <div className="product-eyebrow">데스크 · 인재풀</div>
-            <h1 className="product-title" style={{ fontSize: 28 }}>인재 작업대</h1>
-            <p className="product-muted" style={{ marginTop: 6, fontSize: 13 }}>
-              찾기 {list.length}명 · 비교 {compare.length}/{COMPARE_CAP} · 회사 건 {cases.length}
-            </p>
-          </div>
-          <div className="product-tabs" style={{ height: 40 }}>
-            {([
-              ["find", "찾기"],
-              ["compare", `비교 ${compare.length}/${COMPARE_CAP}`],
-              ["briefs", "회사 건"],
-            ] as const).map(([key, label]) => (
-              <button key={key} type="button" data-on={tab === key} onClick={() => setTab(key)}>
-                {label}
-              </button>
-            ))}
+    <>
+      <header className="lc-top" data-in>
+        <h1>인재풀</h1>
+        <span className="lc-sub">찾기 {list.length}명 · 비교 {compare.length}/{COMPARE_CAP} · 회사 건 {cases.length}</span>
+        <div className="lc-actions">
+          <div className="lc-seg" role="group" aria-label="보기">
+            {TABS.map(([key, label]) => <button key={key} type="button" aria-pressed={tab === key} onClick={() => setTab(key)}>{label}</button>)}
           </div>
         </div>
+      </header>
 
-        {tab === "find" && (
-          <>
-            <div style={{ display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap", alignItems: "center" }}>
-              <input
-                className="product-field"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="이름, 직무, 스킬"
-                style={{ maxWidth: 280, marginBottom: 0 }}
-              />
-              {ROLE_FILTERS.map((item) => (
-                <button key={item.key} type="button" className="product-chip" data-on={role === item.key} onClick={() => setRole(item.key)}>
-                  {item.label}
-                </button>
-              ))}
-              <button type="button" className="product-chip" data-on={fitOnly} onClick={() => setFitOnly((v) => !v)} disabled={!briefMust.length}>
-                이 건 조건
-              </button>
-              {jdReady ? (
-                <button
-                  type="button"
-                  className="product-cta"
-                  onClick={() => setShowJdModal(true)}
-                >
-                  {fitResults.size > 0 ? `JD 매칭 (${fitResults.size})` : "JD 매칭"}
-                </button>
-              ) : null}
-              {sortByFit && fitResults.size > 0 ? (
-                <span className="product-muted" style={{ fontSize: 12 }}>적합도순</span>
-              ) : null}
-              {cases.length === 0 ? (
-                <span className="product-muted" style={{ fontSize: 12 }}>
-                  열린 건 없음 · <Link href="/sourcing">공고 등록에서 만드세요</Link>
-                </span>
-              ) : (
-                <>
-                  <select
-                    className="product-field"
-                    value={brief?.id ?? ""}
-                    onChange={(e) => setActiveBrief(e.target.value)}
-                    aria-label="활성 회사 건"
-                    style={{ marginBottom: 0, width: "auto", minWidth: 240, height: 36, padding: "0 10px" }}
-                  >
-                    {cases.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {caseLabel(b)}
-                      </option>
-                    ))}
-                  </select>
-                  {brief ? (
-                    <span className="product-muted" style={{ fontSize: 12 }}>
-                      담긴 후보 {caseMembers.get(brief.jdHash)?.size ?? 0}명
-                      {briefMust.length ? ` · ${briefMust.join(" / ")}` : ""}
-                    </span>
-                  ) : null}
-                </>
-              )}
+      {tab === "find" && (
+        <>
+          <div className="lc-toolbar" data-in>
+            <label className="lc-search">
+              <Search size={14} aria-hidden="true" />
+              <span className="lc-sr">이름, 직무, 스킬로 찾기</span>
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="이름, 직무, 스킬" />
+            </label>
+            <div className="lc-seg" role="group" aria-label="직무">
+              {ROLE_FILTERS.map((item) => <button key={item.key} type="button" aria-pressed={role === item.key} onClick={() => { setRole(item.key); setPageCount(1); }}>{item.label}</button>)}
             </div>
-            {caseNote && (
-              <p className="product-muted" style={{ fontSize: 12, marginTop: 10 }}>{caseNote}</p>
-            )}
-            {list.length === 0 ? (
-              <EmptyState title="맞는 사람이 없습니다">
-                검색어, 직무, 또는 「이 건 조건」을 바꿔 보세요.
-              </EmptyState>
+            <button type="button" className="lc-btn" aria-pressed={fitOnly} onClick={() => setFitOnly((v) => !v)} disabled={!briefMust.length} style={fitOnly ? { borderColor: "var(--mint)", color: "var(--mint)" } : undefined}>이 건 조건</button>
+            {cases.length === 0 ? (
+              <span className="lc-cap" style={{ margin: 0 }}>열린 건 없음 · <Link href="/sourcing" style={{ color: "var(--mint)" }}>스카우트 건에서 만드세요</Link></span>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginTop: 24, justifyItems: "center", paddingBottom: compared.length > 0 ? 88 : 0 }}>
-                {list.map((c, i) => {
-                  const hits = matchCount(c, briefMust);
-                  const inCompare = compare.includes(c.id);
-                  const compareBlocked = !inCompare && compareFull;
+              <>
+                <label className="lc-sr" htmlFor="lc-case">활성 회사 건</label>
+                <select id="lc-case" className="lc-select" value={brief?.id ?? ""} onChange={(e) => setActiveBrief(e.target.value)}>
+                  {cases.map((b) => <option key={b.id} value={b.id}>{caseLabel(b)}</option>)}
+                </select>
+                {brief ? <span className="lc-cap" style={{ margin: 0 }}>담긴 후보 {caseMembers.get(brief.jdHash)?.size ?? 0}명{briefMust.length ? ` · 필수 ${briefMust.join(" / ")}` : ""}</span> : null}
+              </>
+            )}
+            {jdReady ? (
+              <button type="button" className="lc-btn is-primary" style={{ marginLeft: "auto" }} onClick={() => setShowJdModal(true)}>
+                {fitResults.size > 0 ? `JD 매칭 (${fitResults.size})` : "JD 매칭"}
+              </button>
+            ) : null}
+          </div>
+          {caseNote && <p className="lc-ok" role="status" style={{ marginTop: 0, marginBottom: 12 }}>{caseNote}</p>}
+
+          <section className="lc-panel" aria-label="후보 목록" data-in>
+            {pool.error && !poolData ? (
+              <DLoadError what="인재풀" error={pool.error} />
+            ) : !poolData ? (
+              <DSkeleton rows={5} label="인재풀을 불러오는 중" />
+            ) : list.length === 0 ? (
+              <DState title="맞는 사람이 없습니다" body="검색어, 직무, 또는 「이 건 조건」을 바꿔 보세요." />
+            ) : (
+              <table className="lc-table">
+                <thead><tr>
+                  <th>후보</th>
+                  <th className="lc-hide-m">스킬</th>
+                  <th className="num lc-hide-m">{briefMust.length ? "조건" : "직무"}</th>
+                  <th className="num">{sortByFit && fitResults.size > 0 ? "적합도순" : "적합도"}</th>
+                  <th className="num"><span className="lc-sr">동작</span></th>
+                </tr></thead>
+                <tbody>
+                  {list.map((c) => {
+                    const inCompare = compare.includes(c.id);
+                    const compareBlocked = !inCompare && compareFull;
+                    const report = fitFor(c, fitResults);
+                    return (
+                      <tr key={c.id}>
+                        <td>
+                          <Link className="t-main" href={`/talent/${c.id}`}>{c.name}</Link>
+                          <div className="t-sub">{c.title || (c.role === "developer" ? "개발자" : "디자이너")}</div>
+                        </td>
+                        <td className="lc-hide-m">
+                          <div className="lc-skillrow">
+                            {c.skills.slice(0, 4).map((s) => <span key={s} className={`lc-chip${briefMust.some((m) => skillHit(s, [m])) ? " is-hit" : ""}`}>{s}</span>)}
+                            {c.skills.length > 4 && <span className="t-sub">+{c.skills.length - 4}</span>}
+                          </div>
+                        </td>
+                        <td className="num lc-hide-m t-sub">{briefMust.length ? `${matchCount(c, briefMust)}/${briefMust.length}` : c.role === "developer" ? "개발자" : "디자이너"}</td>
+                        <td className="num">{report ? <VerdictPill verdict={report.verdict} score={report.overallScore} /> : <span className="t-sub">—</span>}</td>
+                        <td className="num">
+                          <div className="lc-row-acts" style={{ justifyContent: "flex-end" }}>
+                            <button type="button" className="lc-btn is-sm is-ghost" disabled={compareBlocked} title={compareBlocked ? `비교는 ${COMPARE_CAP}명까지` : undefined} onClick={() => toggleCompare(c.id)} aria-pressed={inCompare}>
+                              {inCompare ? "비교에서 뺌" : "비교"}
+                            </button>
+                            <AddToCaseButton active={brief} inCase={Boolean(brief && casesOf(c.id).includes(brief.id))} onAdd={() => addToCases(c.id, brief ? [brief.id] : [])} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            {poolData && people.length > 0 && (
+              <div className="lc-more">
+                <span className="t-sub">{people.length}명 표시{poolTotal > people.length ? ` · 전체 약 ${poolTotal}명` : ""}</span>
+                {poolTotal > people.length && (
+                  <button type="button" className="lc-btn" disabled={!pool.data} onClick={() => setPageCount((n) => n + 1)}>
+                    {pool.data ? `${POOL_PAGE}명 더 보기` : "불러오는 중…"}
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+          {compared.length > 0 && <CompareTray slots={compared} cap={COMPARE_CAP} onRemove={toggleCompare} onOpen={() => setTab("compare")} />}
+        </>
+      )}
+
+      {tab === "compare" && (
+        <div data-in>
+          {compared.length === 0 ? (
+            <section className="lc-panel">
+              <DState title="비교할 사람이 없습니다" body={`찾기에서 2~${COMPARE_CAP}명을 담으면 스킬과 소개를 나란히 봅니다.`} action={{ onClick: () => setTab("find"), label: "찾기로 가서 담기" }} />
+            </section>
+          ) : (
+            <>
+              <section className="lc-panel" style={{ marginBottom: 12 }}>
+                <div className="lc-pb" style={{ paddingTop: 14 }}>
+                  {compared.length < 2 ? (
+                    <p style={{ margin: 0, color: "var(--ink-2)" }}>{compared[0].name}만 담겼습니다. 한 명 더 담으면 나란히 비교합니다.</p>
+                  ) : (
+                    <>
+                      <h2 style={{ fontSize: 14, fontWeight: 600 }}>겹치는 스킬</h2>
+                      <div className="lc-tags">
+                        {overlap.length === 0 ? <span className="t-sub" style={{ color: "var(--mute)", fontSize: 13 }}>공통 태그가 없습니다. 차이를 보고 고르세요.</span> : overlap.map((s) => <span key={s} className="lc-chip is-hit">{s}</span>)}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+              <div className="lc-compare" style={{ gridTemplateColumns: `repeat(${compared.length}, minmax(0, 1fr))` }}>
+                {compared.map((c) => {
                   const report = fitFor(c, fitResults);
                   return (
-                    <div key={c.id} style={{ width: 300 }}>
-                      <CandidateTile candidate={c} />
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, margin: "8px 0 6px" }}>
-                        <div className="product-muted" style={{ fontSize: 12 }}>
-                          {briefMust.length ? `조건 ${hits}/${briefMust.length}` : c.role === "developer" ? "개발자" : "디자이너"}
+                    <article key={c.id} className="lc-panel">
+                      <div className="lc-pb" style={{ paddingTop: 16 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                          <span className="lc-cap" style={{ margin: 0 }}>{c.role === "developer" ? "개발자" : "디자이너"}</span>
+                          {report ? <VerdictPill verdict={report.verdict} score={report.overallScore} /> : null}
                         </div>
-                        {report ? <FitScoreBadge report={report} compact /> : null}
+                        <h2><Link href={`/talent/${c.id}`}>{c.name}</Link></h2>
+                        <div className="lc-cap" style={{ marginTop: 2 }}>{c.title}</div>
+                        {brief && briefMust.length ? <div className="lc-cap" style={{ marginTop: 6 }}>{caseLabel(brief)} 조건 {matchCount(c, briefMust)}/{briefMust.length}</div> : null}
+                        <p style={{ fontSize: 13, lineHeight: 1.55, marginTop: 10, color: "var(--ink-2)" }}>{c.shortBio}</p>
+                        <div className="lc-tags">{c.skills.map((s) => <span key={s} className={`lc-chip${overlap.includes(s) ? " is-hit" : ""}`}>{s}</span>)}</div>
+                        <div className="lc-row-acts" style={{ marginTop: 14 }}>
+                          <AddToCaseButton active={brief} inCase={Boolean(brief && casesOf(c.id).includes(brief.id))} onAdd={() => addToCases(c.id, brief ? [brief.id] : [])} />
+                          <button type="button" className="lc-btn is-sm is-ghost" onClick={() => toggleCompare(c.id)}>비교에서 빼기</button>
+                        </div>
                       </div>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button
-                          type="button"
-                          className="product-cta ghost"
-                          style={{ flex: 1 }}
-                          disabled={compareBlocked}
-                          title={compareBlocked ? `비교는 ${COMPARE_CAP}명까지` : undefined}
-                          onClick={() => toggleCompare(c.id)}
-                        >
-                          {inCompare ? "비교에서 뺌" : compareBlocked ? `비교 ${COMPARE_CAP}명까지` : "비교에 담기"}
-                        </button>
-                        <AddToCaseButton active={brief} inCase={Boolean(brief && casesOf(c.id).includes(brief.id))} onAdd={() => addToCases(c.id, brief ? [brief.id] : [])} />
-                      </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
-            )}
-            {compared.length > 0 && (
-              <CompareTray
-                slots={compared}
-                cap={COMPARE_CAP}
-                onRemove={toggleCompare}
-                onOpen={() => setTab("compare")}
-              />
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
+      )}
 
-        {tab === "compare" && (
-          <div style={{ marginTop: 22 }}>
-            {compared.length === 0 ? (
-              <EmptyState title="비교할 사람이 없습니다">
-                찾기에서 2~{COMPARE_CAP}명을 담으면 스킬과 소개를 나란히 봅니다.
-                <button type="button" className="product-cta" style={{ marginTop: 14 }} onClick={() => setTab("find")}>
-                  찾기로 가서 담기
-                </button>
-              </EmptyState>
-            ) : (
-              <>
-                {compared.length < 2 ? (
-                  <div className="product-panel" style={{ padding: 14, marginBottom: 14 }}>
-                    <p className="product-muted" style={{ margin: 0 }}>
-                      {compared[0].name}만 담겼습니다. 한 명 더 담으면 나란히 비교합니다.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="product-panel" style={{ padding: 14, marginBottom: 14 }}>
-                    <div className="product-eyebrow">겹치는 스킬</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                      {overlap.length === 0 ? (
-                        <span className="product-muted" style={{ fontSize: 13 }}>공통 태그가 없습니다. 차이를 보고 고르세요.</span>
-                      ) : (
-                        overlap.map((s) => (
-                          <span key={s} className="product-skill hit">{s}</span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${compared.length}, minmax(0, 1fr))`, gap: 12 }}>
-                  {compared.map((c) => {
-                    const report = fitFor(c, fitResults);
-                    return (
-                      <article key={c.id} className="product-panel" style={{ padding: 16 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                          <div className="product-eyebrow">{c.role === "developer" ? "개발자" : "디자이너"}</div>
-                          {report ? <FitScoreBadge report={report} compact /> : null}
-                        </div>
-                        <h2 style={{ fontSize: 20, margin: "4px 0" }}>{c.name}</h2>
-                        <div className="product-muted" style={{ fontSize: 13 }}>{c.title}</div>
-                        {brief && briefMust.length ? (
-                          <div className="product-muted" style={{ fontSize: 12, marginTop: 8 }}>
-                            {caseLabel(brief)} 조건 {matchCount(c, briefMust)}/{briefMust.length}
-                          </div>
-                        ) : null}
-                        <p style={{ fontSize: 13, lineHeight: 1.55, marginTop: 10 }}>{c.shortBio}</p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
-                          {c.skills.map((s) => (
-                            <span key={s} className={`product-skill${overlap.includes(s) ? " hit" : ""}`}>{s}</span>
-                          ))}
-                        </div>
-                        <div style={{ marginTop: 14, display: "flex" }}>
-                          <AddToCaseButton active={brief} inCase={Boolean(brief && casesOf(c.id).includes(brief.id))} onAdd={() => addToCases(c.id, brief ? [brief.id] : [])} />
-                        </div>
-                        <button
-                          type="button"
-                          className="product-cta ghost wide"
-                          style={{ marginTop: 8 }}
-                          onClick={() => toggleCompare(c.id)}
-                        >
-                          비교에서 빼기
-                        </button>
-                      </article>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {tab === "briefs" && (
-          <CasesPanel
-            cases={cases}
-            activeId={activeBrief}
-            onSelect={setActiveBrief}
-            reports={caseReports}
-            people={people}
-            note={caseNote}
-            startingId={startingId}
-            onStart={startCase}
-          />
-        )}
-      </div>
+      {tab === "briefs" && (
+        <CasesPanel cases={cases} activeId={activeBrief} onSelect={setActiveBrief} reports={caseReports} people={people} note={caseNote} startingId={startingId} onStart={startCase} />
+      )}
 
       <AnimatePresence>
         {showJdModal && (
@@ -496,54 +462,22 @@ export default function DeskPage() {
           />
         )}
       </AnimatePresence>
-    </ProductShell>
+    </>
   );
 }
 
-function CompareTray({
-  slots,
-  cap,
-  onRemove,
-  onOpen,
-}: {
-  slots: Candidate[];
-  cap: number;
-  onRemove: (id: string) => void;
-  onOpen: () => void;
-}) {
+function CompareTray({ slots, cap, onRemove, onOpen }: { slots: Candidate[]; cap: number; onRemove: (id: string) => void; onOpen: () => void }) {
   const ready = slots.length >= 2;
   return (
-    <div className="desk-tray">
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        {Array.from({ length: cap }, (_, i) => {
-          const person = slots[i];
-          if (!person) {
-            return (
-              <span key={`empty-${i}`} className="desk-tray-slot">
-                빈 자리
-              </span>
-            );
-          }
-          return (
-            <button key={person.id} type="button" className="desk-tray-chip" title="비교에서 뺌" onClick={() => onRemove(person.id)}>
-              {person.name} ×
-            </button>
-          );
-        })}
-        <span className="product-muted" style={{ fontSize: 12 }}>{slots.length}/{cap}</span>
-      </div>
-      <button type="button" className="product-cta" disabled={!ready} onClick={onOpen}>
-        {ready ? "나란히 보기" : "2명부터 비교"}
-      </button>
-    </div>
-  );
-}
-
-function EmptyState({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="product-empty" style={{ marginTop: 24 }}>
-      <strong>{title}</strong>
-      <div>{children}</div>
+    <div className="lc-tray" role="region" aria-label="비교 담기">
+      {Array.from({ length: cap }, (_, i) => {
+        const person = slots[i];
+        return person
+          ? <button key={person.id} type="button" className="lc-btn is-sm" title="비교에서 뺌" onClick={() => onRemove(person.id)}>{person.name}<X aria-hidden="true" /><span className="lc-sr">비교에서 빼기</span></button>
+          : <span key={`empty-${i}`} className="slot">빈 자리</span>;
+      })}
+      <span className="lc-cap" style={{ margin: 0 }}>{slots.length}/{cap}</span>
+      <button type="button" className="lc-btn is-sm is-primary" style={{ marginLeft: "auto" }} disabled={!ready} onClick={onOpen}>{ready ? "나란히 보기" : "2명부터 비교"}</button>
     </div>
   );
 }
@@ -551,25 +485,14 @@ function EmptyState({ title, children }: { title: string; children: ReactNode })
 /** 위에서 고른 활성 건에 바로 담기 */
 function AddToCaseButton({ active, inCase, onAdd }: { active: ScoutCase | undefined; inCase: boolean; onAdd: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
-  if (!active) {
-    return (
-      <Link href="/sourcing" className="product-cta ghost" style={{ flex: 1, textAlign: "center" }}>
-        건 만들기
-      </Link>
-    );
-  }
+  if (!active) return <Link href="/sourcing" className="lc-btn is-sm">건 만들기</Link>;
   return (
     <button
       type="button"
-      className={inCase ? "product-cta ghost" : "product-cta"}
-      style={{ flex: 1 }}
+      className={`lc-btn is-sm${inCase ? " is-ghost" : ""}`}
       disabled={inCase || busy}
       title={caseLabel(active)}
-      onClick={async () => {
-        setBusy(true);
-        await onAdd();
-        setBusy(false);
-      }}
+      onClick={async () => { setBusy(true); await onAdd(); setBusy(false); }}
     >
       {inCase ? "이 건에 담김" : busy ? "담는 중…" : "건에 담기"}
     </button>
@@ -588,9 +511,7 @@ interface CaseScore {
 const SCORE_LABEL: Record<string, string> = { must: "필수", nice: "우대", years: "경력", role: "직무", vector: "경험 유사도", activity: "최근 활동" };
 
 /** 회사 건 탭 — 서버 스카우트 건과 담긴 후보, 다음 작업(포트폴리오·리포트·제안) */
-function CasesPanel({
-  cases, activeId, onSelect, reports, people, note, startingId, onStart,
-}: {
+function CasesPanel({ cases, activeId, onSelect, reports, people, note, startingId, onStart }: {
   cases: ScoutCase[];
   activeId: string;
   onSelect: (id: string) => void;
@@ -637,121 +558,97 @@ function CasesPanel({
       setWatchBusy(false);
     }
   };
-  const toneColor = { ok: "#047857", wait: "#64748B", bad: "#B91C1C" } as const;
+  const ranked = members
+    .filter((r) => r.report)
+    .map((r) => ({ id: r.candidateId, label: people.find((x) => x.id === r.candidateId)?.name ?? r.candidateName ?? "후보", score: r.report!.overallScore }))
+    .sort((a, b) => b.score - a.score);
+
   return (
-    <div className="desk-shell" style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16, marginTop: 22 }}>
-      <aside className="product-panel" style={{ padding: 14 }}>
-        <div style={{ fontWeight: 650, marginBottom: 10 }}>열린 회사 건</div>
-        <Link href="/sourcing" className="product-cta wide" style={{ display: "block", textAlign: "center" }}>
-          새 건 · 공고 등록
-        </Link>
-        <div style={{ marginTop: 14, display: "grid", gap: 6 }}>
+    <div className="lc-cases" data-in>
+      <aside className="lc-panel" aria-labelledby="h-open-cases">
+        <div className="lc-ph"><h2 id="h-open-cases">열린 회사 건</h2></div>
+        <div className="lc-pb" style={{ display: "grid", gap: 4 }}>
+          <Link href="/sourcing" className="lc-btn is-primary" style={{ justifyContent: "center", marginBottom: 8 }}>새 건 · 공고 등록</Link>
           {cases.length === 0 ? (
-            <p className="product-muted" style={{ margin: 0, fontSize: 13 }}>열린 건이 없습니다. 공고 등록에서 사람인 형식으로 건을 만드세요.</p>
-          ) : (
-            cases.map((b) => {
-              const n = reports.filter((r) => r.jdHash === b.jdHash).length;
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => onSelect(b.id)}
-                  className="product-panel"
-                  style={{ textAlign: "left", padding: 10, background: b.id === activeId ? "#EEF2FF" : "#fff", cursor: "pointer" }}
-                >
-                  <div style={{ fontWeight: 650, fontSize: 13 }}>{b.clientName ?? "고객사 미정"}</div>
-                  <div className="product-muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.title}</div>
-                  <div className="product-muted" style={{ fontSize: 12, marginTop: 4 }}>
-                    후보 {n}명 · 승인 대기 {b.counts.pending}
-                    {b.deadline ? ` · ~${b.deadline.slice(5).replace("-", ".")}` : ""}
-                  </div>
-                </button>
-              );
-            })
-          )}
+            <p className="lc-cap" style={{ margin: 0 }}>열린 건이 없습니다. 공고 등록에서 사람인 형식으로 건을 만드세요.</p>
+          ) : cases.map((b) => {
+            const n = reports.filter((r) => r.jdHash === b.jdHash).length;
+            return (
+              <button key={b.id} type="button" className="lc-case-btn" aria-pressed={b.id === activeId} onClick={() => onSelect(b.id)}>
+                <b>{b.clientName ?? "고객사 미정"}</b>
+                <span>{b.title}</span>
+                <span>후보 {n}명 · 승인 대기 {b.counts.pending}{b.deadline ? ` · ~${b.deadline.slice(5).replace("-", ".")}` : ""}</span>
+              </button>
+            );
+          })}
         </div>
       </aside>
-      <section className="product-panel" style={{ padding: 18 }}>
+      <section className="lc-panel" aria-label="선택한 회사 건">
         {active ? (
-          <>
-            <div className="product-eyebrow">{active.clientName ?? "고객사 미정"}</div>
-            <h2 style={{ margin: "4px 0 8px" }}>{active.title}</h2>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-              {(active.requirements?.items ?? []).map((m) => (
-                <span key={m.label} className={`product-skill${m.required ? " hit" : ""}`}>{m.label}{m.required ? "" : " (우대)"}</span>
-              ))}
+          <div className="lc-pb" style={{ paddingTop: 16 }}>
+            <div className="lc-cap" style={{ margin: 0 }}>{active.clientName ?? "고객사 미정"}</div>
+            <h2 style={{ fontSize: 18, fontWeight: 600, margin: "2px 0 10px" }}>{active.title}</h2>
+            <div className="lc-tags" style={{ marginBottom: 12 }}>
+              {(active.requirements?.items ?? []).map((m) => <span key={m.label} className={`lc-chip${m.required ? " is-hit" : ""}`}>{m.label}{m.required ? "" : " (우대)"}</span>)}
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-              <button type="button" className="product-cta" disabled={startingId !== null} onClick={() => onStart(active)}>
-                {startingId === active.id ? "찾는 중…" : "JD 매칭 · 후보 찾기"}
-              </button>
-              <Link href={`/review?jd=${encodeURIComponent(active.jdHash)}`} className="product-cta ghost">승인함 · 제안</Link>
+            <div className="lc-row-acts">
+              <button type="button" className="lc-btn is-primary" disabled={startingId !== null} onClick={() => onStart(active)}>{startingId === active.id ? "찾는 중…" : "JD 매칭 · 후보 찾기"}</button>
+              <Link href={`/review?jd=${encodeURIComponent(active.jdHash)}`} className="lc-btn">승인함 · 제안</Link>
               {watch && watch !== "unavailable" && (
-                <button type="button" className={watch.enabled ? "product-cta" : "product-cta ghost"} disabled={watchBusy} onClick={() => void toggleWatch()}
+                <button type="button" className="lc-btn" aria-pressed={watch.enabled} disabled={watchBusy} onClick={() => void toggleWatch()} style={watch.enabled ? { borderColor: "var(--mint)", color: "var(--mint)" } : undefined}
                   title="켜 두면 새로 들어오거나 바뀐 후보를 에이전트가 매일 찾아 승인함에 올립니다 (하루 분석 상한 있음)">
                   {watchBusy ? "바꾸는 중…" : watch.enabled ? `상시 수색 켜짐${watch.until ? ` · ~${watch.until.slice(5, 10).replace("-", ".")}` : ""}` : "상시 수색 켜기"}
                 </button>
               )}
             </div>
-            <p className="product-muted" style={{ fontSize: 12, margin: "0 0 14px" }}>
-              「JD 매칭 · 후보 찾기」는 이 건 공고로 후보 풀을 걸러 상위 후보를 분석합니다. 찾기 탭에서 직접 고른 후보도 「건에 담기」로 여기 들어옵니다.
-              {note ? ` · ${note}` : ""}
-            </p>
-            {(() => {
-              const ranked = members
-                .filter((r) => r.report)
-                .map((r) => ({ id: r.candidateId, label: people.find((x) => x.id === r.candidateId)?.name ?? r.candidateName ?? "후보", score: r.report!.overallScore }))
-                .sort((a, b) => b.score - a.score);
-              return ranked.length > 1 ? (
-                <div style={{ marginBottom: 10 }}>
-                  <ScoreColumns items={ranked} onSelect={(i) => { window.location.href = `/talent/${ranked[i].id}`; }} />
+            <p className="lc-cap">「JD 매칭 · 후보 찾기」는 이 건 공고로 후보 풀을 걸러 상위 후보를 분석합니다. 찾기 탭에서 직접 고른 후보도 「건에 담기」로 여기 들어옵니다.{note ? ` · ${note}` : ""}</p>
+            {ranked.length > 1 && (
+              <>
+                <h3 style={{ fontSize: 13, fontWeight: 600, margin: "16px 0 8px" }}>적합도</h3>
+                <div className="lc-rank">
+                  {ranked.map((x) => (
+                    <button key={x.id} type="button" onClick={() => { window.location.href = `/talent/${x.id}`; }} aria-label={`${x.label} ${x.score}점, 포트폴리오 보기`}>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.label}</span>
+                      <span className="bt"><i data-grow style={{ width: `${x.score}%` }} /></span>
+                      <span className="n">{x.score}</span>
+                    </button>
+                  ))}
                 </div>
-              ) : null;
-            })()}
-            <div style={{ display: "grid", gap: 8 }}>
+              </>
+            )}
+            <div style={{ marginTop: 8 }}>
               {members.length === 0 ? (
-                <EmptyState title="아직 담긴 후보가 없습니다">「JD 매칭 · 후보 찾기」를 누르거나, 찾기 탭에서 「건에 담기」를 쓰세요.</EmptyState>
-              ) : (
-                members.map((r) => {
-                  const p = people.find((x) => x.id === r.candidateId);
-                  const st = reportState(r);
-                  const sc = scores.get(r.candidateId);
-                  return (
-                    <div key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "10px 0", borderBottom: "1px solid #F1F5F9", alignItems: "center" }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ fontWeight: 650 }}>{p?.name ?? r.candidateName ?? "후보"}</div>
-                          {r.report ? <FitScoreBadge report={r.report} compact /> : null}
-                          <span style={{ fontSize: 12, color: toneColor[st.tone] }}>{st.text}</span>
-                        </div>
-                        <div className="product-muted" style={{ fontSize: 12 }}>
-                          {p ? `${p.title} · ${p.skills.slice(0, 3).join(", ")}` : "인재풀에서 비공개로 바뀐 후보"}
-                        </div>
-                        {sc ? (
-                          <div className="product-muted" style={{ fontSize: 11, marginTop: 2 }} title="코드 사전필터 순위 점수의 항목별 충족도 (0~100%)">
-                            순위 {Math.round(sc.rankScore)}점 ·{" "}
-                            {Object.entries(sc.items)
-                              .filter(([k]) => !sc.excluded.includes(k))
-                              .map(([k, v]) => `${SCORE_LABEL[k] ?? k} ${Math.round(v * 100)}%`)
-                              .join(" · ")}
-                            {sc.mustUnmet ? " · 필수 미충족" : ""}
-                          </div>
-                        ) : (
-                          <div className="product-muted" style={{ fontSize: 11, marginTop: 2 }}>직접 담은 후보 · 순위 점수 없음</div>
-                        )}
+                <DState title="아직 담긴 후보가 없습니다" body="「JD 매칭 · 후보 찾기」를 누르거나, 찾기 탭에서 「건에 담기」를 쓰세요." />
+              ) : members.map((r) => {
+                const p = people.find((x) => x.id === r.candidateId);
+                const st = reportState(r);
+                const sc = scores.get(r.candidateId);
+                return (
+                  <div key={r.id} className="lc-member">
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <b style={{ fontWeight: 600 }}>{p?.name ?? r.candidateName ?? "후보"}</b>
+                        {r.report ? <VerdictPill verdict={r.report.verdict} score={r.report.overallScore} /> : null}
+                        <span className={`lc-tone-${st.tone}`} style={{ fontSize: 12 }}>{st.text}</span>
                       </div>
-                      <div style={{ display: "flex", gap: 10, flexShrink: 0, fontSize: 12 }}>
-                        <Link href={`/talent/${r.candidateId}`}>포트폴리오</Link>
-                        {r.report && <Link href={`/review?jd=${encodeURIComponent(r.jdHash)}`}>리포트·제안</Link>}
+                      <div className="lc-cap" style={{ marginTop: 2 }}>{p ? `${p.title} · ${p.skills.slice(0, 3).join(", ")}` : "인재풀에서 비공개로 바뀐 후보"}</div>
+                      <div className="lc-cap" style={{ marginTop: 2 }} title={sc ? "코드 사전필터 순위 점수의 항목별 충족도 (0~100%)" : undefined}>
+                        {sc
+                          ? `순위 ${Math.round(sc.rankScore)}점 · ${Object.entries(sc.items).filter(([k]) => !sc.excluded.includes(k)).map(([k, v]) => `${SCORE_LABEL[k] ?? k} ${Math.round(v * 100)}%`).join(" · ")}${sc.mustUnmet ? " · 필수 미충족" : ""}`
+                          : "직접 담은 후보 · 순위 점수 없음"}
                       </div>
                     </div>
-                  );
-                })
-              )}
+                    <div className="acts">
+                      <Link href={`/talent/${r.candidateId}`}>포트폴리오</Link>
+                      {r.report && <Link href={`/review?jd=${encodeURIComponent(r.jdHash)}`}>리포트·제안</Link>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </>
+          </div>
         ) : (
-          <EmptyState title="선택된 건이 없습니다">왼쪽에서 건을 고르거나 새로 만드세요.</EmptyState>
+          <DState title="선택된 건이 없습니다" body="왼쪽에서 건을 고르거나 새로 만드세요." />
         )}
       </section>
     </div>

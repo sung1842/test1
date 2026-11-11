@@ -5,6 +5,7 @@ import { sourceLabel, trustLabel } from "@/lib/lifeApi";
 import TalentPortfolioShowcase from "@/components/TalentPortfolioShowcase";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { fetchPublicWorks } from "@/lib/portfolioWorks";
+import TalentResume from "@/components/TalentResume";
 
 interface PageProps {
   params: Promise<{ candidateId: string }>;
@@ -68,6 +69,7 @@ export default async function TalentPortfolioPage({ params }: PageProps) {
     <>
       <SiteHeader crumb="포트폴리오" />
       <TalentPortfolioShowcase candidate={candidate} publicId={candidateId} />
+      {candidate.supabaseId && <TalentResume userId={candidate.supabaseId} />}
       {works.length > 0 && (
         <section id="works" className="max-w-5xl mx-auto px-6 py-10">
           <h2 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--text-secondary)" }}>

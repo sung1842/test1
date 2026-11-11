@@ -3,7 +3,6 @@
 // 스카우트 건 하위 메뉴: 새 건 만들기 / 건 현황
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import "./desk.css";
 
 export function SourcingNav() {
   const path = usePathname() ?? "";
@@ -12,7 +11,7 @@ export function SourcingNav() {
     { href: "/sourcing/cases", label: "건 현황", on: path.startsWith("/sourcing/cases") },
   ];
   return (
-    <nav className="dk-subnav" aria-label="스카우트 건 메뉴">
+    <nav className="lc-seg lc-subnav" aria-label="스카우트 건 메뉴">
       {items.map((i) => (
         <Link key={i.href} href={i.href} aria-current={i.on ? "page" : undefined}>
           {i.label}
