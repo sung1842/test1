@@ -1,6 +1,6 @@
 "use client";
 
-import { SkeletonList } from "@/components/state/StateView";
+import { DSkeleton } from "@/components/desk/console/ui";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Database, ExternalLink, Hash, Loader2, Unlink } from "lucide-react";
@@ -184,13 +184,13 @@ function IntegrationsContent() {
   return (
     <>
       <section
-        className="rounded-2xl p-6"
+        className="lc-panel p-6"
         style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
       >
         <div className="flex items-start gap-3 mb-4">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "rgba(var(--accent-rgb), 0.12)", color: "var(--accent)" }}
+            style={{ background: "var(--s2)", color: "var(--ink-2)" }}
           >
             <Database size={20} />
           </div>
@@ -205,7 +205,7 @@ function IntegrationsContent() {
         </div>
 
         {loading ? (
-          <SkeletonList rows={2} label="연동 상태를 불러오는 중" />
+          <DSkeleton rows={2} label="연동 상태를 불러오는 중" />
         ) : !user ? (
           <button
             type="button"
@@ -244,7 +244,7 @@ function IntegrationsContent() {
 
             {databases.length > 0 && (
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
+                <label className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
                   후보 DB 선택
                 </label>
                 <select
@@ -314,13 +314,13 @@ function IntegrationsContent() {
       {/* Slack 채널 자동 소싱 — 웹에서 숨김 (2026-11-10) */}
       {SHOW_SLACK && (
       <section
-        className="rounded-2xl p-6 mt-6"
+        className="lc-panel p-6 mt-6"
         style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}
       >
         <div className="flex items-start gap-3 mb-4">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "rgba(var(--des-color-rgb), 0.12)", color: "var(--des-color)" }}
+            style={{ background: "var(--s2)", color: "var(--ink-2)" }}
           >
             <Hash size={20} />
           </div>
@@ -346,7 +346,7 @@ function IntegrationsContent() {
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "var(--text-secondary)" }}>
+              <label className="text-xs font-semibold block mb-2" style={{ color: "var(--text-secondary)" }}>
                 Slack 채널 ID
               </label>
               <input
@@ -358,7 +358,7 @@ function IntegrationsContent() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "var(--text-secondary)" }}>
+              <label className="text-xs font-semibold block mb-2" style={{ color: "var(--text-secondary)" }}>
                 채용 JD (자동 소싱 기준)
               </label>
               <textarea
@@ -416,16 +416,17 @@ function IntegrationsContent() {
 const SHOW_SLACK = false;
 
 export default function IntegrationsSettingsPage() {
-  // 헤더·탭은 DeskFrame 이 그린다
+  // 사이드바 셸은 DeskFrame 이 그린다
   return (
-    <div className="max-w-xl mx-auto px-4 pb-16" style={{ paddingTop: 28 }}>
-      <span className="tf-label">데스크 · 설정</span>
-      <h1 className="tf-h1" style={{ fontSize: "clamp(28px,4vw,40px)" }}>연동</h1>
-      <p className="tf-lead" style={{ marginBottom: 24 }}>승인한 후보를 Notion에 기록하도록 연결해요.</p>
+    <div style={{ maxWidth: 720 }}>
+      <header className="lc-top" data-in>
+        <h1>연동</h1>
+        <span className="lc-sub">승인한 후보를 Notion에 기록하도록 연결해요</span>
+      </header>
       {!isJdAnalyzerConfigured() ? (
         <ServiceUnavailable title="연동 설정" description="jd-fit-analyzer가 배포되면 Notion 연동을 설정할 수 있습니다." />
       ) : (
-        <Suspense fallback={<SkeletonList rows={2} />}>
+        <Suspense fallback={<DSkeleton rows={2} />}>
           <IntegrationsContent />
         </Suspense>
       )}

@@ -117,6 +117,8 @@ export function ScoutCaseForm() {
   const [paste, setPaste] = useState("");
   // 붙여넣은 원문 — 구직자 공고 화면엔 이걸 그대로 보여 준다. 세 칸을 직접 고치면 고친 내용(표준 양식)이 본문이 된다
   const [original, setOriginal] = useState<string | null>(null);
+  // 구직자 공고 목록 노출은 기업이 고를 때만 (기본 꺼짐)
+  const [post, setPost] = useState(false);
   const body = composePostingText({ summary: null, key_duties: toItems(duties), must_have: toItems(must), nice_to_have: toItems(nice) });
 
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -197,6 +199,7 @@ export function ScoutCaseForm() {
           deadline: deadlineDate,
           requirements: draft.requirements,
           originalText: original,
+          post,
         }),
       });
       setSaved(true);
@@ -412,6 +415,13 @@ export function ScoutCaseForm() {
               style={{ ...inputBase, padding: "6px 10px" }}
             />
           </div>
+          <label className="flex items-start gap-2 pt-1 text-sm cursor-pointer" style={{ color: "var(--text-primary)" }}>
+            <input type="checkbox" checked={post} disabled={saved} onChange={(e) => setPost(e.target.checked)} className="mt-0.5" />
+            <span>
+              구직자 공고 목록에도 올리기
+              <span className="block text-xs" style={{ color: "var(--text-secondary)" }}>끄면 이 건은 회사 안에서 후보 찾기에만 쓰여요. 건 현황에서 언제든 바꿀 수 있어요.</span>
+            </span>
+          </label>
           <div className="flex items-center justify-between gap-3 pt-1">
             <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
               키워드를 눌러 필수/우대를 바꿀 수 있어요. 학력은 공고 조건으로만 쓰고 후보 거르기엔 쓰지 않아요.
@@ -424,7 +434,7 @@ export function ScoutCaseForm() {
                 className="px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
                 style={{ border: "1px solid var(--border-color)", color: "var(--text-primary)", fontFamily: "Pretendard Variable, sans-serif" }}
               >
-                공고만 등록
+                건만 등록
               </button>
               <button
                 type="button"

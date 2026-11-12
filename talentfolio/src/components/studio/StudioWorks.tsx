@@ -25,7 +25,7 @@ export function StudioWorks({ userId, preview, onChange }: { userId: string; pre
       setMsg(e instanceof Error ? e.message : "작업물을 불러오지 못했어요");
     }
   }, [userId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

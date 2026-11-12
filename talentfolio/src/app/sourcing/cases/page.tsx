@@ -8,9 +8,8 @@ import { lifeFetch } from "@/lib/lifeApi";
 import { useCached } from "@/lib/useCached";
 import { KEY, refreshDesk } from "@/lib/deskData";
 import { SourcingNav } from "@/components/desk/SourcingNav";
-import { LoadError, SkeletonList, StateView } from "@/components/state/StateView";
+import { DLoadError, DSkeleton, DState } from "@/components/desk/console/ui";
 import "../../review/review.css";
-import "./cases.css";
 
 interface Counts { matched: number; analyzed: number; pending: number; approved: number; rejected?: number; running?: number; failed?: number }
 interface CaseRow {
@@ -25,6 +24,7 @@ interface CaseRow {
   lastStart: { at?: string; searched?: number; matched?: number; queued?: number; filteredOut?: number } | null;
   requirements: { items: { label: string; required: boolean }[] } | null;
   counts: Counts;
+  posted?: boolean;
 }
 interface StartResult { queued: number; matched: number; ahead?: number; retried?: number }
 
@@ -85,9 +85,22 @@ export default function ScoutCasesPage() {
     }
   }
 
+  async function togglePost(c: CaseRow) {
+    const on = !c.posted;
+    setBusyId(c.id);
+    try {
+      await lifeFetch(`/api/scout-cases/${encodeURIComponent(c.id)}/post`, { method: "POST", body: JSON.stringify({ post: on }) });
+      refreshDesk();
+    } catch (err) {
+      setNote((n) => ({ ...n, [c.id]: err instanceof Error ? err.message : "공고 상태 변경 실패" }));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function toggleClose(c: CaseRow) {
     const reopen = c.status === "closed";
-    if (!reopen && !window.confirm(`「${c.title}」 건을 종료할까요? 구직자 공고 목록에서도 내려갑니다. 나중에 다시 열 수 있어요.`)) return;
+    if (!reopen && !window.confirm(`「${c.title}」 건을 종료할까요? 공고로 올려 둔 건이면 구직자 공고 목록에서도 내려갑니다. 나중에 다시 열 수 있어요.`)) return;
     setBusyId(c.id);
     try {
       await lifeFetch(`/api/scout-cases/${encodeURIComponent(c.id)}/close`, { method: "POST", body: JSON.stringify({ reopen }) });
@@ -101,14 +114,11 @@ export default function ScoutCasesPage() {
 
   return (
     <div className="rv sc">
-      <SourcingNav />
-      <header className="rv-head">
-        <div>
-          <p className="rv-eyebrow">스카우트 건</p>
-          <h1>건 <em>현황</em></h1>
-          <p className="rv-sub">건마다 몇 명을 찾았고, 분석이 어디까지 왔고, 무엇이 막혔는지 봅니다.</p>
-        </div>
-        <Link className="rv-btn pri" href="/sourcing">새 건 만들기 +</Link>
+      <header className="lc-top" data-in>
+        <h1>스카우트 건</h1>
+        <SourcingNav />
+        <span className="lc-sub lc-hide-m">건마다 찾은 수, 분석 진행, 막힌 곳</span>
+        <div className="lc-actions"><Link className="lc-btn is-primary" href="/sourcing">새 건 만들기</Link></div>
       </header>
 
       <div className="sc-kpis">
@@ -128,11 +138,11 @@ export default function ScoutCasesPage() {
       </div>
 
       {q.loading ? (
-        <SkeletonList rows={4} label="건 현황을 불러오는 중" />
+        <section className="lc-panel"><DSkeleton rows={4} label="건 현황을 불러오는 중" /></section>
       ) : q.error ? (
-        <LoadError what="건 현황" error={q.error} />
+        <section className="lc-panel"><DLoadError what="건 현황" error={q.error} /></section>
       ) : cases.length === 0 ? (
-        <StateView art="search" title="아직 만든 건이 없어요" body="JD로 스카우트 건을 만들면 여기서 진행 상황을 관리해요." action={{ href: "/sourcing", label: "새 건 만들기" }} />
+        <section className="lc-panel"><DState title="아직 만든 건이 없어요" body="JD로 스카우트 건을 만들면 여기서 진행 상황을 관리해요." action={{ href: "/sourcing", label: "새 건 만들기" }} /></section>
       ) : shown.length === 0 ? (
         <p className="rv-note">이 조건에 맞는 건이 없어요.</p>
       ) : (
@@ -155,6 +165,7 @@ export default function ScoutCasesPage() {
                       {c.clientName ?? "고객사 미지정"}
                       {c.ownerName && ` · 담당 ${c.ownerName}`} · 등록 {c.createdAt.slice(0, 10)}
                       {dd && <em className={dd === "마감" || dd === "D-day" ? "hot" : ""}>{dd}</em>}
+                      {c.posted && !closed && <em>공고 게시 중</em>}
                     </span>
                   </div>
                   <span className={`rv-pill ${closed ? "expired" : running ? "todo" : c.status === "draft" ? "hold" : "approved"}`}>
@@ -200,6 +211,11 @@ export default function ScoutCasesPage() {
                   )}
                   {k.matched > 0 && <Link className="rv-btn" href={`/review?jd=${encodeURIComponent(c.jdHash)}`}>승인함</Link>}
                   {k.matched > 0 && <Link className="rv-btn ghost" href={`/desk/candidates?jd=${encodeURIComponent(c.jdHash)}`}>인재풀</Link>}
+                  {!closed && (
+                    <button type="button" className="rv-btn ghost" aria-pressed={!!c.posted} disabled={busyId !== null} onClick={() => void togglePost(c)}>
+                      {c.posted ? "공고 내리기" : "공고로 올리기"}
+                    </button>
+                  )}
                   <button type="button" className="rv-btn ghost sc-close" disabled={busyId !== null} onClick={() => void toggleClose(c)}>
                     {closed ? "다시 열기" : "건 종료"}
                   </button>

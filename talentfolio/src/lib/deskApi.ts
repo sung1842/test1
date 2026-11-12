@@ -42,7 +42,7 @@ export interface DeskSummary {
   supplyDemand: {
     supply: { developer: number; designer: number };
     demand: { developer: number; designer: number };
-    skillGap: { skill: string; demand: number; cards: number }[];
+    skillGap: { skill: string; demand: number; holders: number }[];
   };
   todo: { approvals: number; responses: number | null };
   feed: DeskFeedItem[];

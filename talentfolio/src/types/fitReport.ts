@@ -26,6 +26,8 @@ export interface FitReport {
   review?: FitReview;
   /** 보류 — 상태는 검토 대기 그대로, "미처리" 목록에서만 빠진다 */
   hold?: { at: string; by: string | null };
+  /** 코드 점수 보정 (orchestrator lib/calibrate.ts) — 근거 등급 상한·근거 없는 충족 항목 이동 */
+  calibration?: { tier: "thin" | "basic" | "solid" | "rich"; cap: number; rawScore: number; movedItems: string[]; reasons: string[] };
 }
 
 export interface FitReview {

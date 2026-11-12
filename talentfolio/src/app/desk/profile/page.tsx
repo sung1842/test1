@@ -7,7 +7,6 @@
  * 기업 계정의 profiles 행은 항상 비공개(is_public=false)라 인재풀에는 섞이지 않는다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { animate, createScope, stagger, utils } from "animejs";
 import {
   Building2,
@@ -20,10 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { ProductShell } from "@/components/product/ProductShell";
-import { LoadError, SkeletonList } from "@/components/state/StateView";
-import "../../../components/desk/desk.css";
-import "./profile.css";
+import { DLoadError, DSkeleton, DState } from "@/components/desk/console/ui";
 
 const INDUSTRIES = [
   "IT·플랫폼",
@@ -60,16 +56,6 @@ const SIDO = [
   "경남",
   "제주",
   "원격 근무",
-];
-const PERK_SUGGEST = [
-  "유연 근무",
-  "재택 근무",
-  "점심 제공",
-  "교육비 지원",
-  "장비 지원",
-  "스톡옵션",
-  "건강검진",
-  "자율 휴가",
 ];
 
 interface CompanyMeta {
@@ -153,9 +139,10 @@ export default function CompanyProfilePage() {
         location: str(m.location),
         careersUrl: str(m.careersUrl),
         perks: arr(m.perks),
-        contactName: str(m.contactName),
-        contactEmail: str(m.contactEmail) || (user.email ?? ""),
-        contactPhone: str(m.contactPhone),
+        // 담당자 이름·이메일은 로그인 계정 값. 연락처는 계정에 저장되는 곳이 없어 직접 입력값 유지
+        contactName: str(fresh.user_metadata?.name) || str(m.contactName),
+        contactEmail: fresh.email || str(m.contactEmail),
+        contactPhone: str(m.contactPhone) || str(fresh.phone),
       };
       setForm(f);
       setSaved(f);
@@ -183,7 +170,7 @@ export default function CompanyProfilePage() {
     const rm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (rm) return;
     const scope = createScope({ root }).add(() => {
-      animate(".cp-sec, .cp-preview", {
+      animate(".cp-sec", {
         opacity: [0, 1],
         y: [12, 0],
         duration: 380,
@@ -218,42 +205,13 @@ export default function CompanyProfilePage() {
     };
   }, [score]);
 
-  if (authLoading)
-    return (
-      <ProductShell>
-        <div className="cp">
-          <SkeletonList rows={4} label="기업 프로필을 불러오는 중" />
-        </div>
-      </ProductShell>
-    );
-  if (!user)
-    return (
-      <ProductShell>
-        <div className="cp">
-          <LoadError what="기업 프로필" error="로그인이 필요합니다" />
-        </div>
-      </ProductShell>
-    );
+  if (authLoading || (user && !form && !(accountType && accountType !== "company")))
+    return <><h1 className="lc-sr">기업 프로필</h1><DSkeleton rows={4} label="기업 프로필을 불러오는 중" /></>;
+  if (!user) return <DLoadError what="기업 프로필" error="로그인이 필요합니다" level={1} />;
   if (accountType && accountType !== "company") {
-    return (
-      <ProductShell>
-        <div className="cp">
-          <p className="cp-muted">
-            기업 계정만 쓸 수 있는 화면이에요.{" "}
-            <Link href="/studio">스튜디오로 가기</Link>
-          </p>
-        </div>
-      </ProductShell>
-    );
+    return <DState level={1} title="기업 계정만 쓸 수 있는 화면이에요" action={{ href: "/studio", label: "스튜디오로 가기" }} />;
   }
-  if (!form)
-    return (
-      <ProductShell>
-        <div className="cp">
-          <SkeletonList rows={4} label="기업 프로필을 불러오는 중" />
-        </div>
-      </ProductShell>
-    );
+  if (!form) return null;
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => {
     setForm((f) => (f ? { ...f, [k]: v } : f));
@@ -354,433 +312,209 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <ProductShell crumble="데스크 · 기업 프로필">
-      <div className="cp" ref={root}>
-        <header className="cp-head">
-          <div>
-            <p className="cp-eyebrow">기업 프로필</p>
-            <h1>
-              후보가 만나는 <em>우리 회사</em>
-            </h1>
-            <p className="cp-sub">
-              제안을 받은 후보가 이 정보를 보고 회사를 판단해요. 담당자 연락처는
-              내부용이라 공개되지 않아요.
-            </p>
-          </div>
-          <div className="cp-meter" aria-label={`프로필 완성도 ${score}%`}>
-            <span className="cp-meter-k">완성도</span>
-            <span className="cp-meter-v" ref={meter} data-v="0">
-              0%
-            </span>
-            <span className="cp-meter-bar">
-              <i style={{ width: `${score}%` }} />
-            </span>
-          </div>
-        </header>
-
-        <div className="cp-grid">
-          <div className="cp-form">
-            <section className="cp-sec" aria-labelledby="cp-basic">
-              <h2 id="cp-basic">기본 정보</h2>
-              <div className="cp-logo-row">
-                <div className="cp-logo" aria-hidden={!logo}>
-                  {logo ? (
-                    <img src={logo} alt="회사 로고" />
-                  ) : (
-                    <Building2 size={26} />
-                  )}
-                </div>
-                <div className="cp-logo-acts">
-                  <label className="cp-btn">
-                    {logoBusy ? (
-                      <Loader2 size={15} className="cp-spin" />
-                    ) : (
-                      <ImagePlus size={15} />
-                    )}
-                    {logo ? "로고 바꾸기" : "로고 올리기"}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      hidden
-                      disabled={logoBusy}
-                      onChange={(e) =>
-                        e.target.files?.[0] &&
-                        void uploadLogo(e.target.files[0])
-                      }
-                    />
-                  </label>
-                  {logo && (
-                    <button
-                      type="button"
-                      className="cp-btn ghost"
-                      disabled={logoBusy}
-                      onClick={() => void removeLogo()}
-                    >
-                      삭제
-                    </button>
-                  )}
-                  <span className="cp-muted">
-                    PNG·JPG·WEBP, 5MB 이하. 정사각형이 가장 잘 보여요.
-                  </span>
-                </div>
-              </div>
-              <Field label="회사명" required>
-                <input
-                  value={form.name}
-                  maxLength={60}
-                  onChange={(e) => set("name", e.target.value)}
-                  placeholder="예: 미래로시스템"
-                />
-              </Field>
-              <Field label="한 줄 소개" hint={`${form.tagline.length}/80`}>
-                <input
-                  value={form.tagline}
-                  maxLength={80}
-                  onChange={(e) => set("tagline", e.target.value)}
-                  placeholder="예: 공공·금융 시스템을 만드는 Java 전문 SI"
-                />
-              </Field>
-              <div className="cp-two">
-                <Field label="업종">
-                  <select
-                    value={form.industry}
-                    onChange={(e) => set("industry", e.target.value)}
-                  >
-                    <option value="">선택</option>
-                    {INDUSTRIES.map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="규모">
-                  <select
-                    value={form.size}
-                    onChange={(e) => set("size", e.target.value)}
-                  >
-                    <option value="">선택</option>
-                    {SIZES.map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="본사 위치">
-                  <select
-                    value={form.location}
-                    onChange={(e) => set("location", e.target.value)}
-                  >
-                    <option value="">선택</option>
-                    {SIDO.map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="설립 연도">
-                  <input
-                    value={form.founded}
-                    inputMode="numeric"
-                    maxLength={4}
-                    onChange={(e) =>
-                      set("founded", e.target.value.replace(/\D/g, ""))
-                    }
-                    placeholder="예: 2015"
-                  />
-                </Field>
-              </div>
-            </section>
-
-            <section className="cp-sec" aria-labelledby="cp-about">
-              <h2 id="cp-about">회사 소개</h2>
-              <Field label="소개" hint={`${form.about.length}/1500`}>
-                <textarea
-                  value={form.about}
-                  maxLength={1500}
-                  rows={6}
-                  onChange={(e) => set("about", e.target.value)}
-                  placeholder="무엇을 만드는 회사인지, 팀은 어떻게 일하는지, 이번 채용으로 어떤 문제를 풀고 싶은지 적어 주세요."
-                />
-              </Field>
-              <Field label="기술 스택" hint="Enter 로 추가" group>
-                <ChipInput
-                  value={form.stack}
-                  onChange={(v) => set("stack", v)}
-                  placeholder="예: Java, Spring Boot, Oracle"
-                  max={20}
-                />
-              </Field>
-              <Field label="복지·문화" hint="Enter 로 추가" group>
-                <ChipInput
-                  value={form.perks}
-                  onChange={(v) => set("perks", v)}
-                  placeholder="예: 유연 근무"
-                  max={12}
-                  suggest={PERK_SUGGEST}
-                />
-              </Field>
-              <div className="cp-two">
-                <Field label="웹사이트">
-                  <input
-                    value={form.website}
-                    type="url"
-                    onChange={(e) => set("website", e.target.value)}
-                    placeholder="https://"
-                    aria-invalid={!urlOk(form.website)}
-                  />
-                </Field>
-                <Field label="채용 페이지">
-                  <input
-                    value={form.careersUrl}
-                    type="url"
-                    onChange={(e) => set("careersUrl", e.target.value)}
-                    placeholder="https://"
-                    aria-invalid={!urlOk(form.careersUrl)}
-                  />
-                </Field>
-              </div>
-            </section>
-
-            <section className="cp-sec" aria-labelledby="cp-contact">
-              <h2 id="cp-contact">
-                채용 담당자 <span className="cp-lock">내부용 · 비공개</span>
-              </h2>
-              <div className="cp-two">
-                <Field label="이름">
-                  <input
-                    value={form.contactName}
-                    maxLength={30}
-                    onChange={(e) => set("contactName", e.target.value)}
-                    placeholder="홍길동"
-                  />
-                </Field>
-                <Field label="연락처">
-                  <input
-                    value={form.contactPhone}
-                    maxLength={20}
-                    inputMode="tel"
-                    onChange={(e) => set("contactPhone", e.target.value)}
-                    placeholder="02-000-0000"
-                  />
-                </Field>
-              </div>
-              <Field label="이메일">
-                <input
-                  value={form.contactEmail}
-                  type="email"
-                  onChange={(e) => set("contactEmail", e.target.value)}
-                  aria-invalid={!emailOk(form.contactEmail)}
-                />
-              </Field>
-            </section>
-          </div>
-
-          <aside className="cp-side">
-            <div className="cp-preview" aria-label="후보에게 보이는 모습">
-              <p className="cp-preview-k">후보에게 보이는 모습</p>
-              <div className="cp-card">
-                <div className="cp-card-top">
-                  <div className="cp-logo sm">
-                    {logo ? <img src={logo} alt="" /> : <Building2 size={20} />}
-                  </div>
-                  <div>
-                    <strong>{form.name || "회사명"}</strong>
-                    <span>{form.tagline || "한 줄 소개가 여기에 보여요"}</span>
-                  </div>
-                </div>
-                <ul className="cp-facts">
-                  {form.industry && (
-                    <li>
-                      <Building2 size={13} />
-                      {form.industry}
-                    </li>
-                  )}
-                  {form.size && (
-                    <li>
-                      <Users size={13} />
-                      {form.size}
-                    </li>
-                  )}
-                  {form.location && (
-                    <li>
-                      <MapPin size={13} />
-                      {form.location}
-                    </li>
-                  )}
-                  {form.website && (
-                    <li>
-                      <Globe size={13} />
-                      {form.website
-                        .replace(/^https?:\/\//, "")
-                        .replace(/\/$/, "")}
-                    </li>
-                  )}
-                </ul>
-                {form.about && <p className="cp-card-about">{form.about}</p>}
-                {form.stack.length > 0 && (
-                  <div className="cp-tags">
-                    {form.stack.slice(0, 8).map((s) => (
-                      <span key={s}>{s}</span>
-                    ))}
-                  </div>
-                )}
-                {form.perks.length > 0 && (
-                  <div className="cp-tags perk">
-                    {form.perks.slice(0, 6).map((s) => (
-                      <span key={s}>{s}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="cp-save">
-              {error && (
-                <p className="cp-err" role="alert">
-                  {error}
-                </p>
-              )}
-              {state === "done" && !dirty && (
-                <p className="cp-ok" role="status">
-                  저장했어요.
-                </p>
-              )}
-              <button
-                type="button"
-                className="cp-btn pri wide"
-                disabled={!dirty || state === "saving"}
-                onClick={() => void save()}
-              >
-                {state === "saving" ? (
-                  <>
-                    <Loader2 size={15} className="cp-spin" /> 저장 중
-                  </>
-                ) : dirty ? (
-                  "변경 사항 저장"
-                ) : (
-                  "저장됨"
-                )}
-              </button>
-              {dirty && (
-                <button
-                  type="button"
-                  className="cp-btn ghost wide"
-                  onClick={() => {
-                    setForm(saved);
-                    setError(null);
-                  }}
-                >
-                  되돌리기
-                </button>
-              )}
-            </div>
-          </aside>
+    <div ref={root}>
+      <header className="lc-top" data-in>
+        <h1>기업 프로필</h1>
+        <span className="lc-sub lc-hide-m">제안을 받은 후보가 이 정보를 보고 회사를 판단해요. 담당자 연락처는 공개되지 않아요.</span>
+        <div className="lc-actions">
+          {dirty && <button type="button" className="lc-btn is-ghost" onClick={() => { setForm(saved); setError(null); }}>되돌리기</button>}
+          <button type="button" className="lc-btn is-primary" disabled={!dirty || state === "saving"} onClick={() => void save()}>
+            {state === "saving" ? <><Loader2 aria-hidden="true" className="lc-spin" /> 저장 중</> : dirty ? "변경 사항 저장" : "저장됨"}
+          </button>
         </div>
+      </header>
+      {error && <p className="lc-warn" role="alert" style={{ marginTop: 0, marginBottom: 12 }}>{error}</p>}
+      {state === "done" && !dirty && <p className="lc-ok" role="status" style={{ marginTop: 0, marginBottom: 12 }}>저장했어요.</p>}
+
+      <div className="lc-split">
+        <div className="lc-form">
+          <section className="lc-panel cp-sec" aria-labelledby="cp-basic">
+            <div className="lc-ph"><h2 id="cp-basic">기본 정보</h2></div>
+            <div className="lc-pb lc-fields">
+              <div className="lc-logo-row">
+                <div className="lc-logo">{logo ? <img src={logo} alt="회사 로고" /> : <Building2 size={24} aria-hidden="true" />}</div>
+                <div className="lc-row-acts">
+                  <label className="lc-btn is-sm lc-file">
+                    {logoBusy ? <Loader2 aria-hidden="true" className="lc-spin" /> : <ImagePlus aria-hidden="true" />}
+                    {logo ? "로고 바꾸기" : "로고 올리기"}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" disabled={logoBusy} onChange={(e) => e.target.files?.[0] && void uploadLogo(e.target.files[0])} />
+                  </label>
+                  {logo && <button type="button" className="lc-btn is-sm is-ghost" disabled={logoBusy} onClick={() => void removeLogo()}>삭제</button>}
+                  <span className="lc-cap" style={{ margin: 0 }}>PNG·JPG·WEBP, 5MB 이하. 정사각형이 가장 잘 보여요.</span>
+                </div>
+              </div>
+              <Field id="cp-name" label="회사명" required>
+                <input id="cp-name" className="lc-input" value={form.name} maxLength={60} onChange={(e) => set("name", e.target.value)} placeholder="예: 미래로시스템" />
+              </Field>
+              <Field id="cp-tag" label="한 줄 소개" hint={`${form.tagline.length}/80`}>
+                <input id="cp-tag" className="lc-input" value={form.tagline} maxLength={80} onChange={(e) => set("tagline", e.target.value)} placeholder="예: 공공·금융 시스템을 만드는 Java 전문 SI" />
+              </Field>
+              <Field id="cp-ind" label="업종">
+                <select id="cp-ind" className="lc-input" value={form.industry} onChange={(e) => set("industry", e.target.value)}>
+                  <option value="">선택</option>
+                  {INDUSTRIES.map((x) => <option key={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field id="cp-size" label="규모">
+                <select id="cp-size" className="lc-input" value={form.size} onChange={(e) => set("size", e.target.value)}>
+                  <option value="">선택</option>
+                  {SIZES.map((x) => <option key={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field id="cp-loc" label="본사 위치">
+                <select id="cp-loc" className="lc-input" value={form.location} onChange={(e) => set("location", e.target.value)}>
+                  <option value="">선택</option>
+                  {SIDO.map((x) => <option key={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field id="cp-founded" label="설립 연도">
+                <input id="cp-founded" className="lc-input" value={form.founded} inputMode="numeric" maxLength={4} onChange={(e) => set("founded", e.target.value.replace(/\D/g, ""))} placeholder="예: 2015" />
+              </Field>
+            </div>
+          </section>
+
+          <section className="lc-panel cp-sec" aria-labelledby="cp-about">
+            <div className="lc-ph"><h2 id="cp-about">회사 소개</h2></div>
+            <div className="lc-pb lc-fields">
+              <Field id="cp-about-t" label="소개" hint={`${form.about.length}/1500`} wide>
+                <textarea id="cp-about-t" className="lc-input" value={form.about} maxLength={1500} rows={6} onChange={(e) => set("about", e.target.value)} placeholder="무엇을 만드는 회사인지, 팀은 어떻게 일하는지, 이번 채용으로 어떤 문제를 풀고 싶은지 적어 주세요." />
+              </Field>
+              <Field label="기술 스택" hint="Enter 로 추가" group wide>
+                <ChipInput value={form.stack} onChange={(v) => set("stack", v)} placeholder="예: Java, Spring Boot, Oracle" max={20} label="기술 스택" />
+              </Field>
+              <Field label="복지·문화" hint="Enter 로 추가" group wide>
+                <ChipInput value={form.perks} onChange={(v) => set("perks", v)} placeholder="예: 유연 근무" max={12} label="복지·문화" />
+              </Field>
+              <Field id="cp-web" label="웹사이트">
+                <input id="cp-web" className="lc-input" value={form.website} type="url" onChange={(e) => set("website", e.target.value)} placeholder="https://" aria-invalid={!urlOk(form.website)} />
+              </Field>
+              <Field id="cp-car" label="채용 페이지">
+                <input id="cp-car" className="lc-input" value={form.careersUrl} type="url" onChange={(e) => set("careersUrl", e.target.value)} placeholder="https://" aria-invalid={!urlOk(form.careersUrl)} />
+              </Field>
+            </div>
+          </section>
+
+          <section className="lc-panel cp-sec" aria-labelledby="cp-contact">
+            <div className="lc-ph"><h2 id="cp-contact">채용 담당자</h2><span className="lc-note">내부용 · 비공개</span></div>
+            <div className="lc-pb lc-fields">
+              <Field id="cp-cn" label="이름">
+                <input id="cp-cn" className="lc-input" value={form.contactName} readOnly title="계정 이름을 씁니다" />
+              </Field>
+              <Field id="cp-cp" label="연락처">
+                <input id="cp-cp" className="lc-input" value={form.contactPhone} maxLength={20} inputMode="tel" onChange={(e) => set("contactPhone", e.target.value)} placeholder="02-000-0000" />
+              </Field>
+              <Field id="cp-ce" label="이메일" wide>
+                <input id="cp-ce" className="lc-input" value={form.contactEmail} type="email" readOnly title="로그인 이메일을 씁니다" />
+              </Field>
+            </div>
+          </section>
+        </div>
+
+        <aside className="lc-col lc-detail">
+          <section className="lc-panel cp-sec" aria-labelledby="cp-done">
+            <div className="lc-ph"><h2 id="cp-done">완성도 <span ref={meter} data-v="0">0%</span></h2><span className="lc-note">후보에게 보이는 항목 기준</span></div>
+            <div className="lc-pb">
+              <div className="lc-meter is-strong" style={{ width: "100%" }} role="img" aria-label={`프로필 완성도 ${score}%`}><i style={{ width: `${score}%` }} /></div>
+            </div>
+          </section>
+          <section className="lc-panel cp-sec" aria-labelledby="cp-prev">
+            <div className="lc-ph"><h2 id="cp-prev">후보에게 보이는 모습</h2></div>
+            <div className="lc-pb">
+              <div className="lc-prev">
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div className="lc-logo is-sm">{logo ? <img src={logo} alt="" /> : <Building2 size={18} aria-hidden="true" />}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ marginTop: 0 }}>{form.name || "회사명"}</h3>
+                    <p style={{ marginTop: 2 }}>{form.tagline || "한 줄 소개가 여기에 보여요"}</p>
+                  </div>
+                </div>
+                <ul className="lc-facts">
+                  {form.industry && <li><Building2 aria-hidden="true" />{form.industry}</li>}
+                  {form.size && <li><Users aria-hidden="true" />{form.size}</li>}
+                  {form.location && <li><MapPin aria-hidden="true" />{form.location}</li>}
+                  {form.website && <li><Globe aria-hidden="true" />{form.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</li>}
+                </ul>
+                {form.about && <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{form.about}</p>}
+                {form.stack.length > 0 && <div className="lc-tags" style={{ marginTop: 12 }}>{form.stack.slice(0, 8).map((s) => <span key={s} className="lc-chip">{s}</span>)}</div>}
+                {form.perks.length > 0 && <div className="lc-tags">{form.perks.slice(0, 6).map((s) => <span key={s} className="lc-chip is-hit">{s}</span>)}</div>}
+              </div>
+            </div>
+          </section>
+        </aside>
       </div>
-    </ProductShell>
+    </div>
   );
 }
 
-function Field({
-  label,
-  hint,
-  required,
-  group,
-  children,
-}: {
+function Field({ id, label, hint, required, group, wide, children }: {
+  id?: string;
   label: string;
   hint?: string;
   required?: boolean;
   group?: boolean;
+  wide?: boolean;
   children: React.ReactNode;
 }) {
-  const head = (
-    <span className="cp-label">
-      {label}
-      {required && <b aria-label="필수"> *</b>}
-      {hint && <small>{hint}</small>}
-    </span>
-  );
+  const head = <>{label}{required && <b className="lc-req" aria-label="필수"> *</b>}{hint && <span>{hint}</span>}</>;
   // 칩 입력처럼 버튼이 여럿 든 칸은 label 대신 group (label 안 버튼 클릭이 입력으로 새지 않게)
   if (group) {
     return (
-      <div className="cp-field" role="group" aria-label={label}>
-        {head}
+      <div className={`lc-field${wide ? " is-wide" : ""}`} role="group" aria-label={label}>
+        <span style={{ fontSize: 12, color: "var(--ink-2)", display: "flex", justifyContent: "space-between" }}>{head}</span>
         {children}
       </div>
     );
   }
   return (
-    <label className="cp-field">
-      {head}
+    <div className={`lc-field${wide ? " is-wide" : ""}`}>
+      <label htmlFor={id}>{head}</label>
       {children}
-    </label>
+    </div>
   );
 }
 
-function ChipInput({
-  value,
-  onChange,
-  placeholder,
-  max,
-  suggest,
-}: {
+function ChipInput({ value, onChange, placeholder, max, suggest, label }: {
   value: string[];
   onChange: (v: string[]) => void;
   placeholder: string;
   max: number;
   suggest?: string[];
+  label: string;
 }) {
   const [draft, setDraft] = useState("");
   const add = (raw: string) => {
     const v = raw.trim().replace(/,$/, "");
-    if (
-      !v ||
-      value.length >= max ||
-      value.some((x) => x.toLowerCase() === v.toLowerCase())
-    )
-      return;
+    if (!v || value.length >= max || value.some((x) => x.toLowerCase() === v.toLowerCase())) return;
     onChange([...value, v]);
   };
   return (
-    <div className="cp-chips">
-      <div className="cp-chipbox">
+    <div>
+      <div className="lc-chipbox">
         {value.map((v) => (
-          <span key={v} className="cp-chip">
+          <span key={v} className="lc-chip">
             {v}
-            <button
-              type="button"
-              aria-label={`${v} 빼기`}
-              onClick={() => onChange(value.filter((x) => x !== v))}
-            >
-              <X size={12} />
-            </button>
+            <button type="button" aria-label={`${v} 빼기`} onClick={() => onChange(value.filter((x) => x !== v))}><X size={12} aria-hidden="true" /></button>
           </span>
         ))}
         <input
           value={draft}
+          aria-label={`${label} 추가`}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === ",") {
               e.preventDefault();
               add(draft);
               setDraft("");
-            } else if (e.key === "Backspace" && !draft && value.length)
-              onChange(value.slice(0, -1));
+            } else if (e.key === "Backspace" && !draft && value.length) onChange(value.slice(0, -1));
           }}
-          onBlur={() => {
-            add(draft);
-            setDraft("");
-          }}
+          onBlur={() => { add(draft); setDraft(""); }}
           placeholder={value.length ? "" : placeholder}
           disabled={value.length >= max}
         />
       </div>
       {suggest && (
-        <div className="cp-suggest">
-          {suggest
-            .filter((s) => !value.includes(s))
-            .map((s) => (
-              <button key={s} type="button" onClick={() => add(s)}>
-                + {s}
-              </button>
-            ))}
+        <div className="lc-suggest">
+          {suggest.filter((s) => !value.includes(s)).map((s) => <button key={s} type="button" onClick={() => add(s)}>+ {s}</button>)}
         </div>
       )}
     </div>

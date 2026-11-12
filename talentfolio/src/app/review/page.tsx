@@ -2,22 +2,22 @@
 
 // 20 문서 C1 — 후보 검토 작업대: 분석된 모든 후보를 보고 승인 / 보류 / 거절한다.
 // 거절 = 이 건에서 그 후보와 더 할 일이 없다 → 서버가 분석 결과를 지운다 (사유는 지표용으로만 남는다).
-// 점수는 보조. 기본 정렬은 근거 우선(충족 요건 수 → 최고 신뢰 등급 → 점수).
+// 점수는 보조. 기본 정렬은 근거 우선(충족 요건 수 → 인용 카드 수 → 점수).
+// 카드의 신뢰 등급(확인·첨부)은 검증되지 않아 쓰지 않는다. 모든 카드는 자기 신고, 진위는 면접에서 확인 (2026-11-11).
 import Link from "next/link";
+import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ProductShell } from "@/components/product/ProductShell";
 import { deskApi } from "@/lib/deskApi";
 import { getPublicEvidenceCards, type PublicEvidenceCard } from "@/lib/getCandidate";
 import { evidenceCardHref } from "@/lib/briefReport";
-import { lifeFetch, sourceLabel, trustLabel } from "@/lib/lifeApi";
+import { lifeFetch, sourceLabel } from "@/lib/lifeApi";
 import { postingHeadline } from "@/lib/postingFormat";
 import { KEY, isUnprocessed, refreshDesk, useFitReports, type FitReportsPayload } from "@/lib/deskData";
 import { mutateCache } from "@/lib/useCached";
 import { displaySummary, type AgentResult, type FitReport, type FitReportRecord } from "@/types/fitReport";
-import { LoadError, SkeletonList, StateView } from "@/components/state/StateView";
+import { DLoadError, DSkeleton, DState } from "@/components/desk/console/ui";
 import "./review.css";
 
-const TRUST_RANK: Record<string, number> = { confirmed: 3, attached: 2, self: 1 };
 const REVIEWABLE = new Set(["completed", "pending_review"]);
 
 /**
@@ -50,14 +50,21 @@ function agentsOf(r: FitReport | null): AgentResult[] {
 function citedIds(r: FitReport | null): Set<string> {
   return new Set(agentsOf(r).flatMap((a) => a.citedCardIds ?? a.citedCards?.map((c) => c.id) ?? []));
 }
-function bestTrust(r: FitReport | null): number {
-  return Math.max(0, ...agentsOf(r).flatMap((a) => a.citedCards ?? []).map((c) => TRUST_RANK[c.trust] ?? 0));
-}
 const unique = (xs: string[]) => [...new Set(xs.map((x) => x.trim()).filter(Boolean))];
 const matchedOf = (r: FitReport | null) => unique(agentsOf(r).flatMap((a) => a.matched_items));
-const missingOf = (r: FitReport | null) => unique(agentsOf(r).flatMap((a) => a.missing_items));
 
 // 근거 없는 요건 → 유도하지 않는 열린 질문(상황·역할·행동·결과)
+/** 핵심 질문만: 기술 → 경험 순, 소통·태도 같은 일반 요건은 뒤로. 최대 QUESTION_MAX 개 */
+const QUESTION_MAX = 4;
+const SOFT = /소통|커뮤니케이션|책임감|꼼꼼|적극|능동|자기주도|배우|성실|협업|유연|태도|관심/;
+function keyQuestions(r: FitReport | null): { top: string[]; rest: string[] } {
+  const ordered = unique([...(r?.techStack.missing_items ?? []), ...(r?.experience.missing_items ?? []), ...(r?.cultureFit?.missing_items ?? [])]);
+  const hard = ordered.filter((m) => !SOFT.test(m));
+  const soft = ordered.filter((m) => SOFT.test(m));
+  const all = [...hard, ...soft];
+  return { top: all.slice(0, QUESTION_MAX), rest: all.slice(QUESTION_MAX) };
+}
+
 function followUpQuestion(item: string): string {
   return `${item}: 이 요건과 관련해 겪은 상황이 있다면, 그때 맡은 역할과 직접 한 행동, 결과를 들려주세요.`;
 }
@@ -77,7 +84,7 @@ export default function CandidateReviewPage() {
   const [sort, setSort] = useState<"evidence" | "score">("evidence");
   const [onlyTodo, setOnlyTodo] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [flash, setFlash] = useState<{ kind: "approved" | "rejected" | "hold"; name: string; jdHash: string } | null>(null);
+  const [flash, setFlash] = useState<{ kind: "approved" | "rejected" | "hold"; name: string; jdHash: string; id: string } | null>(null);
 
   const jds = useMemo(() => {
     const map = new Map<string, { hash: string; title: string; todo: number; total: number; running: number; failed: number; approved: number }>();
@@ -107,7 +114,7 @@ export default function CandidateReviewPage() {
         phaseRank[phaseOf(a)] - phaseRank[phaseOf(b)] ||
         (sort === "score"
           ? score(b) - score(a)
-          : matchedOf(b.report).length - matchedOf(a.report).length || bestTrust(b.report) - bestTrust(a.report) || score(b) - score(a)),
+          : matchedOf(b.report).length - matchedOf(a.report).length || citedIds(b.report).size - citedIds(a.report).size || score(b) - score(a)),
     );
   }, [records, activeJd, onlyTodo, sort]);
 
@@ -141,12 +148,29 @@ export default function CandidateReviewPage() {
         return { ...cur, reports };
       });
       const name = rec.report?.candidateName ?? rec.candidateName ?? "후보";
-      if (kind !== "unhold") setFlash({ kind, name, jdHash: rec.jdHash });
+      if (kind !== "unhold") setFlash({ kind, name, jdHash: rec.jdHash, id: rec.id });
       if (kind === "approved") setSelectedId(rec.id);
       else if (kind !== "unhold") setSelectedId(nextTodo?.id ?? null);
       refreshDesk();
     },
     [list],
+  );
+
+  // 보류 되돌리기 (단축키 H 오입력 대비)
+  const undoHold = useCallback(
+    async (id: string) => {
+      const rec = list.find((r) => r.id === id);
+      if (!rec) return;
+      try {
+        await lifeFetch(`/api/fit-reports/${encodeURIComponent(id)}/review`, { method: "POST", body: JSON.stringify({ action: "unhold" }) });
+        onDecided(rec, "unhold");
+        setFlash(null);
+        setSelectedId(id);
+      } catch {
+        /* 실패 시 알림을 그대로 둔다 */
+      }
+    },
+    [list, onDecided],
   );
 
   const counts = useMemo(() => {
@@ -155,31 +179,30 @@ export default function CandidateReviewPage() {
   }, [records, activeJd]);
 
   return (
-    <ProductShell crumble="데스크 · 승인함">
-      <div className="rv">
-        <header className="rv-head">
-          <div>
-            <p className="rv-eyebrow">승인함</p>
-            <h1>근거를 보고 <em>판단</em>하세요</h1>
-            <p className="rv-sub">공개 근거 카드만 보입니다. 근거가 없는 요건은 탈락 사유가 아니라 면접 확인 질문입니다.</p>
-          </div>
-          <p className="rv-keys" aria-label="단축키">
-            <kbd>J</kbd><kbd>K</kbd> 이동 <kbd>A</kbd> 승인 <kbd>H</kbd> 보류 <kbd>R</kbd> 거절
+    <div className="rv">
+        <header className="lc-top" data-in>
+          <h1>승인함</h1>
+          <span className="lc-sub lc-hide-m">공개 근거 카드만 보입니다. 근거가 없는 요건은 탈락 사유가 아니라 면접 확인 질문입니다.</span>
+          <p className="lc-hint lc-hide-m" aria-label="단축키" style={{ margin: "0 0 0 auto" }}>
+            <span><kbd className="lc-kbd">J</kbd><kbd className="lc-kbd">K</kbd> 이동</span>
+            <span><kbd className="lc-kbd">A</kbd> 승인</span>
+            <span><kbd className="lc-kbd">H</kbd> 보류</span>
+            <span><kbd className="lc-kbd">R</kbd> 거절</span>
           </p>
         </header>
 
         {loading ? (
-          <SkeletonList rows={4} label="승인함을 불러오는 중" />
+          <section className="lc-panel"><DSkeleton rows={4} label="승인함을 불러오는 중" /></section>
         ) : error ? (
-          <LoadError what="승인함" error={error} />
+          <section className="lc-panel"><DLoadError what="승인함" error={error} /></section>
         ) : jds.length === 0 ? (
-          <StateView
-            art="search"
-            title="아직 승인할 후보가 없어요"
-            note="스카우트 건을 만들면 여기로 모여요"
-            body="JD로 스카우트 건을 만들면 AI가 찾은 후보가 근거와 함께 이곳에 쌓여요."
-            action={{ href: "/sourcing", label: "스카우트 건 만들기" }}
-          />
+          <section className="lc-panel">
+            <DState
+              title="아직 승인할 후보가 없어요"
+              body="JD로 스카우트 건을 만들면 AI가 찾은 후보가 근거와 함께 이곳에 쌓여요."
+              action={{ href: "/sourcing", label: "스카우트 건 만들기" }}
+            />
+          </section>
         ) : (
           <>
             <div className="rv-bar">
@@ -214,14 +237,14 @@ export default function CandidateReviewPage() {
               </div>
               {activeJd && (
                 <Link className="rv-link" href={talentHref(activeJd)}>
-                  인재풀에서 이 건 보기 →
+                  인재풀에서 이 건 보기
                 </Link>
               )}
             </div>
 
             {activeCase && (activeCase.running > 0 || activeCase.failed > 0) && (
               <p className="rv-note">
-                {activeCase.running > 0 && <>분석 중 {activeCase.running}명 — 끝나는 대로 이 목록에 자동으로 나타납니다. </>}
+                {activeCase.running > 0 && <>분석 중 {activeCase.running}명. 끝나는 대로 이 목록에 자동으로 나타납니다. </>}
                 {activeCase.failed > 0 && <>후보 {activeCase.failed}명을 분석하는 중 오류가 발생했습니다. <Link href="/sourcing/cases">건 현황</Link>에서 다시 시도해 주세요.</>}
               </p>
             )}
@@ -232,15 +255,20 @@ export default function CandidateReviewPage() {
                   <>
                     <span><b>{flash.name}</b> 님을 승인했어요. 다음 단계는 제안입니다.</span>
                     <span className="rv-flash-acts">
-                      <Link href={talentHref(flash.jdHash)}>인재풀의 이 건에서 이어가기 →</Link>
+                      <Link href={talentHref(flash.jdHash)}>인재풀의 이 건에서 이어가기</Link>
                     </span>
                   </>
                 ) : flash.kind === "hold" ? (
-                  <span><b>{flash.name}</b> 님을 보류했어요. “미처리만” 보기에서는 빠지고 전체 후보에 남아요.</span>
+                  <>
+                    <span><b>{flash.name}</b> 님을 보류했어요. “미처리만” 보기에서는 빠지고 전체 후보에 남아요.</span>
+                    <span className="rv-flash-acts">
+                      <button type="button" className="rv-linkbtn" onClick={() => void undoHold(flash.id)}>되돌리기</button>
+                    </span>
+                  </>
                 ) : (
                   <span><b>{flash.name}</b> 님을 거절해 이 건에서 지웠어요. 사유는 지표에만 남아요.</span>
                 )}
-                <button type="button" className="rv-x" aria-label="알림 닫기" onClick={() => setFlash(null)}>×</button>
+                <button type="button" className="rv-x" aria-label="알림 닫기" onClick={() => setFlash(null)}><X size={14} aria-hidden="true" /></button>
               </div>
             )}
 
@@ -259,7 +287,6 @@ export default function CandidateReviewPage() {
                 )}
                 {list.map((r) => {
                   const cited = citedIds(r.report).size;
-                  const trust = bestTrust(r.report);
                   const phase = phaseOf(r);
                   return (
                     <li key={r.id}>
@@ -270,7 +297,6 @@ export default function CandidateReviewPage() {
                         </span>
                         <span className="rv-row-meta">
                           충족 {matchedOf(r.report).length} · 근거 {cited}
-                          {trust > 0 && ` · ${trustLabel(Object.keys(TRUST_RANK).find((k) => TRUST_RANK[k] === trust))}`}
                         </span>
                         <span className="rv-score" aria-label={`참고 점수 ${r.report?.overallScore ?? "-"}`}>
                           <i style={{ width: `${Math.max(4, Math.min(100, r.report?.overallScore ?? 0))}%` }} />
@@ -292,8 +318,7 @@ export default function CandidateReviewPage() {
             </div>
           </>
         )}
-      </div>
-    </ProductShell>
+    </div>
   );
 }
 
@@ -330,7 +355,7 @@ function Brief({
   }, [record.candidateId]);
 
   const byId = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
-  const missing = missingOf(report);
+  const questions = keyQuestions(report);
 
   const decide = useCallback(
     async (action: "approve" | "reject" | "hold" | "unhold", reason?: string) => {
@@ -373,7 +398,6 @@ function Brief({
     return () => window.removeEventListener("keydown", onKey);
   }, [onMove, decide, reviewable, rejecting, busy, phase]);
 
-  const matchedAgents = agentsOf(report).filter((a) => a.matched_items.length > 0);
 
   return (
     <section className="rv-panel rv-brief" aria-label="후보 브리프">
@@ -385,53 +409,69 @@ function Brief({
             <span className={`rv-pill ${phase}`}>{PHASE_LABEL[phase]}</span>
             {record.status === "pending_review" && <span className="rv-pill low">신뢰도 낮음</span>}
             <span>참고 점수 <b>{report.overallScore}</b></span>
-            <Link href={`/brief/${encodeURIComponent(record.candidateId)}?jd=${encodeURIComponent(record.jdHash)}`}>전체 브리프 ↗</Link>
+            <Link href={`/talent/${encodeURIComponent(record.candidateId)}`} target="_blank" rel="noopener noreferrer">프로필 보기</Link>
           </p>
         </div>
       </div>
 
       <p className="rv-summary">{displaySummary(report.ceoSummary)}</p>
+      {report.calibration && report.calibration.reasons.length > 0 && (
+        <p className="rv-calib">
+          <b>점수 보정</b> {report.calibration.rawScore}점 → {report.overallScore}점 · {report.calibration.reasons.join(" · ")}
+        </p>
+      )}
 
-      <h3 className="rv-h3">근거가 확인된 요건</h3>
-      {matchedAgents.length === 0 && <p className="rv-muted">없음</p>}
-      {matchedAgents.map((a) => {
+      <h3 className="rv-h3">영역별 분석</h3>
+      {agentsOf(report).map((a) => {
         const ids = a.citedCardIds ?? a.citedCards?.map((c) => c.id) ?? [];
         return (
-          <div key={a.agent} className="rv-req">
+          <div key={a.agent} className="rv-req rv-area">
             <div className="rv-req-title">
               <span className="rv-tag">{AGENT_LABEL[a.agent]}</span>
-              <span className="rv-chips">{a.matched_items.map((m) => <span key={m}>{m}</span>)}</span>
+              <b className="rv-area-score">{a.score}점</b>
+              <span className="rv-muted">충족 {a.matched_items.length} · 확인 필요 {a.missing_items.length}</span>
             </div>
-            {ids.length === 0 ? (
-              <span className="rv-muted">인용한 공개 카드 없음 — 포트폴리오 본문 기반</span>
-            ) : (
-              ids.map((id) => {
-                const c = byId.get(id);
-                return c ? (
-                  <a key={id} className="rv-card" href={evidenceCardHref(record.candidateId, id)} target="_blank" rel="noopener noreferrer" onClick={() => void deskApi.recordView(record.id, id)}>
-                    {c.claim}
-                    <span>
-                      {trustLabel(c.trust_level)} · {sourceLabel(c.source)}
-                      {c.recorded_at && ` · ${c.recorded_at.slice(0, 10)}`}
-                      {c.ai_edited && " · AI 교정"}
-                    </span>
-                  </a>
-                ) : (
-                  <span key={id} className="rv-muted">{cards === null ? "카드 불러오는 중" : "후보가 공개를 철회한 카드"}</span>
-                );
-              })
+            {a.summary && <p className="rv-area-sum">{a.summary}</p>}
+            {a.evidence.length > 0 && (
+              <ul className="rv-evid">
+                {a.evidence.map((e) => <li key={e}>{e}</li>)}
+              </ul>
             )}
+            {a.matched_items.length > 0 && (
+              <p className="rv-area-row"><span className="rv-area-k">충족</span><span className="rv-chips">{a.matched_items.map((m) => <span key={m}>{m}</span>)}</span></p>
+            )}
+            {a.missing_items.length > 0 && (
+              <p className="rv-area-row"><span className="rv-area-k">근거 없음</span><span className="rv-chips miss">{a.missing_items.map((m) => <span key={m}>{m}</span>)}</span></p>
+            )}
+            {ids.map((id) => {
+              const c = byId.get(id);
+              return c ? (
+                <a key={id} className="rv-card" href={evidenceCardHref(record.candidateId, id)} target="_blank" rel="noopener noreferrer" onClick={() => void deskApi.recordView(record.id, id)}>
+                  {c.claim}
+                  <span>
+                    자기 신고 · 면접에서 확인 · {sourceLabel(c.source)}
+                    {c.recorded_at && ` · ${c.recorded_at.slice(0, 10)}`}
+                    {c.ai_edited && " · AI 교정"}
+                  </span>
+                </a>
+              ) : (
+                <span key={id} className="rv-muted">{cards === null ? "카드 불러오는 중" : "후보가 공개를 철회한 카드"}</span>
+              );
+            })}
           </div>
         );
       })}
 
-      <h3 className="rv-h3">면접 확인 질문 <small>근거 없음 {missing.length}</small></h3>
-      {missing.length === 0 ? (
+      <h3 className="rv-h3">면접에서 먼저 확인할 것 <small>핵심 {questions.top.length}개</small></h3>
+      {questions.top.length === 0 ? (
         <p className="rv-muted">근거가 없는 요건이 없습니다.</p>
       ) : (
-        <ol className="rv-qs">
-          {missing.map((m) => <li key={m}>{followUpQuestion(m)}</li>)}
-        </ol>
+        <>
+          <ol className="rv-qs">
+            {questions.top.map((m) => <li key={m}>{followUpQuestion(m)}</li>)}
+          </ol>
+          {questions.rest.length > 0 && <p className="rv-muted">그 밖에 근거가 없는 요건 {questions.rest.length}개는 위 영역별 분석의 “근거 없음”에 있어요.</p>}
+        </>
       )}
 
       {report.review && <p className="rv-muted rv-log">승인{report.review.decidedBy && ` · ${report.review.decidedBy}`} · {report.review.decidedAt.slice(0, 16).replace("T", " ")}</p>}
@@ -440,12 +480,12 @@ function Brief({
         <div className="rv-decide">
           {!rejecting ? (
             <div className="rv-acts">
-              <button type="button" className="rv-btn pri" disabled={busy} onClick={() => void decide("approve")}>{busy ? "처리 중" : "승인"} <kbd>A</kbd></button>
+              <button type="button" className="rv-btn pri" disabled={busy} onClick={() => void decide("approve")}>{busy ? "처리 중" : "승인"} <kbd className="lc-kbd">A</kbd></button>
               <button type="button" className="rv-btn" disabled={busy} onClick={() => void decide(phase === "hold" ? "unhold" : "hold")}>
-                {phase === "hold" ? "보류 해제" : "보류"} <kbd>H</kbd>
+                {phase === "hold" ? "보류 해제" : "보류"} <kbd className="lc-kbd">H</kbd>
               </button>
-              <button type="button" className="rv-btn danger" disabled={busy} onClick={() => setRejecting(true)}>거절 <kbd>R</kbd></button>
-              <button type="button" className="rv-btn ghost" onClick={() => onMove(1)}>다음 <kbd>J</kbd></button>
+              <button type="button" className="rv-btn danger" disabled={busy} onClick={() => setRejecting(true)}>거절 <kbd className="lc-kbd">R</kbd></button>
+              <button type="button" className="rv-btn ghost" onClick={() => onMove(1)}>다음 <kbd className="lc-kbd">J</kbd></button>
             </div>
           ) : (
             <div className="rv-reject">
@@ -501,7 +541,7 @@ function OfferMaker({ fitReportId, jdHash }: { fitReportId: string; jdHash: stri
     <div className="rv-offer">
       <div className="rv-offer-head">
         <b>다음 단계 · 제안 만들기</b>
-        <Link href={talentHref(jdHash)}>인재풀의 이 건에서 보기 →</Link>
+        <Link href={talentHref(jdHash)}>인재풀의 이 건에서 보기</Link>
       </div>
       <textarea
         value={message}
